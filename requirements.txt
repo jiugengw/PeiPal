@@ -1,0 +1,4 @@
+openai-agents>=0.19,<1
+sounddevice>=0.5,<1
+numpy>=2,<3
+pytest>=9,<10

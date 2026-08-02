@@ -16,6 +16,16 @@ cp .env.example .env
 python -m src.demo.voice_cli
 ```
 
+To use the same agent and tools as a typed chat instead:
+
+```bash
+python -m src.demo.chat_cli
+```
+
+The voice and chat commands share the same agent instructions, activity
+recommendation tool, and invitation-draft tool. Only the input/output mode is
+different. Type `/exit` to stop chat mode.
+
 The CLI automatically reads `OPENAI_API_KEY` from `.env`. The file is excluded
 from Git, so keep your real key there and never commit or share it. On macOS,
 grant your terminal microphone permission when prompted. Press `Ctrl+C` to stop
@@ -27,11 +37,16 @@ the demo.
 2. Start `python -m src.demo.voice_cli`.
 3. Confirm that the terminal says `Listening` and allow microphone access if
    macOS asks.
-4. Speak a short question. The terminal should print the conversation and the
-   reply should play through the default speakers.
-5. Start speaking while the companion is replying. Its queued audio should stop
+4. Say something like, “I want to do something relaxing this weekend.” The
+   companion should ask for the information it needs.
+5. Answer with a location, timing, activity style, and mobility preference. The
+   mock recommender should return three activities and the companion should
+   describe them aloud.
+6. Choose one activity and confirm that you want to share it. The companion
+   should create and read a draft support message; it must not send anything.
+7. Start speaking while the companion is replying. Its queued audio should stop
    so it can listen to the new turn.
-6. Press `Ctrl+C` and confirm that the process exits cleanly.
+8. Press `Ctrl+C` and confirm that the process exits cleanly.
 
 ### Troubleshooting
 
@@ -47,9 +62,9 @@ the demo.
 ### Current limitations
 
 This release is local-only and has no browser interface. It prints transcripts
-to the terminal for the active session but does not save them. It cannot search
-for activities, make a plan, send a message, contact trusted people, arrange
-transport, or make bookings.
+to the terminal for the active session but does not save them. Activity results
+and invitation drafts are mock data for the demo. No message is sent, and the
+prototype cannot contact trusted people, arrange transport, or make bookings.
 
 ### OpenAI documentation used
 

@@ -21,14 +21,21 @@ def test_companion_uses_the_count_me_in_voice_prompt():
 
 def test_prompt_prohibits_external_actions():
     for prohibited_action in (
-        "search for activities",
         "make bookings",
         "arrange transport",
         "contact family or friends",
         "send messages",
-        "create plans",
     ):
         assert prohibited_action in VOICE_INSTRUCTIONS
+
+
+def test_agent_exposes_mock_product_tools():
+    agent = build_companion_agent()
+
+    assert [tool.name for tool in agent.tools] == [
+        "recommend_activities",
+        "create_invitation_draft",
+    ]
 
 
 def test_realtime_config_uses_audio_and_interruptible_vad():

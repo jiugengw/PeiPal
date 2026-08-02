@@ -11,12 +11,15 @@ external actions.
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export OPENAI_API_KEY="sk-proj-your-key-here"
+cp .env.example .env
+# Edit .env and replace the placeholder with your real API key.
 python -m src.demo.voice_cli
 ```
 
-On macOS, grant your terminal microphone permission when prompted. Press
-`Ctrl+C` to stop the demo.
+The CLI automatically reads `OPENAI_API_KEY` from `.env`. The file is excluded
+from Git, so keep your real key there and never commit or share it. On macOS,
+grant your terminal microphone permission when prompted. Press `Ctrl+C` to stop
+the demo.
 
 ### Manual acceptance guide
 
@@ -32,8 +35,8 @@ On macOS, grant your terminal microphone permission when prompted. Press
 
 ### Troubleshooting
 
-- **`OPENAI_API_KEY is not set`**: export the key in the same terminal that
-  runs the demo. Never add a real key to `.env.example` or commit it.
+- **`OPENAI_API_KEY is not set`**: copy `.env.example` to `.env`, then add the
+  key after the equals sign. Never add a real key to `.env.example` or commit it.
 - **No microphone input on macOS**: open **System Settings → Privacy & Security
   → Microphone**, then enable the terminal app you used to launch Python.
 - **No speaker output or an audio-device error**: select a working default input

@@ -52,7 +52,7 @@ def test_transcript_line_ignores_non_message_items():
     assert transcript_line(item) is None
 
 
-def test_get_api_key_reads_only_the_environment(monkeypatch):
+def test_get_api_key_reads_the_environment(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     assert get_api_key() is None
 

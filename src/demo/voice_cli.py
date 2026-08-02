@@ -9,6 +9,8 @@ import sys
 from threading import Lock
 from typing import Any
 
+from dotenv import load_dotenv
+
 try:
     import sounddevice as sd
 except ImportError:  # pragma: no cover - exercised by the startup instructions.
@@ -69,8 +71,9 @@ class AudioPlaybackBuffer:
 
 
 def get_api_key() -> str | None:
-    """Return the API key without ever printing it."""
+    """Load a local .env file and return the API key without printing it."""
 
+    load_dotenv()
     return os.environ.get("OPENAI_API_KEY") or None
 
 

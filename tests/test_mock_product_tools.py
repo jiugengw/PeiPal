@@ -8,6 +8,8 @@ from src.agents.mock_product_tools import (
 
 
 def test_mock_recommendation_has_a_replaceable_contract():
+    """Keep the mock recommendation shape stable for the teammates' implementation."""
+
     result = json.loads(
         recommend_activities(
             location="Toa Payoh",
@@ -24,6 +26,8 @@ def test_mock_recommendation_has_a_replaceable_contract():
 
 
 def test_invitation_tool_only_creates_a_draft():
+    """Ensure the invitation tool returns draft text and never reports a send."""
+
     result = json.loads(
         create_invitation_draft(
             activity_id="library-craft",

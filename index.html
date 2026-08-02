@@ -12,7 +12,7 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="setup-panel" aria-labelledby="screen-title">
+    <section class="setup-panel" aria-labelledby="screen-title">
         <aside class="variant-timeline" aria-label="Setup progress">
           <div>
             <p class="eyebrow">Count Me In</p>
@@ -237,6 +237,29 @@
             </footer>
           </form>
         </div>
+      </section>
+
+      <section class="home-panel" id="homePanel" hidden aria-labelledby="home-title">
+        <header class="home-topbar">
+          <div class="home-brand">
+            <p class="eyebrow">Count Me In</p>
+            <p class="home-context" id="homeContext">A gentle care companion</p>
+          </div>
+
+          <div class="home-controls">
+            <div class="role-switch" role="tablist" aria-label="Choose your Count Me In view">
+              <button class="role-tab active" type="button" role="tab" aria-selected="true" data-view="elder">
+                Mary’s view
+              </button>
+              <button class="role-tab" type="button" role="tab" aria-selected="false" data-view="family">
+                Family view
+              </button>
+            </div>
+            <button class="text-button" type="button" id="editSetupButton">Edit setup</button>
+          </div>
+        </header>
+
+        <div class="home-content" id="homeContent" aria-live="polite"></div>
       </section>
     </main>
 

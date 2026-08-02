@@ -7,6 +7,7 @@ from src.agents.count_me_in_voice import (
     VOICE_NAME,
     build_companion_agent,
     build_realtime_config,
+    build_text_runner,
 )
 
 
@@ -38,7 +39,7 @@ def test_agent_exposes_mock_product_tools():
     ]
 
 
-def test_realtime_config_uses_audio_and_interruptible_vad():
+def test_realtime_config_uses_audio_and_turn_detection():
     config = build_realtime_config()
     settings = config["model_settings"]
     audio = settings["audio"]
@@ -51,8 +52,21 @@ def test_realtime_config_uses_audio_and_interruptible_vad():
         "type": "semantic_vad",
         "eagerness": "medium",
         "create_response": True,
-        "interrupt_response": True,
+        "interrupt_response": False,
     }
     assert audio["output"] == {"format": "pcm16", "voice": VOICE_NAME}
     assert config["tracing_disabled"] is True
     assert (AUDIO_SAMPLE_RATE, AUDIO_CHANNELS, AUDIO_DTYPE) == (24_000, 1, "int16")
+
+
+def test_text_runner_uses_the_same_agent_with_text_output():
+    build_text_runner()
+    agent = build_companion_agent()
+    config = build_realtime_config(["text"])
+
+    assert agent.name == "Count Me In Companion"
+    assert config["model_settings"]["output_modalities"] == ["text"]
+    assert [tool.name for tool in agent.tools] == [
+        "recommend_activities",
+        "create_invitation_draft",
+    ]

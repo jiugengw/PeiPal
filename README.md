@@ -16,6 +16,16 @@ cp .env.example .env
 python -m src.demo.voice_cli
 ```
 
+To use the same agent and tools as a typed chat instead:
+
+```bash
+python -m src.demo.chat_cli
+```
+
+The voice and chat commands share the same agent instructions, activity
+recommendation tool, and invitation-draft tool. Only the input/output mode is
+different. Type `/exit` to stop chat mode.
+
 The CLI automatically reads `OPENAI_API_KEY` from `.env`. The file is excluded
 from Git, so keep your real key there and never commit or share it. On macOS,
 grant your terminal microphone permission when prompted. Press `Ctrl+C` to stop

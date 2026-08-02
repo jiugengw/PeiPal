@@ -2,6 +2,7 @@ import asyncio
 from types import SimpleNamespace
 
 from src.demo.voice_cli import AudioPlaybackBuffer, enqueue_latest, get_api_key, transcript_line
+from src.demo.chat_cli import assistant_transcript, receive_response
 
 
 def test_playback_buffer_preserves_audio_order_and_pads_silence():
@@ -59,3 +60,31 @@ def test_get_api_key_reads_the_environment(monkeypatch, tmp_path):
 
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     assert get_api_key() == "test-key"
+
+
+def test_chat_only_displays_assistant_transcripts():
+    user_item = SimpleNamespace(role="user", content=[SimpleNamespace(text="hello")])
+    assistant_item = SimpleNamespace(
+        role="assistant", content=[SimpleNamespace(text="Hi there")]
+    )
+
+    assert assistant_transcript(user_item) is None
+    assert assistant_transcript(assistant_item) == "Count Me In: Hi there"
+
+
+def test_chat_prints_final_text_from_history_update(capsys):
+    assistant_item = SimpleNamespace(
+        role="assistant", content=[SimpleNamespace(text="I can help with that.")]
+    )
+
+    class FakeSession:
+        def __aiter__(self):
+            async def events():
+                yield SimpleNamespace(type="history_updated", history=[assistant_item])
+                yield SimpleNamespace(type="agent_end")
+
+            return events()
+
+    asyncio.run(receive_response(FakeSession()))
+
+    assert capsys.readouterr().out == "Count Me In: I can help with that.\n"

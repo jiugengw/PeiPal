@@ -42,13 +42,13 @@ def build_companion_agent() -> RealtimeAgent:
     )
 
 
-def build_realtime_config() -> dict:
-    """Return the session settings shared by the CLI and its tests."""
+def build_realtime_config(output_modalities: list[str] | None = None) -> dict:
+    """Return session settings, optionally selecting text instead of audio output."""
 
     return {
         "model_settings": {
             "model_name": MODEL_NAME,
-            "output_modalities": ["audio"],
+            "output_modalities": output_modalities or ["audio"],
             "audio": {
                 "input": {
                     "format": "pcm16",
@@ -59,7 +59,7 @@ def build_realtime_config() -> dict:
                         "type": "semantic_vad",
                         "eagerness": "medium",
                         "create_response": True,
-                        "interrupt_response": True,
+                        "interrupt_response": False,
                     },
                 },
                 "output": {
@@ -78,4 +78,13 @@ def build_companion_runner() -> RealtimeRunner:
     return RealtimeRunner(
         starting_agent=build_companion_agent(),
         config=build_realtime_config(),
+    )
+
+
+def build_text_runner() -> RealtimeRunner:
+    """Create the same companion with text responses for the chat CLI."""
+
+    return RealtimeRunner(
+        starting_agent=build_companion_agent(),
+        config=build_realtime_config(["text"]),
     )

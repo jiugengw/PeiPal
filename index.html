@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Count Me In Family Setup</title>
+    <meta
+      name="description"
+      content="A family-assisted setup prototype for Count Me In."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="setup-panel" aria-labelledby="screen-title">
+        <aside class="variant-timeline" aria-label="Setup progress">
+          <div>
+            <p class="eyebrow">Count Me In</p>
+            <h1>Set up care support for your loved one</h1>
+            <p class="intro">Create a simple family profile so activity plans can be shared with the right people, with you as the main approver.</p>
+          </div>
+          <ol class="steps" id="stepList">
+            <li class="active">Start</li>
+            <li>Profile</li>
+            <li>Trusted circle</li>
+            <li>Approval</li>
+            <li>Review</li>
+            <li>Ready</li>
+          </ol>
+        </aside>
+
+        <div class="content-card">
+          <form id="setupForm" novalidate>
+            <section class="screen active" data-screen="0">
+              <div class="screen-grid welcome-grid">
+                <div>
+                  <p class="kicker">Family-assisted setup</p>
+                  <h2 id="screen-title">Start with someone they trust</h2>
+                  <p class="lede">
+                    This setup is for a family member creating a profile for an
+                    older adult. It keeps the important decisions close to a
+                    trusted person while making future activity planning easier.
+                  </p>
+                  <div class="note">
+                    <span class="note-icon" aria-hidden="true">i</span>
+                    <p>
+                      No messages are sent in this prototype. Everything stays
+                      local for the demo.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="preview-card" aria-label="Setup preview">
+                  <div class="profile-visual">
+                    <span class="avatar large">ML</span>
+                    <div class="orbit orbit-one"></div>
+                    <div class="orbit orbit-two"></div>
+                    <span class="avatar small top">J</span>
+                    <span class="avatar small right">A</span>
+                    <span class="avatar small bottom">S</span>
+                  </div>
+                  <h3>Mary's support circle</h3>
+                  <p>Daughter approves. Family can join, remind, or help book.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="1">
+              <p class="kicker">Older adult profile</p>
+              <h2>Tell us about your loved one</h2>
+              <p class="lede">
+                Keep this practical: enough context to suggest comfortable
+                activities and contact the right people.
+              </p>
+
+              <div class="form-grid">
+                <label>
+                  Name
+                  <input
+                    id="elderName"
+                    name="elderName"
+                    type="text"
+                    value="Mary Lim"
+                    autocomplete="name"
+                    required
+                  />
+                </label>
+
+                <label>
+                  Preferred language
+                  <select id="language" name="language">
+                    <option>English</option>
+                    <option>Mandarin</option>
+                    <option>Malay</option>
+                    <option>Tamil</option>
+                    <option>Hokkien</option>
+                  </select>
+                </label>
+
+                <label>
+                  Home area
+                  <input
+                    id="homeArea"
+                    name="homeArea"
+                    type="text"
+                    value="Toa Payoh"
+                    autocomplete="address-level2"
+                  />
+                </label>
+
+                <label>
+                  Mobility needs
+                  <select id="mobility" name="mobility">
+                    <option>Can walk short distances</option>
+                    <option>Prefers seated activities</option>
+                    <option>Uses walking aid</option>
+                    <option>Needs wheelchair-friendly places</option>
+                  </select>
+                </label>
+
+                <label class="span-two">
+                  Transport preference
+                  <select id="transport" name="transport">
+                    <option>Family can help arrange transport</option>
+                    <option>Nearby bus or MRT preferred</option>
+                    <option>Taxi or private hire is okay</option>
+                    <option>Walking distance only</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="2">
+              <div class="section-head">
+                <div>
+                  <p class="kicker">Trusted circle</p>
+                  <h2>Add people who can support plans</h2>
+                </div>
+                <button class="icon-button" type="button" id="addContact" title="Add contact">
+                  +
+                </button>
+              </div>
+              <p class="lede">
+                Contacts can offer practical support. They cannot approve final
+                plans unless you choose to change that later.
+              </p>
+
+              <div class="contact-list" id="contactList"></div>
+              <p class="error-message" id="contactError" role="alert"></p>
+            </section>
+
+            <section class="screen" data-screen="3">
+              <p class="kicker">Approval settings</p>
+              <h2>Keep important decisions with you</h2>
+              <p class="lede">
+                The family member setting this up is the main approver for the
+                MVP. Trusted contacts can help, but they cannot confirm important
+                plans.
+              </p>
+
+              <div class="approval-card">
+                <div>
+                  <span class="avatar medium">JL</span>
+                </div>
+                <div>
+                  <p class="approval-label">Main approver</p>
+                  <h3>You, Jamie Lim</h3>
+                  <p>
+                    Only you can approve important plans, including joining an
+                    activity, sharing details, arranging transport, or confirming
+                    attendance.
+                  </p>
+                </div>
+              </div>
+
+              <div class="permission-grid">
+                <div>
+                  <strong>Trusted contacts can</strong>
+                  <p>Join, remind, suggest alternatives, and offer booking help.</p>
+                </div>
+                <div>
+                  <strong>Trusted contacts cannot</strong>
+                  <p>Approve final decisions or send private details onward.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="4">
+              <p class="kicker">Review setup</p>
+              <h2>Check everything before confirming</h2>
+              <p class="lede">
+                This is the family setup that future activity plans will use.
+              </p>
+
+              <div class="summary-grid">
+                <article>
+                  <h3>Profile</h3>
+                  <dl id="profileSummary"></dl>
+                </article>
+                <article>
+                  <h3>Trusted contacts</h3>
+                  <ul id="contactSummary"></ul>
+                </article>
+                <article>
+                  <h3>Approver</h3>
+                  <p class="summary-strong">Jamie Lim</p>
+                  <p>Only you can approve important plans.</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="5">
+              <div class="complete-state">
+                <div class="complete-mark" aria-hidden="true">✓</div>
+                <p class="kicker">Setup complete</p>
+                <h2>Your family setup is ready</h2>
+                <p class="lede">
+                  Count Me In can now use this trusted circle when helping Mary
+                  find activities and ask for support in a low-pressure way.
+                </p>
+
+                <div class="next-card">
+                  <strong>Next step</strong>
+                  <p>
+                    Start finding nearby activities, then share the selected plan
+                    with the trusted circle for support.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <footer class="actions">
+              <button class="secondary" type="button" id="backButton">Back</button>
+              <button class="primary" type="button" id="nextButton">
+                Start setup
+              </button>
+            </footer>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  <!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js?token=6fad94ad-c69f-4e5d-8684-2f517851e2e8"></script>
+<!-- impeccable-live-end -->
+</body>
+</html>

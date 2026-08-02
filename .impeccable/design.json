@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-02T00:00:00.000Z",
+  "title": "Design System: Count Me In",
+  "extensions": {
+    "colorMeta": {
+      "green": {
+        "role": "primary",
+        "displayName": "Garden Green",
+        "canonical": "#2f6f4f",
+        "tonalRamp": ["#f4f8f4", "#2f6f4f", "#204d38"]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Quiet Blue",
+        "canonical": "#335c81",
+        "tonalRamp": ["#eef3f8", "#335c81", "#243f5a"]
+      },
+      "coral": {
+        "role": "tertiary",
+        "displayName": "Warm Coral",
+        "canonical": "#c85f4d",
+        "tonalRamp": ["#fff6f3", "#c85f4d", "#8f382a"]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Cream",
+        "canonical": "#fffdf8",
+        "tonalRamp": ["#ffffff", "#fffdf8", "#f5f1e7"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Large orientation statements and the primary sidebar message."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Readable explanations designed to work for both scanning and read-aloud use."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shell-ambient",
+        "value": "0 24px 60px rgba(42, 52, 46, 0.16)",
+        "purpose": "Softly lift the overall setup frame from the page background."
+      },
+      {
+        "name": "avatar-lift",
+        "value": "0 12px 28px rgba(47, 111, 79, 0.22)",
+        "purpose": "Give the central profile avatar a gentle focal lift."
+      }
+    ],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "tablet",
+        "value": "920px"
+      },
+      {
+        "name": "phone",
+        "value": "520px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The clear next action in setup and confirmation flows.",
+      "html": "<button class=\"ds-btn-primary\">Continue</button>",
+      "css": ".ds-btn-primary { min-height: 50px; padding: 0 22px; border: 1px solid #2f6f4f; border-radius: 8px; background: #2f6f4f; color: #fff; font-weight: 900; } .ds-btn-primary:hover { background: #204d38; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A high-contrast, touch-friendly field for practical profile details.",
+      "html": "<input class=\"ds-field\" aria-label=\"Name\" />",
+      "css": ".ds-field { width: 100%; min-height: 52px; padding: 0 14px; border: 1px solid #cfd7ce; border-radius: 8px; background: #fff; color: #17211d; } .ds-field:focus { outline: 3px solid rgba(51, 92, 129, 0.28); outline-offset: 2px; }"
+    },
+    {
+      "name": "Support Circle Visual",
+      "kind": "custom",
+      "description": "Initial-based avatars and orbit rings make trusted support tangible without requiring photography.",
+      "html": "<div class=\"ds-support-circle\"><span class=\"ds-avatar ds-avatar-primary\">ML</span><span class=\"ds-avatar\">J</span><span class=\"ds-avatar\">A</span></div>",
+      "css": ".ds-support-circle { position: relative; display: grid; place-items: center; min-height: 220px; } .ds-avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 999px; background: #335c81; color: #fff; font-weight: 900; } .ds-avatar-primary { width: 94px; height: 94px; background: #c85f4d; box-shadow: 0 12px 28px rgba(47, 111, 79, 0.22); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Gentle Care Companion",
+    "overview": "Count Me In is expressed as a calm, warm setup space for a family member helping an older adult. The current interface uses a deep green progress rail, softly tinted paper-like surfaces, generous copy, and human circular avatars. Its palette, 8px geometry, and Inter type system are incumbent implementation choices and may evolve while warmth, clarity, dignity, and low-pressure support remain stable.",
+    "keyCharacteristics": [
+      "Warm paper surfaces against a calm green anchor.",
+      "Clear step-by-step progression and readable headings.",
+      "Softly lifted cards with restrained borders.",
+      "Human support represented through circles, initials, and orbit motifs."
+    ],
+    "rules": [
+      {
+        "name": "The Low-Pressure Accent Rule",
+        "body": "Accent colors clarify trust, support, or state; they do not create urgency or promotion.",
+        "section": "colors"
+      },
+      {
+        "name": "The Soft Lift Rule",
+        "body": "Use depth for the calm container or meaningful focal point; do not make every card float.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep hierarchy explicit through scale, weight, and one-screen-at-a-time progression.",
+      "Do preserve strong focus states and large touch-friendly controls.",
+      "Do use circles and initials to express people, trust, and support."
+    ],
+    "donts": [
+      "Don't introduce urgency, gamification, or promotional visual language.",
+      "Don't hide approval or sharing boundaries behind decorative UI.",
+      "Don't rely on color alone to communicate progress, permission, or errors."
+    ]
+  }
+}

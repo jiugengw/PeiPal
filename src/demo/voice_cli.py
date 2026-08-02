@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections import deque
 import os
+from pathlib import Path
 import sys
 from threading import Lock
 from typing import Any
@@ -73,7 +74,7 @@ class AudioPlaybackBuffer:
 def get_api_key() -> str | None:
     """Load a local .env file and return the API key without printing it."""
 
-    load_dotenv()
+    load_dotenv(dotenv_path=Path.cwd() / ".env")
     return os.environ.get("OPENAI_API_KEY") or None
 
 

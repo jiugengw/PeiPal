@@ -127,9 +127,9 @@ def _deliver_email(
         "text": body,
         "html": f"<p>{escape(body).replace(chr(10), '<br>')}</p>",
     }
-    reply_to = os.getenv("EMAIL_REPLY_TO")
-    if reply_to:
-        message["reply_to"] = reply_to
+    # reply_to = os.getenv("EMAIL_REPLY_TO")
+    # if reply_to:
+    #     message["reply_to"] = reply_to
     response = resend.Emails.send(message, options={"idempotency_key": idempotency_key})
     return str(response.get("id", "sent"))
 

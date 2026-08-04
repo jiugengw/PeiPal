@@ -4,8 +4,8 @@ Count Me In is a voice-first companion agent that helps older adults find nearby
 ## Local voice demo
 
 The first voice prototype runs locally from the terminal. It uses the computer's
-default microphone and speakers, and it does not save transcripts or perform any
-external actions.
+default microphone and speakers, and it does not save transcripts. Its only
+optional external action is a confirmed email notification through Resend.
 
 ```bash
 python3 -m venv .venv
@@ -22,9 +22,22 @@ To use the same agent and tools as a typed chat instead:
 python -m src.demo.chat_cli
 ```
 
+### Email notifications
+
+The agent can send a simple activity invitation through Resend after showing
+the complete email and receiving explicit confirmation. Copy
+`contacts.example.json` to `contacts.json`, add trusted contacts, then set
+`RESEND_API_KEY` and `EMAIL_FROM` in `.env`. `EMAIL_FROM` must use a domain
+verified in Resend. You may also set `EMAIL_REPLY_TO` if replies should go to a
+different address. The local `contacts.json` file is excluded from Git.
+
+Each selected contact receives a separate email, so recipients never see one
+another's addresses. Emails are notifications only and do not include RSVP
+buttons or booking actions.
+
 The voice and chat commands share the same agent instructions, activity
-recommendation tool, and invitation-draft tool. Only the input/output mode is
-different. Type `/exit` to stop chat mode.
+recommendation tool, and email tools. Only the input/output mode is different.
+Type `/exit` to stop chat mode.
 
 The CLI automatically reads `OPENAI_API_KEY` from `.env`. The file is excluded
 from Git, so keep your real key there and never commit or share it. On macOS,
@@ -42,11 +55,13 @@ the demo.
 5. Answer with a location, timing, activity style, and mobility preference. The
    mock recommender should return three activities and the companion should
    describe them aloud.
-6. Choose one activity and confirm that you want to share it. The companion
-   should create and read a draft support message; it must not send anything.
-7. Start speaking while the companion is replying. Its queued audio should stop
+6. Choose one activity and ask to notify a trusted contact. The companion should
+   read the recipients, subject, and full message, then ask for confirmation.
+7. Confirm the preview and verify that one notification reaches each selected
+   contact. Skip this step if Resend is not configured.
+8. Start speaking while the companion is replying. Its queued audio should stop
    so it can listen to the new turn.
-8. Press `Ctrl+C` and confirm that the process exits cleanly.
+9. Press `Ctrl+C` and confirm that the process exits cleanly.
 
 ### Troubleshooting
 
@@ -63,8 +78,9 @@ the demo.
 
 This release is local-only and has no browser interface. It prints transcripts
 to the terminal for the active session but does not save them. Activity results
-and invitation drafts are mock data for the demo. No message is sent, and the
-prototype cannot contact trusted people, arrange transport, or make bookings.
+are mock data for the demo. Confirmed email notifications can be sent when
+Resend is configured, but the prototype cannot arrange transport, track
+invitation responses, or make bookings.
 
 ### OpenAI documentation used
 

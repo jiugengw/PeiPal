@@ -5,14 +5,24 @@ import { HomePage } from '@/pages/HomePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SetupPage } from '@/pages/SetupPage'
 import { AuthPage } from '@/pages/AuthPage'
+import { RequireAuth } from '@/features/auth/RequireAuth'
 
 export const routes = [
   { path: 'auth', element: <AuthPage /> },
-  { element: <App />, children: [
-  { index: true, element: <HomePage /> },
-  { path: 'setup', element: <SetupPage /> },
-  { path: 'family', element: <FamilyPage /> },
-  { path: '*', element: <NotFoundPage /> },
-]}]
+  {
+    element: <RequireAuth />,
+    children: [
+      {
+        element: <App />,
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'setup', element: <SetupPage /> },
+          { path: 'family', element: <FamilyPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
+    ],
+  },
+]
 
 export const router = createBrowserRouter(routes)

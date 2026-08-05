@@ -1,16 +1,28 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AuthForm } from "@/features/auth/AuthForm";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
 import { TextAnimate } from "@/components/ui/text-animate";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useAuthSession();
 
   useEffect(() => {
-    if (session) void navigate("/setup", { replace: true });
-  }, [navigate, session]);
+    if (!session) return;
+
+    const routeState = location.state as { returnTo?: unknown } | null;
+    const requestedPath = routeState?.returnTo;
+    const destination =
+      typeof requestedPath === "string" &&
+      requestedPath.startsWith("/") &&
+      !requestedPath.startsWith("/auth")
+        ? requestedPath
+        : "/setup";
+
+    void navigate(destination, { replace: true });
+  }, [location.state, navigate, session]);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground">

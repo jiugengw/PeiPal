@@ -91,3 +91,20 @@ def test_parallel_provider_skips_results_without_event_date():
     )
 
     assert provider.search() == []
+
+
+def test_parallel_provider_skips_events_outside_requested_date_range():
+    provider = ParallelActivityProvider(
+        "test-key",
+        start_date="2026-08-05",
+        end_date="2026-09-05",
+        post_json=lambda url, body: {
+            "results": [{
+                "url": "https://example.com/old-event",
+                "title": "Old event",
+                "excerpts": ["09 July 2026, 7PM"],
+            }]
+        },
+    )
+
+    assert provider.search() == []

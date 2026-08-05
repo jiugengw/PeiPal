@@ -97,6 +97,13 @@ class ParallelActivityProvider:
             start_time = _event_time(text)
             if not date or not start_time or not url:
                 continue
+            event_day = datetime.strptime(date, "%d/%m/%Y").date()
+            if not (
+                datetime.fromisoformat(self.start_date).date()
+                <= event_day
+                <= datetime.fromisoformat(self.end_date).date()
+            ):
+                continue
             activities.append({
                 "name": str(page.get("title") or result.get("title") or "Activity").strip(),
                 "description": text[:2_000] or None,

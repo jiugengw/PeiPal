@@ -1,4 +1,4 @@
-from src.services.activity_search.ingestion import normalize_activity
+from src.services.activity_search.ingestion import ParallelActivityProvider, normalize_activity
 
 
 def test_normalize_activity_builds_singapore_timestamp_and_dedupe_key():
@@ -23,3 +23,59 @@ def test_normalize_activity_rejects_missing_required_fields():
         assert "location" in str(error)
     else:
         raise AssertionError("Expected missing activity field error")
+
+
+def test_parallel_provider_searches_and_extracts_event_pages():
+    calls = []
+
+    def fake_post(url, body):
+        calls.append((url, body))
+        if url.endswith("/search"):
+            return {
+                "results": [{
+                    "url": "https://example.com/activity",
+                    "title": "Bishan Conversation Circle",
+                    "excerpts": ["12 August 2026, 10:00 AM at Bishan Community Club"],
+                }]
+            }
+        return {
+            "results": [{
+                "url": "https://example.com/activity",
+                "title": "Bishan Conversation Circle",
+                "excerpts": [
+                    "Date: 12 August 2026\nTime: 10:00 AM\n"
+                    "Venue: Bishan Community Club\nFree"
+                ],
+            }]
+        }
+
+    provider = ParallelActivityProvider(
+        "test-key",
+        area="Bishan",
+        start_date="2026-08-05",
+        end_date="2026-09-05",
+        post_json=fake_post,
+    )
+
+    activities = provider.search()
+
+    assert len(activities) == 1
+    assert activities[0]["date"] == "12/08/2026"
+    assert activities[0]["start_time"] == "10:00 AM"
+    assert activities[0]["location"] == "Bishan Community Club"
+    assert len(calls) == 2
+    assert calls[0][0].endswith("/search")
+    assert calls[1][0].endswith("/extract")
+
+
+def test_parallel_provider_skips_results_without_event_date():
+    provider = ParallelActivityProvider(
+        "test-key",
+        start_date="2026-08-05",
+        end_date="2026-09-05",
+        post_json=lambda url, body: {
+            "results": [{"url": "https://example.com", "title": "No date"}]
+        },
+    )
+
+    assert provider.search() == []

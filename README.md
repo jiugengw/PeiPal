@@ -61,6 +61,21 @@ The static website requests saved activities from `/api/activities` when the
 backend is running. If the API is unavailable, it keeps the demo activities so
 the prototype remains usable offline.
 
+### React frontend
+
+The production frontend foundation lives in `frontend/` and uses React,
+TypeScript, Vite, React Router, Tailwind CSS, Vitest, and Testing Library.
+
+```powershell
+cd frontend
+npm.cmd install
+npm.cmd run dev
+```
+
+During development, Vite proxies `/api` and `/health` to the FastAPI server at
+`http://127.0.0.1:8000`. Copy `.env.example` to `.env` only when you need to
+override that API URL or add future public Supabase browser credentials.
+
 ### Refreshing activities with Parallel
 
 The backend can use Parallel Search and Extract to discover current activities

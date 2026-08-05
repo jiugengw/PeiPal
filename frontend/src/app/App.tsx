@@ -26,7 +26,6 @@ export function App() {
         </nav>
       </header>
       <main className={styles.main} id="main-content"><Outlet /></main>
-      <footer className={styles.footer}>Plans stay private until the older adult chooses to share them.</footer>
     </div>
   )
 }

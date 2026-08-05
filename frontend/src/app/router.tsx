@@ -1,28 +1,14 @@
-import { createBrowserRouter } from 'react-router-dom'
-import { App } from '@/app/App'
-import { FamilyPage } from '@/pages/FamilyPage'
-import { HomePage } from '@/pages/HomePage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { SetupPage } from '@/pages/SetupPage'
-import { AuthPage } from '@/pages/AuthPage'
-import { RequireAuth } from '@/features/auth/RequireAuth'
+import { createRouter } from '@tanstack/react-router'
+import { routeTree } from '@/routeTree.gen'
 
-export const routes = [
-  { path: 'auth', element: <AuthPage /> },
-  {
-    element: <RequireAuth />,
-    children: [
-      {
-        element: <App />,
-        children: [
-          { index: true, element: <HomePage /> },
-          { path: 'setup', element: <SetupPage /> },
-          { path: 'family', element: <FamilyPage /> },
-          { path: '*', element: <NotFoundPage /> },
-        ],
-      },
-    ],
-  },
-]
+export const router = createRouter({
+  routeTree,
+  context: { auth: undefined! },
+  defaultPreload: 'intent',
+})
 
-export const router = createBrowserRouter(routes)
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}

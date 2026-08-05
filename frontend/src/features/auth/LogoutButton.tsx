@@ -1,12 +1,18 @@
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import { signOut } from '@/features/auth/signOut'
 
 export function LogoutButton() {
   const navigate = useNavigate()
   const mutation = useMutation({
     mutationFn: signOut,
-    onSuccess: () => { void navigate('/auth', { replace: true }) },
+    onSuccess: () => {
+      void navigate({
+        to: '/auth',
+        search: { redirect: undefined },
+        replace: true,
+      })
+    },
   })
 
   return (

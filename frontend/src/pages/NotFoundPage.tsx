@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { PageIntro } from "@/components/PageIntro";
 export function NotFoundPage() {
   return (

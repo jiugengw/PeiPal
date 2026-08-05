@@ -1,28 +1,30 @@
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { AuthForm } from "@/features/auth/AuthForm";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
 import { TextAnimate } from "@/components/ui/text-animate";
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const search = useSearch({ from: "/auth" });
   const { session } = useAuthSession();
 
   useEffect(() => {
     if (!session) return;
 
-    const routeState = location.state as { returnTo?: unknown } | null;
-    const requestedPath = routeState?.returnTo;
-    const destination =
+    const requestedPath = search.redirect;
+    if (
       typeof requestedPath === "string" &&
       requestedPath.startsWith("/") &&
       !requestedPath.startsWith("/auth")
-        ? requestedPath
-        : "/setup";
+    ) {
+      router.history.replace(requestedPath);
+      return;
+    }
 
-    void navigate(destination, { replace: true });
-  }, [location.state, navigate, session]);
+    void navigate({ to: "/setup", replace: true });
+  }, [navigate, router.history, search.redirect, session]);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground">

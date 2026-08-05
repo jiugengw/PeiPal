@@ -11,4 +11,9 @@ describe('application routes', () => {
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/missing'] })} />)
     expect(screen.getByRole('heading', { name: /we could not find that page/i })).toBeVisible()
   })
+  it('renders authentication outside the main app shell', () => {
+    render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/auth'] })} />)
+    expect(screen.getByRole('heading', { name: /welcome back/i })).toBeVisible()
+    expect(screen.queryByRole('navigation', { name: /primary navigation/i })).not.toBeInTheDocument()
+  })
 })

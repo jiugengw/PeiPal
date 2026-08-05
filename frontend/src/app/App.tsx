@@ -5,6 +5,7 @@ const navigation = [
   { to: '/', label: 'Discover' },
   { to: '/setup', label: 'Setup' },
   { to: '/family', label: 'Family view' },
+  { to: '/auth', label: 'Log in' },
 ]
 
 export function App() {

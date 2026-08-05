@@ -68,6 +68,15 @@ def main() -> int:
         )
         raw_activities = provider.search()
         print(f"[activity search] Found {len(raw_activities)} activities with usable dates")
+        if hasattr(provider, "last_stats"):
+            stats = provider.last_stats
+            print(
+                "[activity search] Diagnostics: "
+                f"search_results={stats['search_results']}; "
+                f"pages_extracted={stats['pages_extracted']}; "
+                f"missing_date_or_time={stats['skipped_missing_date_or_time']}; "
+                f"outside_date_range={stats['skipped_outside_date_range']}"
+            )
         normalized = [normalize_activity(activity) for activity in raw_activities]
         saved = repository.upsert_activities(normalized)
         expired = repository.expire_past_activities()

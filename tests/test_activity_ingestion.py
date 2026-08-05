@@ -108,3 +108,25 @@ def test_parallel_provider_skips_events_outside_requested_date_range():
     )
 
     assert provider.search() == []
+
+
+def test_parallel_provider_reads_full_content_and_iso_dates():
+    def fake_post(url, body):
+        if url.endswith("/search"):
+            return {"results": [{"url": "https://example.com/event", "title": "Event"}]}
+        return {
+            "results": [{
+                "url": "https://example.com/event",
+                "full_content": "Date: 2026-08-12. Time: 9:00 AM. Venue: Bishan Hall.",
+            }]
+        }
+
+    provider = ParallelActivityProvider(
+        "test-key",
+        start_date="2026-08-05",
+        end_date="2026-09-05",
+        post_json=fake_post,
+    )
+
+    assert len(provider.search()) == 1
+    assert provider.last_stats["pages_extracted"] == 1

@@ -48,6 +48,7 @@ class ParallelActivityProvider:
         self.mobility = mobility
         self.max_results = max_results
         self._post_json = post_json or self._request_json
+        self.last_stats: dict[str, int] = {}
 
     def search(self) -> list[dict[str, Any]]:
         objective = (
@@ -68,6 +69,12 @@ class ParallelActivityProvider:
             {"objective": objective, "search_queries": queries},
         )
         results = (search_response.get("results") or [])[: self.max_results]
+        self.last_stats = {
+            "search_results": len(results),
+            "pages_extracted": 0,
+            "skipped_missing_date_or_time": 0,
+            "skipped_outside_date_range": 0,
+        }
         urls = [result.get("url") for result in results if result.get("url")]
         extracted_by_url: dict[str, dict[str, Any]] = {}
         if urls:
@@ -80,8 +87,12 @@ class ParallelActivityProvider:
                         "accessibility details, registration URL, and a short description. "
                         "Only use facts stated on the page."
                     ),
+                    "advanced_settings": {
+                        "full_content": {"max_chars_per_result": 12_000},
+                    },
                 },
             )
+            self.last_stats["pages_extracted"] = len(extract_response.get("results") or [])
             extracted_by_url = {
                 item["url"]: item
                 for item in (extract_response.get("results") or [])
@@ -92,10 +103,14 @@ class ParallelActivityProvider:
         for result in results:
             url = str(result.get("url") or "").strip()
             page = extracted_by_url.get(url, {})
-            text = "\n".join(page.get("excerpts") or result.get("excerpts") or [])
+            text = "\n".join(
+                page.get("excerpts") or result.get("excerpts") or []
+            )
+            text = f"{text}\n{page.get('full_content') or ''}"
             date = _event_date(text)
             start_time = _event_time(text)
             if not date or not start_time or not url:
+                self.last_stats["skipped_missing_date_or_time"] += 1
                 continue
             event_day = datetime.strptime(date, "%d/%m/%Y").date()
             if not (
@@ -103,6 +118,7 @@ class ParallelActivityProvider:
                 <= event_day
                 <= datetime.fromisoformat(self.end_date).date()
             ):
+                self.last_stats["skipped_outside_date_range"] += 1
                 continue
             activities.append({
                 "name": str(page.get("title") or result.get("title") or "Activity").strip(),
@@ -138,6 +154,8 @@ class ParallelActivityProvider:
 def _event_date(text: str) -> str | None:
     patterns = (
         (r"\b(\d{1,2})[ /-](\d{1,2})[ /-](\d{4})\b", "%d/%m/%Y"),
+        (r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b", "%Y-%m-%d"),
+        (r"\b(\d{4})/(\d{1,2})/(\d{1,2})\b", "%Y/%m/%d"),
         (r"\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b", "%d %B %Y"),
         (r"\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b", "%d %b %Y"),
         (r"\b([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})\b", "%B %d, %Y"),

@@ -52,6 +52,7 @@ Do not create empty folders for symmetry. Add a folder when real code needs it.
 5. Put external boundaries in `services/`. Generic HTTP behavior belongs in `services/api/`; feature-specific requests belong in `features/<feature>/api/` once that feature grows.
 6. Prefer colocated tests, for example `ActivityCard.test.tsx` beside `ActivityCard.tsx`.
 7. Avoid catch-all files or folders named `helpers`, `common`, or `misc`. Choose a specific owner.
+8. Split into smaller logical components as much as possible. Each component should ideally be in its own file.
 
 There is intentionally no `shared/` folder. Use the top-level `components`, `hooks`, `lib`, `types`, and `utils` folders when code is genuinely cross-feature.
 

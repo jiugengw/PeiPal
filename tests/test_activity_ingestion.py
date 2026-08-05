@@ -130,3 +130,27 @@ def test_parallel_provider_reads_full_content_and_iso_dates():
 
     assert len(provider.search()) == 1
     assert provider.last_stats["pages_extracted"] == 1
+
+
+def test_parallel_provider_accepts_date_ranges_and_compact_times():
+    def fake_post(url, body):
+        if url.endswith("/search"):
+            return {"results": [{"url": "https://example.com/range", "title": "Range event"}]}
+        return {
+            "results": [{
+                "url": "https://example.com/range",
+                "full_content": "Runs 5 Aug – 30 Sep 2026. Every session starts at 10.00 a.m.",
+            }]
+        }
+
+    provider = ParallelActivityProvider(
+        "test-key",
+        start_date="2026-08-05",
+        end_date="2026-09-05",
+        post_json=fake_post,
+    )
+
+    activities = provider.search()
+
+    assert activities[0]["date"] == "05/08/2026"
+    assert activities[0]["start_time"] == "10:00 AM"

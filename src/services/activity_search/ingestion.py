@@ -49,6 +49,7 @@ class ParallelActivityProvider:
         self.max_results = max_results
         self._post_json = post_json or self._request_json
         self.last_stats: dict[str, int] = {}
+        self.skip_examples: list[str] = []
 
     def search(self) -> list[dict[str, Any]]:
         objective = (
@@ -75,6 +76,7 @@ class ParallelActivityProvider:
             "skipped_missing_date_or_time": 0,
             "skipped_outside_date_range": 0,
         }
+        self.skip_examples = []
         urls = [result.get("url") for result in results if result.get("url")]
         extracted_by_url: dict[str, dict[str, Any]] = {}
         if urls:
@@ -107,18 +109,14 @@ class ParallelActivityProvider:
                 page.get("excerpts") or result.get("excerpts") or []
             )
             text = f"{text}\n{page.get('full_content') or ''}"
-            date = _event_date(text)
+            date = _event_date_in_range(text, self.start_date, self.end_date)
             start_time = _event_time(text)
             if not date or not start_time or not url:
                 self.last_stats["skipped_missing_date_or_time"] += 1
-                continue
-            event_day = datetime.strptime(date, "%d/%m/%Y").date()
-            if not (
-                datetime.fromisoformat(self.start_date).date()
-                <= event_day
-                <= datetime.fromisoformat(self.end_date).date()
-            ):
-                self.last_stats["skipped_outside_date_range"] += 1
+                if len(self.skip_examples) < 5:
+                    self.skip_examples.append(
+                        f"missing date/time: {result.get('title') or url}"
+                    )
                 continue
             activities.append({
                 "name": str(page.get("title") or result.get("title") or "Activity").strip(),
@@ -171,12 +169,65 @@ def _event_date(text: str) -> str | None:
     return None
 
 
+def _event_date_in_range(text: str, start_date: str, end_date: str) -> str | None:
+    start_day = datetime.fromisoformat(start_date).date()
+    end_day = datetime.fromisoformat(end_date).date()
+    candidates: list[str] = []
+
+    # Handle ranges such as “5 Aug – 30 Sep 2026” by considering both ends.
+    range_pattern = (
+        r"\b(\d{1,2})\s+([A-Za-z]+)\s*(?:-|–|to)\s*"
+        r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b"
+    )
+    for match in re.finditer(range_pattern, text, flags=re.IGNORECASE):
+        for day, month in ((match.group(1), match.group(2)), (match.group(3), match.group(4))):
+            for month_format in ("%d %B %Y", "%d %b %Y"):
+                try:
+                    candidates.append(
+                        datetime.strptime(
+                            f"{day} {month} {match.group(5)}", month_format
+                        ).strftime("%d/%m/%Y")
+                    )
+                    break
+                except ValueError:
+                    continue
+
+    # Collect all explicit dates instead of trusting only the first date on a page.
+    date_patterns = (
+        (r"\b\d{1,2}[ /-]\d{1,2}[ /-]\d{4}\b", "%d/%m/%Y"),
+        (r"\b\d{4}-\d{1,2}-\d{1,2}\b", "%Y-%m-%d"),
+        (r"\b\d{4}/\d{1,2}/\d{1,2}\b", "%Y/%m/%d"),
+        (r"\b\d{1,2}\s+[A-Za-z]+\s+\d{4}\b", "%d %B %Y"),
+        (r"\b\d{1,2}\s+[A-Za-z]+\s+\d{4}\b", "%d %b %Y"),
+        (r"\b[A-Za-z]+\s+\d{1,2},\s+\d{4}\b", "%B %d, %Y"),
+        (r"\b[A-Za-z]+\s+\d{1,2},\s+\d{4}\b", "%b %d, %Y"),
+    )
+    for pattern, date_format in date_patterns:
+        for match in re.finditer(pattern, text, flags=re.IGNORECASE):
+            try:
+                candidates.append(
+                    datetime.strptime(match.group(0), date_format).strftime("%d/%m/%Y")
+                )
+            except ValueError:
+                continue
+
+    for candidate in candidates:
+        event_day = datetime.strptime(candidate, "%d/%m/%Y").date()
+        if start_day <= event_day <= end_day:
+            return candidate
+    return None
+
+
 def _event_time(text: str) -> str | None:
-    match = re.search(r"\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b", text, flags=re.IGNORECASE)
+    match = re.search(
+        r"\b(\d{1,2})(?:(?::|\.)(\d{2}))?\s*([ap])\.?m\.?\b",
+        text,
+        flags=re.IGNORECASE,
+    )
     if not match:
         return None
-    value = match.group(1).upper().replace(" ", " ")
-    return value if ":" in value else value.replace(" AM", ":00 AM").replace(" PM", ":00 PM")
+    minutes = match.group(2) or "00"
+    return f"{match.group(1)}:{minutes} {match.group(3).upper()}M"
 
 
 def _event_location(text: str, fallback: str) -> str:

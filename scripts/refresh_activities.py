@@ -77,6 +77,8 @@ def main() -> int:
                 f"missing_date_or_time={stats['skipped_missing_date_or_time']}; "
                 f"outside_date_range={stats['skipped_outside_date_range']}"
             )
+            for example in getattr(provider, "skip_examples", []):
+                print(f"[activity search] Skipped {example}")
         normalized = [normalize_activity(activity) for activity in raw_activities]
         saved = repository.upsert_activities(normalized)
         expired = repository.expire_past_activities()

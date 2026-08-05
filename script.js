@@ -13,6 +13,7 @@ const contactError = document.querySelector("#contactError");
 const profileSummary = document.querySelector("#profileSummary");
 const contactSummary = document.querySelector("#contactSummary");
 const addContactButton = document.querySelector("#addContact");
+const API_BASE_URL = window.COUNT_ME_IN_API_URL || "http://127.0.0.1:8000";
 
 const roleOptions = [
   "Join activities",
@@ -21,7 +22,7 @@ const roleOptions = [
   "Help with booking",
 ];
 
-const activities = [
+let activities = [
   {
     id: "library-craft",
     title: "Quiet craft session",
@@ -53,6 +54,42 @@ const activities = [
     tags: ["Outdoors", "Benches"],
   },
 ];
+
+function activityFromApi(row) {
+  const start = row.start_at ? new Date(row.start_at) : null;
+  const timing = start && !Number.isNaN(start.valueOf())
+    ? start.toLocaleString([], { weekday: "long", hour: "numeric", minute: "2-digit" })
+    : "Date to be confirmed";
+  const cost = row.cost == null ? "Price to be confirmed" : row.cost === 0 ? "Free" : `$${row.cost}`;
+
+  return {
+    id: row.dedupe_key || String(row.id),
+    title: row.name,
+    venue: row.location,
+    timing,
+    distance: "",
+    cost,
+    detail: row.description || "Details are available on the event page.",
+    tags: row.tags?.length ? row.tags : [row.intensity || "Activity"],
+    infoLink: row.info_link,
+  };
+}
+
+async function loadActivitiesFromApi() {
+  const area = encodeURIComponent(fieldValue("homeArea") || "");
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/activities?location=${area}&limit=10`);
+    if (!response.ok) {
+      throw new Error(`Activity API returned ${response.status}`);
+    }
+    const payload = await response.json();
+    if (Array.isArray(payload.activities) && payload.activities.length) {
+      activities = payload.activities.map(activityFromApi);
+    }
+  } catch (error) {
+    console.warn("Using demo activities because the backend is unavailable.", error);
+  }
+}
 
 let currentScreen = 0;
 let contacts = [
@@ -501,6 +538,7 @@ function showHome() {
   homePanel.hidden = false;
   renderHome();
   homePanel.querySelector("button, input")?.focus();
+  loadActivitiesFromApi().then(renderHome);
 }
 
 function selectActivity(id) {

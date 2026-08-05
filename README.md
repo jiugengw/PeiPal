@@ -57,6 +57,10 @@ credentials are loaded from `.env`; keep `SUPABASE_SERVICE_ROLE_KEY` on the
 server only. Set `CORS_ORIGINS` to the deployed website origin before hosting
 the API.
 
+The static website requests saved activities from `/api/activities` when the
+backend is running. If the API is unavailable, it keeps the demo activities so
+the prototype remains usable offline.
+
 ### Manual acceptance guide
 
 1. Activate the virtual environment and set `OPENAI_API_KEY` as shown above.

@@ -6,7 +6,10 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
+import re
 from typing import Any, Protocol
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 
@@ -15,6 +18,152 @@ SINGAPORE = ZoneInfo("Asia/Singapore")
 
 class ActivityProvider(Protocol):
     def search(self) -> list[dict[str, Any]]: ...
+
+
+class ParallelActivityProvider:
+    """Discover and extract activities through Parallel's Search and Extract APIs."""
+
+    search_url = "https://api.parallel.ai/v1/search"
+    extract_url = "https://api.parallel.ai/v1/extract"
+
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        area: str = "Singapore",
+        start_date: str,
+        end_date: str,
+        timing: str = "morning",
+        preference: str = "social activities and talks",
+        mobility: str = "gentle, no steps",
+        max_results: int = 10,
+        post_json: Any | None = None,
+    ) -> None:
+        self.api_key = api_key
+        self.area = area
+        self.start_date = start_date
+        self.end_date = end_date
+        self.timing = timing
+        self.preference = preference
+        self.mobility = mobility
+        self.max_results = max_results
+        self._post_json = post_json or self._request_json
+
+    def search(self) -> list[dict[str, Any]]:
+        objective = (
+            f"Find current in-person activities in {self.area}, Singapore, between "
+            f"{self.start_date} and {self.end_date}. Prioritize {self.timing} activities "
+            f"for older adults interested in {self.preference}, suitable for mobility "
+            f"needs described as {self.mobility}. Prefer official organizer, community "
+            "centre, library, government, museum, or venue pages. Return only events "
+            "with a clearly stated upcoming date."
+        )
+        queries = [
+            f"{self.area} Singapore elderly activities {self.start_date}",
+            f"Singapore community centre {self.preference} {self.start_date}",
+            f"Singapore senior morning activities {self.end_date}",
+        ]
+        search_response = self._post_json(
+            self.search_url,
+            {"objective": objective, "search_queries": queries},
+        )
+        results = (search_response.get("results") or [])[: self.max_results]
+        urls = [result.get("url") for result in results if result.get("url")]
+        extracted_by_url: dict[str, dict[str, Any]] = {}
+        if urls:
+            extract_response = self._post_json(
+                self.extract_url,
+                {
+                    "urls": urls,
+                    "objective": (
+                        "Extract the exact event date, start time, venue, location, cost, "
+                        "accessibility details, registration URL, and a short description. "
+                        "Only use facts stated on the page."
+                    ),
+                },
+            )
+            extracted_by_url = {
+                item["url"]: item
+                for item in (extract_response.get("results") or [])
+                if item.get("url")
+            }
+
+        activities: list[dict[str, Any]] = []
+        for result in results:
+            url = str(result.get("url") or "").strip()
+            page = extracted_by_url.get(url, {})
+            text = "\n".join(page.get("excerpts") or result.get("excerpts") or [])
+            date = _event_date(text)
+            start_time = _event_time(text)
+            if not date or not start_time or not url:
+                continue
+            activities.append({
+                "name": str(page.get("title") or result.get("title") or "Activity").strip(),
+                "description": text[:2_000] or None,
+                "location": _event_location(text, self.area),
+                "date": date,
+                "start_time": start_time,
+                "cost": _event_cost(text),
+                "info_link": url,
+                "signup_link": url,
+                "mobility_notes": self.mobility,
+                "tags": ["parallel", self.preference],
+            })
+        return activities
+
+    def _request_json(self, url: str, body: dict[str, Any]) -> dict[str, Any]:
+        request = Request(
+            url,
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": self.api_key,
+            },
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=45) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (HTTPError, URLError, TimeoutError) as error:
+            raise RuntimeError(f"Parallel request failed: {error}") from error
+
+
+def _event_date(text: str) -> str | None:
+    patterns = (
+        (r"\b(\d{1,2})[ /-](\d{1,2})[ /-](\d{4})\b", "%d/%m/%Y"),
+        (r"\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b", "%d %B %Y"),
+        (r"\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b", "%d %b %Y"),
+        (r"\b([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})\b", "%B %d, %Y"),
+        (r"\b([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})\b", "%b %d, %Y"),
+    )
+    for pattern, input_format in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            try:
+                return datetime.strptime(match.group(0), input_format).strftime("%d/%m/%Y")
+            except ValueError:
+                continue
+    return None
+
+
+def _event_time(text: str) -> str | None:
+    match = re.search(r"\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b", text, flags=re.IGNORECASE)
+    if not match:
+        return None
+    value = match.group(1).upper().replace(" ", " ")
+    return value if ":" in value else value.replace(" AM", ":00 AM").replace(" PM", ":00 PM")
+
+
+def _event_location(text: str, fallback: str) -> str:
+    for line in text.splitlines():
+        if re.search(r"\b(venue|location|address):", line, flags=re.IGNORECASE):
+            return re.sub(r"^.*?:\s*", "", line).strip() or fallback
+    return fallback
+
+
+def _event_cost(text: str) -> str | None:
+    match = re.search(r"(?:ฟรี|free|\$\s*\d+(?:\.\d{1,2})?|sgd\s*\d+(?:\.\d{1,2})?)", text, flags=re.IGNORECASE)
+    return match.group(0) if match else None
 
 
 def _cost(value: Any) -> float | None:

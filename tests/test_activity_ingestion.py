@@ -16,6 +16,18 @@ def test_normalize_activity_builds_singapore_timestamp_and_dedupe_key():
     assert result["dedupe_key"].startswith("https://example.com/gentle-walk|")
 
 
+def test_normalize_activity_accepts_time_without_minutes():
+    result = normalize_activity({
+        "name": "Evening Talk",
+        "location": "Bishan Community Club",
+        "date": "09/07/2026",
+        "start_time": "7PM",
+        "info_link": "https://example.com/evening-talk",
+    })
+
+    assert result["start_at"] == "2026-07-09T19:00:00+08:00"
+
+
 def test_normalize_activity_rejects_missing_required_fields():
     try:
         normalize_activity({"name": "Incomplete"})

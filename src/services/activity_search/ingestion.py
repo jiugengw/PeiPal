@@ -181,9 +181,7 @@ def normalize_activity(raw: dict[str, Any]) -> dict[str, Any]:
     if missing:
         raise ValueError(f"Activity is missing required fields: {', '.join(missing)}")
 
-    start = datetime.strptime(
-        f"{raw['date']} {raw['start_time']}", "%d/%m/%Y %I:%M %p"
-    ).replace(tzinfo=SINGAPORE)
+    start = _parse_start(raw["date"], raw["start_time"])
     info_link = str(raw["info_link"]).strip()
     dedupe_key = str(raw.get("dedupe_key") or f"{info_link}|{start.isoformat()}")
     content_hash = hashlib.sha256(
@@ -228,3 +226,15 @@ class JsonFileProvider:
         if not isinstance(activities, list):
             raise ValueError("Activity input must be a JSON list or an activities object.")
         return activities
+
+
+def _parse_start(event_date: Any, event_time: Any) -> datetime:
+    value = f"{event_date} {event_time}".strip()
+    for time_format in ("%d/%m/%Y %I:%M %p", "%d/%m/%Y %I%p"):
+        try:
+            return datetime.strptime(value, time_format).replace(tzinfo=SINGAPORE)
+        except ValueError:
+            continue
+    raise ValueError(
+        f"Unsupported activity date/time '{value}'. Expected DD/MM/YYYY HH:MM AM/PM."
+    )

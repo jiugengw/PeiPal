@@ -1,7 +1,34 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthForm } from "@/features/auth/AuthForm";
+import { getSupabaseClient } from "@/lib/supabase";
+import { environment } from "@/services/environment";
 
 export function AuthPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!environment.supabase) return;
+
+    let isActive = true;
+    let unsubscribe: (() => void) | undefined;
+
+    void getSupabaseClient().then((supabase) => {
+      if (!isActive) return;
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session && (event === "INITIAL_SESSION" || event === "SIGNED_IN")) {
+          void navigate("/setup", { replace: true });
+        }
+      });
+      unsubscribe = () => data.subscription.unsubscribe();
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe?.();
+    };
+  }, [navigate]);
+
   return (
     <div className="mx-auto min-h-screen w-full overflow-hidden bg-background text-foreground sm:my-4 sm:min-h-[calc(100vh-2rem)] sm:w-[min(1160px,calc(100%-2rem))] sm:rounded-2xl sm:border sm:border-border sm:shadow-[0_20px_60px_rgb(37_44_64_/_0.10)]">
       <a

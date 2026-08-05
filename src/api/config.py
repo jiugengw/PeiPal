@@ -24,3 +24,8 @@ def supabase_service_key() -> str:
     if not value:
         raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is not configured.")
     return value
+
+
+def cors_origins() -> list[str]:
+    value = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:5500")
+    return [origin.strip() for origin in value.split(",") if origin.strip()]

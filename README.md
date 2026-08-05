@@ -54,7 +54,8 @@ uvicorn src.api.main:app --reload
 
 The health check is available at `http://127.0.0.1:8000/health`. Supabase
 credentials are loaded from `.env`; keep `SUPABASE_SERVICE_ROLE_KEY` on the
-server only.
+server only. Set `CORS_ORIGINS` to the deployed website origin before hosting
+the API.
 
 ### Manual acceptance guide
 

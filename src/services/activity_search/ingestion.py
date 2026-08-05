@@ -1,4 +1,4 @@
-"""Normalize activity-search output before it reaches PostgreSQL."""
+"""Normalize activity search output before it reaches PostgreSQL."""
 
 from __future__ import annotations
 

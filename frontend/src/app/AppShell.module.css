@@ -1,0 +1,19 @@
+.shell { width: min(1200px, calc(100% - 32px)); min-height: calc(100vh - 32px); margin: 16px auto; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--background); box-shadow: 0 20px 60px rgb(37 44 64 / 10%); }
+.skipLink { position: fixed; top: -80px; left: 20px; z-index: 20; padding: 12px 16px; border-radius: 12px; color: var(--foreground); background: var(--background); }
+.skipLink:focus { top: 16px; }
+.header { display: flex; min-height: 82px; align-items: center; justify-content: space-between; gap: 24px; padding: 14px clamp(20px, 4vw, 48px); border-bottom: 1px solid var(--border); }
+.brand { display: inline-flex; align-items: center; gap: 12px; color: var(--foreground); font-size: 1.1rem; font-weight: 800; text-decoration: none; }
+.brandMark { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 12px; color: var(--primary-foreground); background: var(--primary); }
+.navigation { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.navLink { display: inline-flex; min-height: 48px; align-items: center; padding: 0 15px; border-radius: 12px; color: var(--foreground); font-weight: 700; text-decoration: none; }
+.navLink:hover { background: var(--muted); }
+.navLinkActive { color: var(--secondary-foreground); background: var(--secondary); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.main { min-height: 620px; }
+.footer { padding: 22px clamp(20px, 4vw, 48px); border-top: 1px solid var(--border); color: var(--foreground); background: var(--background); font-size: 0.95rem; }
+
+@media (max-width: 700px) {
+  .shell { width: 100%; min-height: 100vh; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+  .header { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .navigation { width: 100%; overflow-x: auto; }
+  .navLink { white-space: nowrap; }
+}

@@ -12,20 +12,20 @@ const navigation = [
 export function App() {
   const { session, isLoading } = useAuthSession()
   return (
-    <div className={styles.shell}>
-      <a className={styles.skipLink} href="#main-content">Skip to main content</a>
-      <header className={styles.header}>
-        <NavLink className={styles.brand} to="/" aria-label="Count Me In home">
-          <span className={styles.brandMark} aria-hidden="true">CM</span><span>Count Me In</span>
+    <div className={styles.clnShell}>
+      <a className={styles.clnSkipLink} href="#main-content">Skip to main content</a>
+      <header className={styles.clnHeader}>
+        <NavLink className={styles.clnBrand} to="/" aria-label="Count Me In home">
+          <span className={styles.clnBrandMark} aria-hidden="true">CM</span><span>Count Me In</span>
         </NavLink>
         <nav aria-label="Primary navigation">
-          <ul className={styles.navigation}>
-            {navigation.map((item) => <li key={item.to}><NavLink className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`} end={item.to === '/'} to={item.to}>{item.label}</NavLink></li>)}
-            {!isLoading ? <li>{session ? <LogoutButton /> : <NavLink className={styles.navLink} to="/auth">Log in</NavLink>}</li> : null}
+          <ul className={styles.clnNavigation}>
+            {navigation.map((item) => <li key={item.to}><NavLink className={({ isActive }) => `${styles.clnNavLink} ${isActive ? styles.clnNavLinkActive : ''}`} end={item.to === '/'} to={item.to}>{item.label}</NavLink></li>)}
+            {!isLoading ? <li>{session ? <LogoutButton /> : <NavLink className={styles.clnNavLink} to="/auth">Log in</NavLink>}</li> : null}
           </ul>
         </nav>
       </header>
-      <main className={styles.main} id="main-content"><Outlet /></main>
+      <main className={styles.clnMain} id="main-content"><Outlet /></main>
     </div>
   )
 }

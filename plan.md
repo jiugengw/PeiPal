@@ -132,9 +132,9 @@ Suggested folder ownership:
 
 - `src/agents/`: LLM orchestration and conversation state
 - `src/prompts/`: System prompts, guardrails, and reusable conversation flows
-- `src/services/activity-search/`: Google Places, web search, and event lookup adapters
+- `src/services/activity_search/`: Google Places, web search, and event lookup adapters
 - `src/services/notifications/`: WhatsApp links, SMS drafts, Twilio integration later
-- `src/services/trusted-circle/`: Contact management and support response handling
+- `src/services/trusted_circle/`: Contact management and support response handling
 - `src/models/`: Shared user, contact, activity, and support-action types
 - `src/demo/`: Hackathon mock data and scripted demo flows
 

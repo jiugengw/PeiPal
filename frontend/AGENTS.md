@@ -32,7 +32,6 @@ src/
 |-- features/     # Business capabilities grouped by product domain
 |-- hooks/        # Hooks genuinely reused across multiple features
 |-- lib/          # Foundational helpers and configured third-party libraries
-|-- pages/        # Route-level components
 |-- routes/       # TanStack file routes and route-level guards
 |-- services/     # API client, environment, Supabase, and browser integrations
 |-- styles/       # Global CSS, design tokens, and themes
@@ -49,9 +48,9 @@ Do not create empty folders for symmetry. Add a folder when real code needs it.
 ### Placement Rules
 
 1. Put code tied to one business capability in `features/<feature>/`.
-2. Put components connected directly to routes in `pages/`. Keep pages thin: they should compose features and handle route-level state.
-3. Put reusable visual components in `components/`. Do not move a component there until it is useful outside its original feature.
-4. Put global application wiring in `app/`, not in a feature or page.
+2. Put route-specific screens directly in their owning files under `routes/`. Creating a route file should create the route without a parallel `pages/` file.
+3. Put reusable visual components in `components/`. Do not move a component there until it is useful outside its original route or feature.
+4. Put global application wiring in `app/`, not in a feature or route.
 5. Put external boundaries in `services/`. Generic HTTP behavior belongs in `services/api/`; feature-specific requests belong in `features/<feature>/api/` once that feature grows.
 6. Prefer colocated tests, for example `ActivityCard.test.tsx` beside `ActivityCard.tsx`.
 7. Avoid catch-all files or folders named `helpers`, `common`, or `misc`. Choose a specific owner.
@@ -61,9 +60,8 @@ There is intentionally no `shared/` folder. Use the top-level `components`, `hoo
 
 ## Routing
 
-Routes use TanStack Router's file-based routing. Add route definitions under `src/routes/`; the Vite plugin generates `src/routeTree.gen.ts`. Keep route files thin by composing route-level components from `src/pages/`. The shared shell renders child pages through an `Outlet`.
+Routes use TanStack Router's file-based routing. Add route definitions and route-specific screen UI under `src/routes/`; the Vite plugin generates `src/routeTree.gen.ts`. The shared shell renders child routes through an `Outlet`.
 
-- Add route-level components to `src/pages/`.
 - Add or change URLs through files in `src/routes/`; never edit `src/routeTree.gen.ts` manually.
 - Use `Link` or `NavLink` for internal navigation instead of plain anchors.
 - Preserve the fallback route and provide a clear way back to a known page.

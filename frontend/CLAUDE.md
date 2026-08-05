@@ -11,7 +11,8 @@ The frontend is the browser interface for Count Me In, a service that helps olde
 - React and TypeScript
 - Vite
 - React Router
-- Tailwind CSS and CSS Modules
+- TanStack Query
+- Tailwind CSS
 - Vitest and Testing Library
 - ESLint
 
@@ -97,7 +98,8 @@ The interface is intended to be comfortable for older adults:
 - Keep TypeScript strict. Do not bypass errors with `any`, broad casts, or `@ts-ignore` unless the reason is documented and unavoidable.
 - Prefer small function components and explicit interfaces at module boundaries.
 - Keep state close to where it is used. Add global state only when several unrelated routes truly require it.
-- Do not duplicate server data into unnecessary local state.
+- Use TanStack Query for asynchronous server state. Keep temporary form values, disclosure controls, and other local UI state in React.
+- Define feature-specific query keys, query options, and mutations inside the owning feature. Do not duplicate query results into local state.
 - Handle loading, empty, error, and success states for asynchronous UI.
 - Keep secrets and service-role credentials out of browser code. Only `VITE_` variables intended to be public may enter the frontend bundle.
 
@@ -113,9 +115,10 @@ During local development, Vite proxies `/api` and `/health` to the FastAPI backe
 
 ## Styling
 
-- Use global CSS for tokens, resets, typography, and application-wide behavior.
-- Use CSS Modules for component-specific structural styles.
-- Use Tailwind utilities for concise local styling when they remain readable.
+- Use Tailwind utilities as the default for component and page styling, including layout, spacing, typography, responsive behavior, and interaction states.
+- Use global CSS only for design tokens, resets, typography defaults, and genuinely application-wide behavior.
+- Use a CSS Module only when a component requires styling that Tailwind cannot express cleanly. Document the reason in the component and do not use CSS Modules merely to shorten class lists.
+- Prefix project-authored CSS and CSS Module class names with `cln` (for example, `clnShell`) so they are easy to distinguish from Tailwind utilities.
 - Reuse theme variables such as `--primary`, `--foreground`, and `--border`.
 - Avoid inline style objects unless values must be calculated at runtime.
 - Preserve visible focus states and adequate hover, active, disabled, and error states.

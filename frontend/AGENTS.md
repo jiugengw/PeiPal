@@ -118,6 +118,7 @@ During local development, Vite proxies `/api` and `/health` to the FastAPI backe
 - Use Tailwind utilities as the default for component and page styling, including layout, spacing, typography, responsive behavior, and interaction states.
 - Use global CSS only for design tokens, resets, typography defaults, and genuinely application-wide behavior.
 - Use a CSS Module only when a component requires styling that Tailwind cannot express cleanly. Document the reason in the component and do not use CSS Modules merely to shorten class lists.
+- Prefix project-authored CSS and CSS Module class names with `cln` (for example, `clnShell`) so they are easy to distinguish from Tailwind utilities.
 - Reuse theme variables such as `--primary`, `--foreground`, and `--border`.
 - Avoid inline style objects unless values must be calculated at runtime.
 - Preserve visible focus states and adequate hover, active, disabled, and error states.

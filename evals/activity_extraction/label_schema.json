@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkBuddy activity extraction label",
+  "type": "object",
+  "required": ["id", "expected"],
+  "properties": {
+    "id": {"type": "string"},
+    "expected": {
+      "type": "object",
+      "required": ["page_type", "is_event", "is_recommendable", "matches_preference", "confidence", "review_status"],
+      "properties": {
+        "page_type": {
+          "enum": [
+            "specific_event",
+            "recurring_activity",
+            "source_page",
+            "directory",
+            "news_article",
+            "irrelevant",
+            "unclear"
+          ]
+        },
+        "is_event": {"type": "boolean"},
+        "is_recommendable": {"type": "boolean"},
+        "matches_preference": {"type": "boolean"},
+        "matches_area": {"type": "boolean"},
+        "mobility_suitable": {"type": ["boolean", "null"]},
+        "date": {"type": ["string", "null"]},
+        "start_time": {"type": ["string", "null"]},
+        "venue": {"type": ["string", "null"]},
+        "registration_url": {"type": ["string", "null"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "reasoning": {"type": "string"},
+        "review_status": {"enum": ["workbuddy_only", "human_confirmed", "human_corrected"]}
+      }
+    }
+  }
+}

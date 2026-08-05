@@ -61,6 +61,64 @@ The static website requests saved activities from `/api/activities` when the
 backend is running. If the API is unavailable, it keeps the demo activities so
 the prototype remains usable offline.
 
+### Refreshing activities with Parallel
+
+The backend can use Parallel Search and Extract to discover current activities
+and save them into Supabase. Add a server-side `PARALLEL_API_KEY` to `.env`,
+then run a refresh manually:
+
+```bash
+python scripts/refresh_activities.py \
+  --area Bishan \
+  --start-date 2026-08-05 \
+  --end-date 2026-09-05 \
+  --timing Morning \
+  --preference Talk \
+  --mobility "Gentle, no steps"
+```
+
+The command logs its search criteria, extracts official result pages, skips
+results without a usable event date/time, upserts the remaining activities,
+and expires activities that have already started. The Parallel key stays in
+the backend process and is never sent to the website.
+
+For an offline fixture refresh, use:
+
+```bash
+python scripts/refresh_activities.py --provider json --input data/sample_activities.json
+```
+
+### Evaluating Parallel search and extraction
+
+Capture real search and extraction results without connecting to Supabase:
+
+```bash
+python scripts/capture_activity_eval.py \
+  --area Bishan \
+  --start-date 2026-08-05 \
+  --end-date 2026-09-05 \
+  --preference "fun and educational"
+```
+
+This produces `unlabelled.jsonl` for WorkBuddy and a separate
+`predictions.jsonl`. Keep the predictions hidden while WorkBuddy labels the raw
+cases using `evals/activity_extraction/label_schema.json`; this avoids anchoring
+the evaluator to the current parser. WorkBuddy should write reviewed labels to
+`evals/activity_extraction/gold_cases.jsonl`.
+
+Compare the reviewed labels with the system predictions:
+
+```bash
+python scripts/evaluate_activity_extraction.py \
+  --cases evals/activity_extraction/gold_cases.jsonl \
+  --predictions evals/activity_extraction/predictions.jsonl
+```
+
+The evaluator reports event and recommendation precision/recall, usable-event
+rate, field accuracy, and clickable failures in JSON and Markdown. Use
+`--append` on the capture command to build a larger deduplicated test set across
+multiple areas and preferences.
+
 ### Manual acceptance guide
 
 1. Activate the virtual environment and set `OPENAI_API_KEY` as shown above.

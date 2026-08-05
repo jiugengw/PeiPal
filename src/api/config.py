@@ -26,6 +26,13 @@ def supabase_service_key() -> str:
     return value
 
 
+def parallel_api_key() -> str:
+    value = os.getenv("PARALLEL_API_KEY")
+    if not value:
+        raise RuntimeError("PARALLEL_API_KEY is not configured.")
+    return value
+
+
 def cors_origins() -> list[str]:
     value = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:5500")
     return [origin.strip() for origin in value.split(",") if origin.strip()]

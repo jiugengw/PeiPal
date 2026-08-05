@@ -44,6 +44,18 @@ from Git, so keep your real key there and never commit or share it. On macOS,
 grant your terminal microphone permission when prompted. Press `Ctrl+C` to stop
 the demo.
 
+### Backend API
+
+Install dependencies and start the website API with:
+
+```bash
+uvicorn src.api.main:app --reload
+```
+
+The health check is available at `http://127.0.0.1:8000/health`. Supabase
+credentials are loaded from `.env`; keep `SUPABASE_SERVICE_ROLE_KEY` on the
+server only.
+
 ### Manual acceptance guide
 
 1. Activate the virtual environment and set `OPENAI_API_KEY` as shown above.

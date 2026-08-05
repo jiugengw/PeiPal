@@ -1,0 +1,10 @@
+{
+  "contacts": [
+    {
+      "id": "anna-lim",
+      "name": "Anna Lim",
+      "relationship": "Daughter",
+      "email": "anna@example.com"
+    }
+  ]
+}

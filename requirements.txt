@@ -3,3 +3,4 @@ python-dotenv>=1,<2
 sounddevice>=0.5,<1
 numpy>=2,<3
 pytest>=9,<10
+resend>=2,<3

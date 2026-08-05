@@ -29,19 +29,21 @@ def test_prompt_prohibits_external_actions():
         "make bookings",
         "arrange transport",
         "contact family or friends",
-        "send messages",
+        "send other messages",
     ):
         assert prohibited_action in VOICE_INSTRUCTIONS
 
 
-def test_agent_exposes_mock_product_tools():
-    """Ensure the voice agent can call the mock recommendation and draft tools."""
+def test_agent_exposes_recommendation_and_email_tools():
+    """Ensure the shared agent exposes the complete invitation workflow."""
 
     agent = build_companion_agent()
 
     assert [tool.name for tool in agent.tools] == [
         "recommend_activities",
-        "create_invitation_draft",
+        "list_trusted_contacts",
+        "prepare_invitation_email",
+        "send_invitation_email",
     ]
 
 
@@ -78,5 +80,12 @@ def test_text_runner_uses_the_same_agent_with_text_output():
     assert config["model_settings"]["output_modalities"] == ["text"]
     assert [tool.name for tool in agent.tools] == [
         "recommend_activities",
-        "create_invitation_draft",
+        "list_trusted_contacts",
+        "prepare_invitation_email",
+        "send_invitation_email",
     ]
+
+
+def test_prompt_requires_preview_and_separate_confirmation():
+    assert "read the recipient names, subject, and full message" in VOICE_INSTRUCTIONS
+    assert "new, explicit confirmation" in VOICE_INSTRUCTIONS

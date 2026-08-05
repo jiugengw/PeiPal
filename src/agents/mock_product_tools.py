@@ -65,27 +65,6 @@ def recommend_activities(
     )
 
 
-def create_invitation_draft(
-    activity_id: str,
-    activity_name: str,
-    activity_time: str,
-    recipients: str,
-) -> str:
-    """Create a mock support message; this never sends anything."""
-
-    return json.dumps(
-        {
-            "activity_id": activity_id,
-            "recipients": recipients,
-            "draft": (
-                f"I am interested in joining {activity_name} on {activity_time}. "
-                "Could anyone join me, help with transport, or remind me?"
-            ),
-            "sent": False,
-        }
-    )
-
-
 recommend_activities_tool = function_tool(
     recommend_activities,
     name_override="recommend_activities",
@@ -94,14 +73,3 @@ recommend_activities_tool = function_tool(
         "location, timing, activity style, and mobility needs."
     ),
 )
-
-create_invitation_draft_tool = function_tool(
-    create_invitation_draft,
-    name_override="create_invitation_draft",
-    description_override=(
-        "Draft a low-pressure support message for trusted people. This only "
-        "creates text and never sends a message."
-    ),
-)
-
-MOCK_PRODUCT_TOOLS = [recommend_activities_tool, create_invitation_draft_tool]

@@ -2,7 +2,8 @@
 
 from agents.realtime import RealtimeAgent, RealtimeRunner
 
-from src.agents.mock_product_tools import MOCK_PRODUCT_TOOLS
+from src.agents.email_tools import EMAIL_TOOLS
+from src.agents.mock_product_tools import recommend_activities_tool
 
 MODEL_NAME = "gpt-realtime-2.1"
 VOICE_NAME = "ash"
@@ -17,14 +18,24 @@ Speak in short, clear sentences. Ask one question at a time and leave time for
 the person to answer. Start in English, but follow the user's spoken language
 when you can do so naturally. Be supportive without being patronising.
 
-You have two demo tools. Use recommend_activities after collecting the user's
+Use recommend_activities after collecting the user's
 location, time preference, activity preference, and mobility needs. Present up
-to three options in simple language. After the user chooses an option and gives
-clear confirmation, use create_invitation_draft to prepare a low-pressure
-support message. The draft is only text: it is never sent.
+to three options in simple language. After the user chooses an option, ask if
+they want to notify trusted contacts by email. If they do, list the trusted
+contacts and ask whom to notify.
 
-You cannot make bookings, arrange transport, contact family or friends, or
-send messages. Never imply that an external action has happened.
+Write a warm, low-pressure email that says what the activity is, where and when
+it is, and asks whether the recipients would like to join. Do not imply that
+anyone is obligated or already attending. Use prepare_invitation_email, then
+read the recipient names, subject, and full message to the user. Only call
+send_invitation_email after the user gives a new, explicit confirmation of that
+exact preview. If anything changes, prepare and preview a new email first.
+Accurately report complete, partial, or failed delivery.
+
+You can send only a confirmed invitation email through the provided tool. You
+cannot make bookings, arrange transport, contact family or friends in any other
+way, or send other messages. Never imply that an external action has happened
+unless its tool reports success.
 
 Do not ask for passwords, payment details, or other sensitive information. If a
 user describes an urgent medical or safety emergency, encourage them to contact
@@ -38,7 +49,7 @@ def build_companion_agent() -> RealtimeAgent:
     return RealtimeAgent(
         name="Count Me In Companion",
         instructions=VOICE_INSTRUCTIONS,
-        tools=MOCK_PRODUCT_TOOLS,
+        tools=[recommend_activities_tool, *EMAIL_TOOLS],
     )
 
 

@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Gentle Garden Walk",
+    "location": "Bishan Park",
+    "date": "10/08/2026",
+    "start_time": "9:00 am",
+    "cost": 0,
+    "price_remarks": "Free",
+    "slots_availability": "Available",
+    "info_link": "https://example.com/gentle-garden-walk",
+    "signup_link": "https://example.com/signup",
+    "description": "A gentle social walk with nearby seating.",
+    "tags": ["outdoors", "gentle"]
+  }
+]

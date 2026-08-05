@@ -78,6 +78,9 @@ def test_parallel_provider_searches_and_extracts_event_pages():
     assert len(calls) == 2
     assert calls[0][0].endswith("/search")
     assert calls[1][0].endswith("/extract")
+    assert provider.last_captured_pages[0]["url"] == "https://example.com/activity"
+    assert "actual" not in provider.last_captured_pages[0]
+    assert provider.last_predictions[0]["actual"]["is_event"] is True
 
 
 def test_parallel_provider_skips_results_without_event_date():

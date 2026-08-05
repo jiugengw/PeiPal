@@ -1,0 +1,6 @@
+{"id":"specific_fun_event","text":"Senior Creative Workshop\nDate: 12 August 2026\nTime: 10:00 AM\nVenue: Bishan Community Club\nRegister: https://example.com/register","expected":{"is_event":true,"date":"12/08/2026","start_time":"10:00 AM","venue":"Bishan Community Club"}}
+{"id":"generic_programme_page","text":"Senior Workshops and Active Ageing Programmes in Singapore. Explore our range of courses and services for seniors.","expected":{"is_event":false}}
+{"id":"news_article","text":"New active ageing hub in Bishan for seniors to stay engaged with community. The centre will offer activities and services.","expected":{"is_event":false}}
+{"id":"recurring_date_range","text":"Fun learning sessions run from 5 Aug – 30 Sep 2026. Every Wednesday at 10.00 a.m. Venue: Bishan Library.","expected":{"is_event":true,"date":"05/08/2026","start_time":"10:00 AM","venue":"Bishan Library"}}
+{"id":"directory_page","text":"Discover Bishan Events and Activities in Central Singapore. Browse upcoming listings on Eventbrite.","expected":{"is_event":false}}
+{"id":"missing_time","text":"Educational talk at Bishan Community Club on 20 August 2026. Registration is required.","expected":{"is_event":false}}

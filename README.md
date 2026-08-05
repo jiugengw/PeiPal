@@ -88,6 +88,37 @@ For an offline fixture refresh, use:
 python scripts/refresh_activities.py --provider json --input data/sample_activities.json
 ```
 
+### Evaluating Parallel search and extraction
+
+Capture real search and extraction results without connecting to Supabase:
+
+```bash
+python scripts/capture_activity_eval.py \
+  --area Bishan \
+  --start-date 2026-08-05 \
+  --end-date 2026-09-05 \
+  --preference "fun and educational"
+```
+
+This produces `unlabelled.jsonl` for WorkBuddy and a separate
+`predictions.jsonl`. Keep the predictions hidden while WorkBuddy labels the raw
+cases using `evals/activity_extraction/label_schema.json`; this avoids anchoring
+the evaluator to the current parser. WorkBuddy should write reviewed labels to
+`evals/activity_extraction/gold_cases.jsonl`.
+
+Compare the reviewed labels with the system predictions:
+
+```bash
+python scripts/evaluate_activity_extraction.py \
+  --cases evals/activity_extraction/gold_cases.jsonl \
+  --predictions evals/activity_extraction/predictions.jsonl
+```
+
+The evaluator reports event and recommendation precision/recall, usable-event
+rate, field accuracy, and clickable failures in JSON and Markdown. Use
+`--append` on the capture command to build a larger deduplicated test set across
+multiple areas and preferences.
+
 ### Manual acceptance guide
 
 1. Activate the virtual environment and set `OPENAI_API_KEY` as shown above.

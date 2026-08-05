@@ -50,20 +50,40 @@ class ParallelActivityProvider:
         self._post_json = post_json or self._request_json
         self.last_stats: dict[str, int] = {}
         self.skip_examples: list[str] = []
+        self.last_captured_pages: list[dict[str, Any]] = []
+        self.last_predictions: list[dict[str, Any]] = []
 
     def search(self) -> list[dict[str, Any]]:
+        preference_lower = self.preference.lower()
+        health_requested = any(
+            word in preference_lower
+            for word in ("health", "wellness", "screening", "medical")
+        )
+        category_guidance = (
+            "Health or wellness services are allowed because they were requested."
+            if health_requested
+            else "Exclude medical screenings, functional assessments, health checks, and wellness services."
+        )
         objective = (
-            f"Find current in-person activities in {self.area}, Singapore, between "
-            f"{self.start_date} and {self.end_date}. Prioritize {self.timing} activities "
-            f"for older adults interested in {self.preference}, suitable for mobility "
-            f"needs described as {self.mobility}. Prefer official organizer, community "
-            "centre, library, government, museum, or venue pages. Return only events "
-            "with a clearly stated upcoming date."
+            f"Find individual upcoming in-person events in {self.area}, Singapore, "
+            f"between {self.start_date} and {self.end_date}. Prioritize {self.timing} "
+            f"{self.preference} activities or sessions for older adults, suitable for "
+            f"mobility needs described as {self.mobility}. Only return activities that "
+            "a person can directly attend or register for. Every result must have a "
+            "specific event name, exact date, exact start time, physical venue, and "
+            "registration, booking, or organiser contact URL. Prefer official event "
+            "listing pages from community centres, libraries, government organisations, "
+            "museums, or venues. Exclude news articles, general programme pages, "
+            "organisation pages, directories, annual campaigns, and pages without a "
+            f"specific session. {category_guidance} Treat the preference as the "
+            "main activity category: social, fun, educational, creative, movement, "
+            "or health. Do not substitute a health service when a recreational or "
+            "educational activity was requested."
         )
         queries = [
-            f"{self.area} Singapore elderly activities {self.start_date}",
-            f"Singapore community centre {self.preference} {self.start_date}",
-            f"Singapore senior morning activities {self.end_date}",
+            f"{self.area} Singapore elderly {self.preference} event register {self.start_date}",
+            f"{self.area} community club elderly {self.preference} event booking",
+            f"Singapore senior {self.preference} workshop registration {self.start_date}",
         ]
         search_response = self._post_json(
             self.search_url,
@@ -77,6 +97,8 @@ class ParallelActivityProvider:
             "skipped_outside_date_range": 0,
         }
         self.skip_examples = []
+        self.last_captured_pages = []
+        self.last_predictions = []
         urls = [result.get("url") for result in results if result.get("url")]
         extracted_by_url: dict[str, dict[str, Any]] = {}
         if urls:
@@ -109,24 +131,53 @@ class ParallelActivityProvider:
                 page.get("excerpts") or result.get("excerpts") or []
             )
             text = f"{text}\n{page.get('full_content') or ''}"
-            date = _event_date_in_range(text, self.start_date, self.end_date)
-            start_time = _event_time(text)
-            if not date or not start_time or not url:
+            prediction = parse_activity_text(
+                text,
+                area=self.area,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                source_url=url or None,
+            )
+            case_id = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16] if url else "missing-url"
+            self.last_captured_pages.append({
+                "id": case_id,
+                "title": str(page.get("title") or result.get("title") or "").strip(),
+                "url": url,
+                "search_excerpts": result.get("excerpts") or [],
+                "extracted_text": text.strip()[:12_000],
+                "search_parameters": {
+                    "area": self.area,
+                    "start_date": self.start_date,
+                    "end_date": self.end_date,
+                    "timing": self.timing,
+                    "preference": self.preference,
+                    "mobility": self.mobility,
+                },
+            })
+            self.last_predictions.append({
+                "id": case_id,
+                "title": str(page.get("title") or result.get("title") or "").strip(),
+                "url": url,
+                "actual": prediction,
+            })
+            date = prediction["date"]
+            start_time = prediction["start_time"]
+            if not prediction["is_event"] or not url:
                 self.last_stats["skipped_missing_date_or_time"] += 1
                 if len(self.skip_examples) < 5:
                     self.skip_examples.append(
-                        f"missing date/time: {result.get('title') or url}"
+                        f"{prediction['decision_reason']}: {result.get('title') or url}"
                     )
                 continue
             activities.append({
                 "name": str(page.get("title") or result.get("title") or "Activity").strip(),
                 "description": text[:2_000] or None,
-                "location": _event_location(text, self.area),
+                "location": prediction["venue"] or self.area,
                 "date": date,
                 "start_time": start_time,
                 "cost": _event_cost(text),
                 "info_link": url,
-                "signup_link": url,
+                "signup_link": prediction["registration_url"] or url,
                 "mobility_notes": self.mobility,
                 "tags": ["parallel", self.preference],
             })
@@ -233,8 +284,38 @@ def _event_time(text: str) -> str | None:
 def _event_location(text: str, fallback: str) -> str:
     for line in text.splitlines():
         if re.search(r"\b(venue|location|address):", line, flags=re.IGNORECASE):
-            return re.sub(r"^.*?:\s*", "", line).strip() or fallback
+            return re.sub(r"^.*?:\s*", "", line).strip(" .,-") or fallback
     return fallback
+
+
+def parse_activity_text(
+    text: str,
+    *,
+    area: str,
+    start_date: str,
+    end_date: str,
+    source_url: str | None = None,
+) -> dict[str, Any]:
+    """Parse extracted page text without making any database changes."""
+    date = _event_date_in_range(text, start_date, end_date)
+    start_time = _event_time(text)
+    location = _event_location(text, area)
+    is_event = bool(date and start_time)
+    if not date:
+        reason = "missing in-range date"
+    elif not start_time:
+        reason = "missing start time"
+    else:
+        reason = "accepted"
+    return {
+        "is_event": is_event,
+        "is_recommendable": is_event,
+        "date": date,
+        "start_time": start_time,
+        "venue": location if location != area else None,
+        "registration_url": source_url if is_event else None,
+        "decision_reason": reason,
+    }
 
 
 def _event_cost(text: str) -> str | None:

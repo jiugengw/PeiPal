@@ -200,3 +200,56 @@ class PlanResponse(BaseModel):
 
 class PlanListResponse(BaseModel):
     plans: list[PlanResponse]
+
+
+class SupportOfferResponse(BaseModel):
+    id: int
+    plan_id: int
+    offered_by: str
+    support_type: Literal[
+        "join",
+        "remind",
+        "transport",
+        "alternative",
+        "booking",
+        "encourage",
+    ]
+    note: str | None = None
+    status: Literal["offered", "withdrawn"]
+    created_at: datetime
+    updated_at: datetime
+
+
+class SupportOfferListResponse(BaseModel):
+    support_offers: list[SupportOfferResponse]
+
+
+class PlanNotificationResponse(BaseModel):
+    id: int
+    plan_id: int
+    trusted_contact_id: int
+    recipient_name: str
+    recipient_email: str | None = None
+    status: Literal["pending", "sent", "failed"]
+    provider_id: str | None = None
+    error_message: str | None = None
+    attempted_at: datetime | None = None
+    sent_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PlanNotificationListResponse(BaseModel):
+    notifications: list[PlanNotificationResponse]
+
+
+class NotificationDeliveryResponse(BaseModel):
+    contact_id: int
+    name: str
+    status: Literal["sent", "already_sent", "failed"]
+    provider_id: str | None = None
+    error: str | None = None
+
+
+class NotificationDeliveryListResponse(BaseModel):
+    deliveries: list[NotificationDeliveryResponse]

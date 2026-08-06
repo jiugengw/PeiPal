@@ -1,10 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
+from types import SimpleNamespace
 
 from src.api.main import app
 from src.api.models import OlderAdultCreate, PlanCreate, PlanNotificationCreate, SupportOfferCreate
-from src.api.routes import get_activity
+from src.api import routes
+from src.api.routes import create_support_offer, get_activity
 
 
 client = TestClient(app)
@@ -68,6 +70,10 @@ def test_plan_notification_requires_at_least_one_contact():
         ("/api/plans", "get", "200", "PlanListResponse"),
         ("/api/plans/{plan_id}", "get", "200", "PlanResponse"),
         ("/api/plans/{plan_id}", "patch", "200", "PlanResponse"),
+        ("/api/plans/{plan_id}/support-offers", "post", "201", "SupportOfferResponse"),
+        ("/api/plans/{plan_id}/support-offers", "get", "200", "SupportOfferListResponse"),
+        ("/api/plans/{plan_id}/notifications", "post", "200", "NotificationDeliveryListResponse"),
+        ("/api/plans/{plan_id}/notifications", "get", "200", "PlanNotificationListResponse"),
         ("/api/activities/{activity_id}", "get", "200", "ActivityResponse"),
     ],
 )
@@ -96,3 +102,46 @@ def test_activity_detail_returns_an_expired_activity_for_existing_plans():
             return Query()
 
     assert get_activity(7, Client()) == activity
+
+
+def test_withdrawn_support_offer_is_reactivated(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+    updated_values = {}
+
+    class Query:
+        def __init__(self, table):
+            self.table = table
+            self.operation = "select"
+
+        def select(self, *_args): return self
+        def eq(self, *_args): return self
+        def limit(self, *_args): return self
+        def update(self, values):
+            self.operation = "update"
+            updated_values.update(values)
+            return self
+        def execute(self):
+            if self.table == "plans":
+                return SimpleNamespace(data=[{"status": "shared"}])
+            if self.operation == "select":
+                return SimpleNamespace(data=[{"id": 4, "status": "withdrawn"}])
+            return SimpleNamespace(data=[{
+                "id": 4,
+                "plan_id": 9,
+                "offered_by": "user-1",
+                **updated_values,
+            }])
+
+    class Client:
+        def table(self, name): return Query(name)
+
+    result = create_support_offer(
+        9,
+        SupportOfferCreate(support_type="transport", note="I can drive."),
+        SimpleNamespace(id="user-1"),
+        Client(),
+    )
+
+    assert result["id"] == 4
+    assert updated_values["status"] == "offered"
+    assert updated_values["note"] == "I can drive."

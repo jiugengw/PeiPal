@@ -620,7 +620,7 @@ Verify on desktop and mobile:
 6. `feat: add plan workflow` - completed
    - Plan creation, direct sharing, family approval, cancellation, and plan detail route.
 
-7. `feat: add notifications and family support`
+7. `feat: add notifications and family support` - completed
    - Recipient selection, delivery results, demo family view, support offers, and withdrawal.
 
 8. `test: cover plan and support workflow`

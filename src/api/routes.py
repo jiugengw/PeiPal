@@ -29,12 +29,16 @@ from src.api.models import (
     OlderAdultListResponse,
     OlderAdultResponse,
     OlderAdultUpdate,
+    NotificationDeliveryListResponse,
     PlanCreate,
     PlanListResponse,
     PlanNotificationCreate,
+    PlanNotificationListResponse,
     PlanResponse,
     PlanUpdate,
     SupportOfferCreate,
+    SupportOfferListResponse,
+    SupportOfferResponse,
     TrustedContactCreate,
     TrustedContactListResponse,
     TrustedContactResponse,
@@ -433,7 +437,13 @@ def update_plan(
         raise HTTPException(status_code=502, detail="Could not update plan.") from error
 
 
-@router.post("/plans/{plan_id}/support-offers", status_code=status.HTTP_201_CREATED, tags=["Support offers"], summary="Offer support for a shared plan")
+@router.post(
+    "/plans/{plan_id}/support-offers",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SupportOfferResponse,
+    tags=["Support offers"],
+    summary="Offer support for a shared plan",
+)
 def create_support_offer(
     plan_id: int,
     payload: SupportOfferCreate,
@@ -447,19 +457,21 @@ def create_support_offer(
             raise HTTPException(status_code=409, detail="Support can only be offered on a shared plan.")
         existing = (
             client.table("plan_support_offers")
-            .select("id")
+            .select("id, status")
             .eq("plan_id", plan_id)
             .eq("offered_by", user_id(user))
             .eq("support_type", payload.support_type)
-            .eq("status", "offered")
             .limit(1)
             .execute()
             .data
         )
-        if existing:
+        if existing and existing[0]["status"] == "offered":
             raise HTTPException(status_code=409, detail="You already offered this type of support.")
         values = payload.model_dump()
         values.update({"plan_id": plan_id, "offered_by": user_id(user)})
+        if existing:
+            values.update({"status": "offered", "updated_at": datetime.now(timezone.utc).isoformat()})
+            return client.table("plan_support_offers").update(values).eq("id", existing[0]["id"]).execute().data[0]
         return client.table("plan_support_offers").insert(values).execute().data[0]
     except HTTPException:
         raise
@@ -467,7 +479,12 @@ def create_support_offer(
         raise HTTPException(status_code=502, detail="Could not create support offer.") from error
 
 
-@router.get("/plans/{plan_id}/support-offers", tags=["Support offers"], summary="List support offers")
+@router.get(
+    "/plans/{plan_id}/support-offers",
+    response_model=SupportOfferListResponse,
+    tags=["Support offers"],
+    summary="List support offers",
+)
 def list_support_offers(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -510,6 +527,7 @@ def withdraw_support_offer(
 
 @router.post(
     "/plans/{plan_id}/notifications",
+    response_model=NotificationDeliveryListResponse,
     tags=["Notifications"],
     summary="Send plan notifications",
     description=(
@@ -661,7 +679,12 @@ def send_plan_notifications(
         raise HTTPException(status_code=502, detail="Could not send plan notifications.") from error
 
 
-@router.get("/plans/{plan_id}/notifications", tags=["Notifications"], summary="List plan notifications")
+@router.get(
+    "/plans/{plan_id}/notifications",
+    response_model=PlanNotificationListResponse,
+    tags=["Notifications"],
+    summary="List plan notifications",
+)
 def list_plan_notifications(
     plan_id: int,
     user: Any = Depends(require_user),

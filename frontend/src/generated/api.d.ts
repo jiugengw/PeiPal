@@ -439,6 +439,27 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** NotificationDeliveryListResponse */
+        NotificationDeliveryListResponse: {
+            /** Deliveries */
+            deliveries: components["schemas"]["NotificationDeliveryResponse"][];
+        };
+        /** NotificationDeliveryResponse */
+        NotificationDeliveryResponse: {
+            /** Contact Id */
+            contact_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "sent" | "already_sent" | "failed";
+            /** Provider Id */
+            provider_id?: string | null;
+            /** Error */
+            error?: string | null;
+        };
         /**
          * OlderAdultCreate
          * @example {
@@ -574,6 +595,47 @@ export interface components {
             /** Contact Ids */
             contact_ids: number[];
         };
+        /** PlanNotificationListResponse */
+        PlanNotificationListResponse: {
+            /** Notifications */
+            notifications: components["schemas"]["PlanNotificationResponse"][];
+        };
+        /** PlanNotificationResponse */
+        PlanNotificationResponse: {
+            /** Id */
+            id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Trusted Contact Id */
+            trusted_contact_id: number;
+            /** Recipient Name */
+            recipient_name: string;
+            /** Recipient Email */
+            recipient_email?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "sent" | "failed";
+            /** Provider Id */
+            provider_id?: string | null;
+            /** Error Message */
+            error_message?: string | null;
+            /** Attempted At */
+            attempted_at?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** PlanResponse */
         PlanResponse: {
             /** Id */
@@ -644,6 +706,42 @@ export interface components {
             support_type: "join" | "remind" | "transport" | "alternative" | "booking" | "encourage";
             /** Note */
             note?: string | null;
+        };
+        /** SupportOfferListResponse */
+        SupportOfferListResponse: {
+            /** Support Offers */
+            support_offers: components["schemas"]["SupportOfferResponse"][];
+        };
+        /** SupportOfferResponse */
+        SupportOfferResponse: {
+            /** Id */
+            id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Offered By */
+            offered_by: string;
+            /**
+             * Support Type
+             * @enum {string}
+             */
+            support_type: "join" | "remind" | "transport" | "alternative" | "booking" | "encourage";
+            /** Note */
+            note?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "offered" | "withdrawn";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /**
          * TrustedContactCreate
@@ -1337,9 +1435,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["SupportOfferListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1376,9 +1472,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["SupportOfferResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1442,9 +1536,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["PlanNotificationListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1481,9 +1573,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["NotificationDeliveryListResponse"];
                 };
             };
             /** @description Validation Error */

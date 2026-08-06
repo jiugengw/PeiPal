@@ -20,11 +20,12 @@ import {
   type PlanStatus,
 } from "@/features/plans/api/planQueries";
 import { planStatusLabels } from "@/features/plans/status";
+import { NotificationPanel } from "@/features/notifications/NotificationPanel";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function PlanDetail({ planId }: { planId: number }) {
   const queryClient = useQueryClient();
-  const { olderAdult } = useSetupProgress();
+  const { olderAdult, contacts = [] } = useSetupProgress();
   const hasValidPlanId = Number.isInteger(planId) && planId > 0;
   const planQuery = useQuery({
     ...planQueryOptions(planId),
@@ -118,6 +119,9 @@ export function PlanDetail({ planId }: { planId: number }) {
               </>
             )}
           </div>
+          {plan.status === "shared" ? (
+            <NotificationPanel planId={plan.id} contacts={contacts} />
+          ) : null}
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">

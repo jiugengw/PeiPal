@@ -19,6 +19,10 @@ OPENAPI_TAGS = [
         "description": "Browse active activities available for planning.",
     },
     {
+        "name": "Voice",
+        "description": "Create short-lived browser voice sessions.",
+    },
+    {
         "name": "Households",
         "description": "Create and manage the family household.",
     },

@@ -31,9 +31,30 @@ from src.api.models import (
     TrustedContactUpdate,
 )
 from src.services.notifications import send_plan_email
+from src.services.realtime import create_realtime_client_secret
 
 
 router = APIRouter(prefix="/api")
+
+
+@router.post(
+    "/voice/session",
+    tags=["Voice"],
+    summary="Create a browser voice session",
+    description=(
+        "Create a short-lived OpenAI Realtime credential for the signed-in browser. "
+        "The permanent OpenAI API key is never returned."
+    ),
+)
+def create_voice_session(
+    user: Any = Depends(require_user),
+) -> dict[str, Any]:
+    try:
+        return create_realtime_client_secret(user_id(user))
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="Browser voice is not available.") from error
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not create browser voice session.") from error
 
 
 @router.post("/households", status_code=status.HTTP_201_CREATED, tags=["Households"], summary="Create a household")

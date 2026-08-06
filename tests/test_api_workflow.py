@@ -1,12 +1,13 @@
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from types import SimpleNamespace
 
 from src.api.main import app
-from src.api.models import OlderAdultCreate, PlanCreate, PlanNotificationCreate, SupportOfferCreate
+from src.api.models import OlderAdultCreate, PlanCreate, PlanNotificationCreate, PlanUpdate, SupportOfferCreate
 from src.api import routes
-from src.api.routes import create_support_offer, get_activity
+from src.api.routes import create_support_offer, get_activity, send_plan_notifications, update_plan, withdraw_support_offer
 
 
 client = TestClient(app)
@@ -145,3 +146,133 @@ def test_withdrawn_support_offer_is_reactivated(monkeypatch):
     assert result["id"] == 4
     assert updated_values["status"] == "offered"
     assert updated_values["note"] == "I can drive."
+
+
+class QueueQuery:
+    def __init__(self, responses):
+        self.responses = responses
+
+    def select(self, *_args): return self
+    def insert(self, *_args): return self
+    def update(self, *_args): return self
+    def eq(self, *_args): return self
+    def in_(self, *_args): return self
+    def limit(self, *_args): return self
+    def order(self, *_args, **_kwargs): return self
+    def execute(self): return SimpleNamespace(data=self.responses.pop(0))
+
+
+class QueueClient:
+    def __init__(self, responses): self.responses = list(responses)
+    def table(self, _name): return QueueQuery(self.responses)
+
+
+def test_plan_can_move_from_awaiting_approval_to_shared(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+    monkeypatch.setattr(routes, "require_household_owner", lambda *_args: None)
+    shared = {"id": 9, "household_id": 1, "status": "shared"}
+
+    result = update_plan(
+        9,
+        PlanUpdate(status="shared"),
+        SimpleNamespace(id="user-1"),
+        QueueClient([[{"status": "awaiting_approval"}], [shared]]),
+    )
+
+    assert result == shared
+
+
+def test_plan_rejects_an_invalid_status_transition(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+
+    with pytest.raises(HTTPException) as error:
+        update_plan(
+            9,
+            PlanUpdate(status="awaiting_approval"),
+            SimpleNamespace(id="user-1"),
+            QueueClient([[{"status": "shared"}]]),
+        )
+
+    assert error.value.status_code == 409
+
+
+def test_notifications_reject_a_plan_that_is_not_shared(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+
+    with pytest.raises(HTTPException) as error:
+        send_plan_notifications(
+            9,
+            PlanNotificationCreate(contact_ids=[1]),
+            SimpleNamespace(id="user-1"),
+            QueueClient([[{"status": "draft", "older_adult_id": 2, "activity_id": 3}]]),
+        )
+
+    assert error.value.status_code == 409
+
+
+def test_notifications_preserve_sent_contacts_and_report_partial_failure(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+    monkeypatch.setattr(routes, "send_plan_email", lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("provider failed")))
+    client = QueueClient([
+        [{"status": "shared", "older_adult_id": 2, "activity_id": 3}],
+        [{"id": 1, "name": "Anna", "email": "anna@example.com"}, {"id": 2, "name": "David", "email": "david@example.com"}],
+        [{"name": "Mary", "preferred_name": "Mary"}],
+        [{"name": "Yoga", "location": "Bishan", "start_at": "2030-01-01", "info_link": "https://example.com"}],
+        [{"id": 10, "status": "sent"}],
+        [{"id": 11, "status": "failed"}],
+        [{}],
+        [{}],
+    ])
+
+    result = send_plan_notifications(
+        9,
+        PlanNotificationCreate(contact_ids=[1, 2]),
+        SimpleNamespace(id="user-1"),
+        client,
+    )
+
+    assert result["deliveries"] == [
+        {"contact_id": 1, "name": "Anna", "status": "already_sent"},
+        {"contact_id": 2, "name": "David", "status": "failed", "error": "Email delivery failed."},
+    ]
+
+
+def test_support_rejects_non_shared_plan(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+
+    with pytest.raises(HTTPException) as error:
+        create_support_offer(
+            9,
+            SupportOfferCreate(support_type="join"),
+            SimpleNamespace(id="user-1"),
+            QueueClient([[{"status": "draft"}]]),
+        )
+
+    assert error.value.status_code == 409
+
+
+def test_support_rejects_duplicate_active_offer(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+
+    with pytest.raises(HTTPException) as error:
+        create_support_offer(
+            9,
+            SupportOfferCreate(support_type="join"),
+            SimpleNamespace(id="user-1"),
+            QueueClient([[{"status": "shared"}], [{"id": 4, "status": "offered"}]]),
+        )
+
+    assert error.value.status_code == 409
+
+
+def test_user_cannot_withdraw_another_accounts_support(monkeypatch):
+    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
+
+    with pytest.raises(HTTPException) as error:
+        withdraw_support_offer(
+            4,
+            SimpleNamespace(id="user-1"),
+            QueueClient([[{"plan_id": 9, "offered_by": "user-2"}]]),
+        )
+
+    assert error.value.status_code == 403

@@ -623,7 +623,7 @@ Verify on desktop and mobile:
 7. `feat: add notifications and family support` - completed
    - Recipient selection, delivery results, demo family view, support offers, and withdrawal.
 
-8. `test: cover plan and support workflow`
+8. `test: cover plan and support workflow` - completed
    - Status transitions, partial delivery, retries, conflicts, and cancellations.
 
 9. `feat: add browser voice companion`

@@ -87,8 +87,8 @@ the prototype remains usable offline.
 
 The authenticated API also supports the core planning workflow. A signed-in
 household member can create and retrieve household setup data, update the
-older-adult profile and trusted contacts, create a plan from an active activity,
-update the plan status through approval and sharing, and add or withdraw support offers.
+older-adult profile and trusted contacts, choose direct or family-approved
+sharing, update the plan status when needed, and add or withdraw support offers.
 Plans and support offers are stored in Supabase. The current API does not yet
 send notifications or connect these workflow endpoints to the React screens.
 

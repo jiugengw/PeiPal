@@ -55,12 +55,15 @@ The signed-in user becomes the household owner.
 1. Call **Activities → List active activities** and copy an activity `id`.
 2. Call **Households → Create a household** and copy the returned household `id`.
 3. Call **Older adults → Create an older-adult profile**, using that household `id`.
-   Copy the returned older-adult profile `id`.
+   Choose `direct` to share plans immediately, or `family_approval` to require
+   the owner to approve sharing. Copy the returned older-adult profile `id`.
 4. Call **Trusted contacts → Add a trusted contact** using the profile `id`.
-5. Call **Plans → Create a draft plan**, using the household `id`, profile `id`,
+5. Call **Plans → Create a plan**, using the household `id`, profile `id`,
    and activity `id`. Copy the returned plan `id`.
-6. Call **Plans → Update a plan status** with `{"status":"awaiting_approval"}`.
-7. Call **Plans → Update a plan status** with `{"status":"shared"}` using the owner token.
+6. If the profile uses `family_approval`, call **Plans → Update a plan status**
+   with `{"status":"awaiting_approval"}`, then update it to
+   `{"status":"shared"}` using the owner token. Direct-sharing plans are
+   already `shared` after creation.
 8. Call **Support offers → Offer support for a shared plan**.
 9. Use **Plans → Get a plan** and **Support offers → List support offers** to
    confirm the final state.

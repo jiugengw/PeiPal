@@ -2,7 +2,7 @@
 
 This document contains local setup, backend, frontend, API, migration, testing, activity-ingestion, and troubleshooting instructions. The product overview for judges and collaborators is in [README.md](README.md).
 
-## Local voice demo
+## Terminal voice demo
 
 The voice prototype runs locally from the terminal. It uses the computer's default microphone and speakers and does not save transcripts.
 
@@ -40,12 +40,13 @@ EMAIL_REPLY_TO=...
 Keep browser-safe values in `frontend/.env`:
 
 ```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_API_BASE_URL=
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
 Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `PARALLEL_API_KEY`, or `RESEND_API_KEY` in the frontend environment file.
+Keep `VITE_API_BASE_URL` empty for normal local development so requests use the Vite proxy. If the browser calls FastAPI directly instead, set it to `http://127.0.0.1:8000` and include the frontend origin in the backend `CORS_ORIGINS` value.
 
 ## Email notifications
 
@@ -175,7 +176,37 @@ npm install
 npm run dev
 ```
 
-During development, Vite proxies `/api` and `/health` to `http://127.0.0.1:8000`. The React frontend currently contains authentication, route structure, and API foundations; the complete prototype flow still needs to be connected to the React screens.
+During development, Vite proxies `/api` and `/health` to `http://127.0.0.1:8000`. Run FastAPI and Vite in separate terminals. The browser app includes authentication, household setup, activity discovery, both plan-sharing modes, notification delivery status, the demo family view, support offers, and an optional browser voice companion.
+
+### Route map
+
+| Route | Purpose |
+| --- | --- |
+| `/auth` | Log in or create an account. |
+| `/` | Send an authenticated account to setup or discovery. |
+| `/setup` | Create the household, older-adult profile, sharing preference, and trusted contacts. |
+| `/discover` | Search activities, choose one, and create a plan. |
+| `/plans/:planId` | Review plan status, request approval, send notifications, and inspect delivery history. |
+| `/family` | Same-account demo family view for approval and support offers. |
+
+Unknown authenticated routes show a recovery page. Protected routes redirect signed-out visitors to `/auth`.
+
+### Browser voice
+
+The voice companion starts only after the user selects **Start voice** and grants microphone access. The frontend requests a short-lived credential from `POST /api/voice/session`, then connects directly to OpenAI Realtime over WebRTC. The permanent `OPENAI_API_KEY` remains on the backend.
+
+Voice and click interactions operate on the same visible activity and plan state. Creating, approving, sharing, notifying, and offering support always require an explicit approval in the voice panel. If microphone permission or the Realtime connection fails, every click-based form and button remains available.
+
+### OpenAPI-generated frontend types
+
+Frontend request and response types come from FastAPI's `/openapi.json`; do not create duplicate interfaces for backend payloads or edit `frontend/src/generated/api.d.ts` manually. After changing an API contract, start FastAPI and run:
+
+```bash
+cd frontend
+npm run generate:api
+```
+
+Feature API modules use the configured client in `frontend/src/lib/fetchClient.ts`.
 
 ## Testing
 
@@ -197,9 +228,12 @@ Frontend checks:
 
 ```bash
 cd frontend
+npm run lint
+npm test
 npm run build
-npm test -- --run
 ```
+
+The frontend currently uses Vitest and Testing Library. Browser-level Playwright coverage is intentionally deferred, so complete the manual judge walkthrough below before a demo.
 
 ## Refreshing activities with Parallel
 
@@ -243,18 +277,36 @@ python scripts/evaluate_activity_extraction.py \
   --predictions evals/activity_extraction/predictions.jsonl
 ```
 
-## Manual acceptance guide
+## Judge walkthrough
 
-1. Activate the virtual environment and configure `OPENAI_API_KEY`.
-2. Start `python -m src.demo.voice_cli`.
-3. Confirm that the terminal says `Listening` and allow microphone access if macOS asks.
-4. Say: “I want to do something relaxing this weekend.”
-5. Answer the questions about location, timing, activity style, and mobility.
-6. Confirm that the companion returns up to three suitable activities.
-7. Choose one and ask to notify a trusted contact.
-8. Confirm the email preview and verify delivery if Resend is configured.
-9. Start speaking while the companion is replying and confirm queued audio stops.
-10. Press `Ctrl+C` and confirm the process exits cleanly.
+Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
+
+### Family-approval path
+
+1. Log in and complete setup without copying any database IDs manually.
+2. Choose **Family reviews first** and add at least one trusted contact with an email address.
+3. Open discovery, choose an activity, review it, and create the plan.
+4. Confirm that the plan starts as a draft and choose **Ask for family approval**.
+5. Open **Demo family view**, approve and share the waiting plan, then return to its detail page.
+6. Select the trusted contact, review the recipient list, and send the plan email.
+7. Confirm the delivery result is visible. If Resend is not configured, confirm the failed result is honest and retryable.
+8. Return to the family view, offer one kind of practical support, and verify it appears as **You offered**.
+9. Refresh `/plans/{planId}` and confirm the shared status, activity details, notification history, and support state reload.
+
+### Direct-sharing path
+
+1. Edit or create a profile using **Share after personal confirmation**.
+2. Choose an activity and confirm plan creation.
+3. Confirm the plan is immediately shared and no family-approval action appears.
+4. Verify notification selection is available only after the plan is shared.
+
+### Browser voice checks
+
+1. Open the voice companion and confirm nothing starts until **Start voice** is selected.
+2. Allow microphone access, search for activities, and confirm voice and visible selection stay synchronized.
+3. Trigger a consequential action and verify the approval panel appears before anything changes.
+4. Test mute, stop speech, typed fallback, and ending the session.
+5. Deny microphone permission once and confirm the normal click workflow still works.
 
 ## Troubleshooting
 
@@ -267,11 +319,12 @@ python scripts/evaluate_activity_extraction.py \
 
 ## Current technical limitations
 
-- The full React workflow is not yet connected end-to-end.
-- The Python voice demo and browser product prototype use different interaction surfaces.
+- The family page is a same-account demo, not a separately authenticated trusted-contact portal.
+- Browser end-to-end automation is deferred; the complete judge path is verified manually.
 - The API does not yet arrange transport or complete bookings.
 - Plan completion tracking is not yet implemented.
 - Notification delivery requires Resend configuration.
+- Browser voice requires microphone permission, WebRTC support, and a configured server-side OpenAI key.
 
 ## OpenAI documentation used
 

@@ -632,10 +632,10 @@ Verify on desktop and mobile:
 10. `test: cover browser voice workflow` - completed
     - Session states, tool guards, human approval, failures, and fallback interaction.
 
-11. `test: add core workflow browser coverage`
+11. `test: add core workflow browser coverage` - skipped
     - Playwright judge path and direct-sharing path.
 
-12. `docs: explain frontend workflow`
+12. `docs: explain frontend workflow` - completed
     - Environment setup, route map, API dependencies, demo limitations, test commands, and judge walkthrough.
 
 ## Acceptance Criteria

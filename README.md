@@ -26,7 +26,7 @@ Instead of sending a direct invitation to one person, Count Me In turns an older
 - Shared activity plans
 - Support choices such as joining, reminders, transport, and booking help
 - Per-contact email delivery tracking, including failed deliveries that can be retried
-- A voice-first companion prototype for natural activity planning
+- An optional browser voice companion that uses the same activity and plan workflow as the visible controls
 
 ## Why it matters
 
@@ -38,6 +38,6 @@ Mary wants to do something relaxing nearby but does not want to trouble anyone. 
 
 ## Current scope
 
-The current prototype focuses on planning and coordination. It does not yet arrange transport, complete bookings, track RSVP responses, or provide full browser-based voice interaction.
+The current prototype focuses on planning and coordination. It does not arrange transport, complete bookings, track RSVP responses, or provide separate trusted-contact accounts. The family view is an explicitly labelled same-account demo.
 
 Technical setup, API documentation, migrations, testing, activity ingestion, and troubleshooting are in [DEVELOPMENT.md](DEVELOPMENT.md).

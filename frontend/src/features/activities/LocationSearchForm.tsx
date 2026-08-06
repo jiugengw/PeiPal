@@ -1,9 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { fieldClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/features/activities/activityStyles'
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  fieldClass,
+  labelClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from "@/features/activities/activityStyles";
 
 interface LocationSearchFormProps {
-  location: string
-  onSearch: (location: string) => void
+  location: string;
+  onSearch: (location: string) => void;
 }
 
 /**
@@ -12,23 +17,29 @@ interface LocationSearchFormProps {
  * with any other way the location filter can change (for example, clearing it from
  * the empty state).
  */
-export function LocationSearchForm({ location, onSearch }: LocationSearchFormProps) {
-  const [value, setValue] = useState(location)
+export function LocationSearchForm({
+  location,
+  onSearch,
+}: LocationSearchFormProps) {
+  const [value, setValue] = useState(location);
 
-  useEffect(() => setValue(location), [location])
+  useEffect(() => setValue(location), [location]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    onSearch(value.trim())
+    event.preventDefault();
+    onSearch(value.trim());
   }
 
   function clear() {
-    setValue('')
-    onSearch('')
+    setValue("");
+    onSearch("");
   }
 
   return (
-    <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={submit}>
+    <form
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      onSubmit={submit}
+    >
       <label className={`${labelClass} flex-1`}>
         Search by neighborhood or venue
         <input
@@ -41,13 +52,19 @@ export function LocationSearchForm({ location, onSearch }: LocationSearchFormPro
         />
       </label>
       <div className="flex gap-3">
-        <button className={primaryButtonClass} type="submit">Search</button>
+        <button className={primaryButtonClass} type="submit">
+          Search
+        </button>
         {location ? (
-          <button className={secondaryButtonClass} onClick={clear} type="button">
+          <button
+            className={secondaryButtonClass}
+            onClick={clear}
+            type="button"
+          >
             Clear
           </button>
         ) : null}
       </div>
     </form>
-  )
+  );
 }

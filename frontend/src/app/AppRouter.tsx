@@ -1,9 +1,9 @@
-import { RouterProvider } from '@tanstack/react-router'
-import { router } from '@/app/router'
-import { useAuthSession } from '@/features/auth/AuthSessionContext'
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "@/app/router";
+import { useAuthSession } from "@/features/auth/AuthSessionContext";
 
 export function AppRouter() {
-  const auth = useAuthSession()
+  const auth = useAuthSession();
 
   if (auth.isLoading) {
     return (
@@ -12,8 +12,8 @@ export function AppRouter() {
           Checking your account…
         </p>
       </main>
-    )
+    );
   }
 
-  return <RouterProvider router={router} context={{ auth }} />
+  return <RouterProvider router={router} context={{ auth }} />;
 }

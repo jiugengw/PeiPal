@@ -1,9 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { PageIntro } from '@/components/PageIntro'
+import { createFileRoute } from "@tanstack/react-router";
+import { PageIntro } from "@/components/PageIntro";
 
-export const Route = createFileRoute('/_authenticated/family')({
+export const Route = createFileRoute("/_authenticated/family")({
   component: FamilyPage,
-})
+});
 
 function FamilyPage() {
   return (
@@ -15,5 +15,5 @@ function FamilyPage() {
         No plan is waiting yet. Nothing is shared until the older adult chooses.
       </p>
     </PageIntro>
-  )
+  );
 }

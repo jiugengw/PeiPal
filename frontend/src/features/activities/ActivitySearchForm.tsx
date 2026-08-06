@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react'
-import { fieldClass, labelClass, secondaryButtonClass } from '@/features/activities/activityStyles'
+import { useEffect, useState } from "react";
+import {
+  fieldClass,
+  labelClass,
+  secondaryButtonClass,
+} from "@/features/activities/activityStyles";
 
 interface ActivitySearchFormProps {
-  query: string
-  onSearch: (query: string) => void
+  query: string;
+  onSearch: (query: string) => void;
 }
 
 /**
@@ -11,14 +15,17 @@ interface ActivitySearchFormProps {
  * live, client-side, against whatever activities are already loaded - see
  * `matchesActivityQuery` - so there is no submit step or network round trip.
  */
-export function ActivitySearchForm({ query, onSearch }: ActivitySearchFormProps) {
-  const [value, setValue] = useState(query)
+export function ActivitySearchForm({
+  query,
+  onSearch,
+}: ActivitySearchFormProps) {
+  const [value, setValue] = useState(query);
 
-  useEffect(() => setValue(query), [query])
+  useEffect(() => setValue(query), [query]);
 
   function change(nextValue: string) {
-    setValue(nextValue)
-    onSearch(nextValue)
+    setValue(nextValue);
+    onSearch(nextValue);
   }
 
   return (
@@ -35,10 +42,14 @@ export function ActivitySearchForm({ query, onSearch }: ActivitySearchFormProps)
         />
       </label>
       {query ? (
-        <button className={secondaryButtonClass} onClick={() => change('')} type="button">
+        <button
+          className={secondaryButtonClass}
+          onClick={() => change("")}
+          type="button"
+        >
           Clear
         </button>
       ) : null}
     </div>
-  )
+  );
 }

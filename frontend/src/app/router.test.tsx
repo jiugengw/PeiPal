@@ -1,43 +1,43 @@
-import type { Session } from '@supabase/supabase-js'
-import { QueryClientProvider } from '@tanstack/react-query'
+import type { Session } from "@supabase/supabase-js";
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
   createMemoryHistory,
   createRouter,
-} from '@tanstack/react-router'
-import { render, screen, waitFor } from '@testing-library/react'
-import { routeTree } from '@/routeTree.gen'
-import { AuthSessionContext } from '@/features/auth/AuthSessionContext'
-import { createQueryClient } from '@/lib/queryClient'
+} from "@tanstack/react-router";
+import { render, screen, waitFor } from "@testing-library/react";
+import { routeTree } from "@/routeTree.gen";
+import { AuthSessionContext } from "@/features/auth/AuthSessionContext";
+import { createQueryClient } from "@/lib/queryClient";
 
-const { useSetupProgress } = vi.hoisted(() => ({ useSetupProgress: vi.fn() }))
+const { useSetupProgress } = vi.hoisted(() => ({ useSetupProgress: vi.fn() }));
 
-vi.mock('@/features/setup/useSetupProgress', () => ({ useSetupProgress }))
+vi.mock("@/features/setup/useSetupProgress", () => ({ useSetupProgress }));
 
 function setupProgress(complete = false) {
   return {
-    household: complete ? { id: 1, name: 'Lim Family' } : undefined,
-    olderAdult: complete ? { id: 2, household_id: 1, name: 'Mary' } : undefined,
-    contacts: complete ? [{ id: 3, name: 'Anna' }] : [],
+    household: complete ? { id: 1, name: "Lim Family" } : undefined,
+    olderAdult: complete ? { id: 2, household_id: 1, name: "Mary" } : undefined,
+    contacts: complete ? [{ id: 3, name: "Anna" }] : [],
     isPending: false,
     isError: false,
     isComplete: complete,
     householdsQuery: { refetch: vi.fn() },
     olderAdultsQuery: { refetch: vi.fn() },
     trustedContactsQuery: { refetch: vi.fn() },
-  }
+  };
 }
 
 function renderRoute(path: string, authenticated = false) {
   const auth = {
     session: authenticated ? ({} as Session) : null,
     isLoading: false,
-  }
+  };
   const testRouter = createRouter({
     routeTree,
     context: { auth },
     history: createMemoryHistory({ initialEntries: [path] }),
-  })
+  });
 
   const view = render(
     <QueryClientProvider client={createQueryClient()}>
@@ -45,51 +45,57 @@ function renderRoute(path: string, authenticated = false) {
         <RouterProvider router={testRouter} context={{ auth }} />
       </AuthSessionContext.Provider>
     </QueryClientProvider>,
-  )
-  return { router: testRouter, view }
+  );
+  return { router: testRouter, view };
 }
 
-describe('application routes', () => {
-  beforeEach(() => useSetupProgress.mockReturnValue(setupProgress()))
+describe("application routes", () => {
+  beforeEach(() => useSetupProgress.mockReturnValue(setupProgress()));
 
-  it('redirects an incomplete account to setup', async () => {
-    const { router } = renderRoute('/', true)
-    await waitFor(() => expect(router.state.location.pathname).toBe('/setup'))
-    expect(await screen.findByRole('heading', { name: /who are we setting this up for/i })).toBeVisible()
-  })
-
-  it('redirects a complete account to discovery', async () => {
-    useSetupProgress.mockReturnValue(setupProgress(true))
-    const { router } = renderRoute('/', true)
-    await waitFor(() => expect(router.state.location.pathname).toBe('/discover'))
-  })
-
-  it('renders a helpful not-found page for an authenticated user', async () => {
-    renderRoute('/missing', true)
+  it("redirects an incomplete account to setup", async () => {
+    const { router } = renderRoute("/", true);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
     expect(
-      await screen.findByRole('heading', {
+      await screen.findByRole("heading", {
+        name: /who are we setting this up for/i,
+      }),
+    ).toBeVisible();
+  });
+
+  it("redirects a complete account to discovery", async () => {
+    useSetupProgress.mockReturnValue(setupProgress(true));
+    const { router } = renderRoute("/", true);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/discover"),
+    );
+  });
+
+  it("renders a helpful not-found page for an authenticated user", async () => {
+    renderRoute("/missing", true);
+    expect(
+      await screen.findByRole("heading", {
         name: /we could not find that page/i,
       }),
-    ).toBeVisible()
-  })
+    ).toBeVisible();
+  });
 
-  it('renders authentication outside the main app shell', async () => {
-    renderRoute('/auth')
+  it("renders authentication outside the main app shell", async () => {
+    renderRoute("/auth");
     expect(
-      await screen.findByRole('heading', { name: /welcome back/i }),
-    ).toBeVisible()
+      await screen.findByRole("heading", { name: /welcome back/i }),
+    ).toBeVisible();
     expect(
-      screen.queryByRole('navigation', { name: /primary navigation/i }),
-    ).not.toBeInTheDocument()
-  })
+      screen.queryByRole("navigation", { name: /primary navigation/i }),
+    ).not.toBeInTheDocument();
+  });
 
-  it('redirects signed-out visitors away from protected pages', async () => {
-    renderRoute('/family')
+  it("redirects signed-out visitors away from protected pages", async () => {
+    renderRoute("/family");
     expect(
-      await screen.findByRole('heading', { name: /welcome back/i }),
-    ).toBeVisible()
+      await screen.findByRole("heading", { name: /welcome back/i }),
+    ).toBeVisible();
     expect(
-      screen.queryByRole('navigation', { name: /primary navigation/i }),
-    ).not.toBeInTheDocument()
-  })
-})
+      screen.queryByRole("navigation", { name: /primary navigation/i }),
+    ).not.toBeInTheDocument();
+  });
+});

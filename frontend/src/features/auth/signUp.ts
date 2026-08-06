@@ -1,17 +1,21 @@
-import { getSupabaseClient } from '@/lib/supabase'
+import { getSupabaseClient } from "@/lib/supabase";
 
 export interface SignUpInput {
-  fullName: string
-  email: string
-  password: string
+  fullName: string;
+  email: string;
+  password: string;
 }
 
 export interface SignUpResult {
-  confirmationRequired: boolean
+  confirmationRequired: boolean;
 }
 
-export async function signUp({ fullName, email, password }: SignUpInput): Promise<SignUpResult> {
-  const supabase = await getSupabaseClient()
+export async function signUp({
+  fullName,
+  email,
+  password,
+}: SignUpInput): Promise<SignUpResult> {
+  const supabase = await getSupabaseClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -19,8 +23,8 @@ export async function signUp({ fullName, email, password }: SignUpInput): Promis
       data: { full_name: fullName },
       emailRedirectTo: `${window.location.origin}/auth`,
     },
-  })
+  });
 
-  if (error) throw error
-  return { confirmationRequired: data.session === null }
+  if (error) throw error;
+  return { confirmationRequired: data.session === null };
 }

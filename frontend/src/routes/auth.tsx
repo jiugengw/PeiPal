@@ -1,52 +1,52 @@
-import { useEffect } from 'react'
+import { useEffect } from "react";
 import {
   createFileRoute,
   redirect,
   useNavigate,
   useRouter,
-} from '@tanstack/react-router'
-import { TextAnimate } from '@/components/ui/text-animate'
-import { AuthForm } from '@/features/auth/AuthForm'
-import { useAuthSession } from '@/features/auth/AuthSessionContext'
+} from "@tanstack/react-router";
+import { TextAnimate } from "@/components/ui/text-animate";
+import { AuthForm } from "@/features/auth/AuthForm";
+import { useAuthSession } from "@/features/auth/AuthSessionContext";
 
-export const Route = createFileRoute('/auth')({
+export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
-    redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   beforeLoad: ({ context, search }) => {
-    if (!context.auth.session) return
+    if (!context.auth.session) return;
 
     const destination =
-      search.redirect?.startsWith('/') && !search.redirect.startsWith('/auth')
+      search.redirect?.startsWith("/") && !search.redirect.startsWith("/auth")
         ? search.redirect
-        : '/setup'
+        : "/setup";
 
-    throw redirect({ href: destination, replace: true })
+    throw redirect({ href: destination, replace: true });
   },
   component: AuthPage,
-})
+});
 
 function AuthPage() {
-  const navigate = useNavigate()
-  const router = useRouter()
-  const search = Route.useSearch()
-  const { session } = useAuthSession()
+  const navigate = useNavigate();
+  const router = useRouter();
+  const search = Route.useSearch();
+  const { session } = useAuthSession();
 
   useEffect(() => {
-    if (!session) return
+    if (!session) return;
 
-    const requestedPath = search.redirect
+    const requestedPath = search.redirect;
     if (
-      typeof requestedPath === 'string' &&
-      requestedPath.startsWith('/') &&
-      !requestedPath.startsWith('/auth')
+      typeof requestedPath === "string" &&
+      requestedPath.startsWith("/") &&
+      !requestedPath.startsWith("/auth")
     ) {
-      router.history.replace(requestedPath)
-      return
+      router.history.replace(requestedPath);
+      return;
     }
 
-    void navigate({ to: '/setup', replace: true })
-  }, [navigate, router.history, search.redirect, session])
+    void navigate({ to: "/setup", replace: true });
+  }, [navigate, router.history, search.redirect, session]);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground">
@@ -85,5 +85,5 @@ function AuthPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

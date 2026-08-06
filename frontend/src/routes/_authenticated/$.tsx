@@ -1,9 +1,9 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { PageIntro } from '@/components/PageIntro'
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { PageIntro } from "@/components/PageIntro";
 
-export const Route = createFileRoute('/_authenticated/$')({
+export const Route = createFileRoute("/_authenticated/$")({
   component: NotFoundPage,
-})
+});
 
 function NotFoundPage() {
   return (
@@ -18,5 +18,5 @@ function NotFoundPage() {
         Return home
       </Link>
     </PageIntro>
-  )
+  );
 }

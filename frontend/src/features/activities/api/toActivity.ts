@@ -1,12 +1,12 @@
-import type { components } from '@/generated/api'
-import type { Activity } from '@/features/activities/types'
+import type { components } from "@/generated/api";
+import type { Activity } from "@/features/activities/types";
 
-type ActivityResponse = components['schemas']['ActivityResponse']
+type ActivityResponse = components["schemas"]["ActivityResponse"];
 
 function parseDate(value?: string | null): Date | null {
-  if (!value) return null
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 /**
@@ -25,11 +25,11 @@ export function toActivity(response: ActivityResponse): Activity {
     cost: response.cost ?? null,
     currency: response.currency,
     priceRemarks: response.price_remarks ?? null,
-    description: response.description ?? '',
+    description: response.description ?? "",
     tags: response.tags ?? [],
     mobilityNotes: response.mobility_notes ?? null,
     slotsAvailability: response.slots_availability ?? null,
     infoLink: response.info_link ?? null,
     signupLink: response.signup_link ?? null,
-  }
+  };
 }

@@ -4,1343 +4,1582 @@
  */
 
 export interface paths {
-  "/api/households": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/voice/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a browser voice session
+         * @description Create a short-lived OpenAI Realtime credential for the signed-in browser. The permanent OpenAI API key is never returned.
+         */
+        post: operations["create_voice_session_api_voice_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List my households */
-    get: operations["list_households_api_households_get"];
-    put?: never;
-    /** Create a household */
-    post: operations["create_household_api_households_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/households/{household_id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/households": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my households */
+        get: operations["list_households_api_households_get"];
+        put?: never;
+        /** Create a household */
+        post: operations["create_household_api_households_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get a household */
-    get: operations["get_household_api_households__household_id__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Update a household */
-    patch: operations["update_household_api_households__household_id__patch"];
-    trace?: never;
-  };
-  "/api/older-adults": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/households/{household_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a household */
+        get: operations["get_household_api_households__household_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a household */
+        patch: operations["update_household_api_households__household_id__patch"];
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Create an older-adult profile */
-    post: operations["create_older_adult_api_older_adults_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/households/{household_id}/older-adults": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/older-adults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an older-adult profile */
+        post: operations["create_older_adult_api_older_adults_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List household older-adult profiles */
-    get: operations["list_older_adults_api_households__household_id__older_adults_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/older-adults/{older_adult_id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/households/{household_id}/older-adults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List household older-adult profiles */
+        get: operations["list_older_adults_api_households__household_id__older_adults_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get an older-adult profile */
-    get: operations["get_older_adult_api_older_adults__older_adult_id__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Update an older-adult profile */
-    patch: operations["update_older_adult_api_older_adults__older_adult_id__patch"];
-    trace?: never;
-  };
-  "/api/older-adults/{older_adult_id}/trusted-contacts": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/older-adults/{older_adult_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an older-adult profile */
+        get: operations["get_older_adult_api_older_adults__older_adult_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update an older-adult profile */
+        patch: operations["update_older_adult_api_older_adults__older_adult_id__patch"];
+        trace?: never;
     };
-    /** List trusted contacts */
-    get: operations["list_trusted_contacts_api_older_adults__older_adult_id__trusted_contacts_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/trusted-contacts": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/older-adults/{older_adult_id}/trusted-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List trusted contacts */
+        get: operations["list_trusted_contacts_api_older_adults__older_adult_id__trusted_contacts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Add a trusted contact */
-    post: operations["create_trusted_contact_api_trusted_contacts_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/trusted-contacts/{contact_id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/trusted-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a trusted contact */
+        post: operations["create_trusted_contact_api_trusted_contacts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post?: never;
-    /** Remove a trusted contact */
-    delete: operations["delete_trusted_contact_api_trusted_contacts__contact_id__delete"];
-    options?: never;
-    head?: never;
-    /** Update a trusted contact */
-    patch: operations["update_trusted_contact_api_trusted_contacts__contact_id__patch"];
-    trace?: never;
-  };
-  "/api/plans": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/trusted-contacts/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a trusted contact */
+        delete: operations["delete_trusted_contact_api_trusted_contacts__contact_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update a trusted contact */
+        patch: operations["update_trusted_contact_api_trusted_contacts__contact_id__patch"];
+        trace?: never;
     };
-    /** List household plans */
-    get: operations["list_plans_api_plans_get"];
-    put?: never;
-    /** Create a plan */
-    post: operations["create_plan_api_plans_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/plans/{plan_id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List household plans */
+        get: operations["list_plans_api_plans_get"];
+        put?: never;
+        /** Create a plan */
+        post: operations["create_plan_api_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get a plan */
-    get: operations["get_plan_api_plans__plan_id__get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /**
-     * Update a plan status
-     * @description Use this resource update for the plan lifecycle. Valid transitions are draft → awaiting_approval → shared for family approval, or cancellation from any active state. Direct-sharing profiles create plans as shared. Sharing requires the household owner.
-     */
-    patch: operations["update_plan_api_plans__plan_id__patch"];
-    trace?: never;
-  };
-  "/api/plans/{plan_id}/support-offers": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a plan */
+        get: operations["get_plan_api_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a plan status
+         * @description Use this resource update for the plan lifecycle. Valid transitions are draft → awaiting_approval → shared for family approval, or cancellation from any active state. Direct-sharing profiles create plans as shared. Sharing requires the household owner.
+         */
+        patch: operations["update_plan_api_plans__plan_id__patch"];
+        trace?: never;
     };
-    /** List support offers */
-    get: operations["list_support_offers_api_plans__plan_id__support_offers_get"];
-    put?: never;
-    /** Offer support for a shared plan */
-    post: operations["create_support_offer_api_plans__plan_id__support_offers_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/support-offers/{offer_id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/plans/{plan_id}/support-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List support offers */
+        get: operations["list_support_offers_api_plans__plan_id__support_offers_get"];
+        put?: never;
+        /** Offer support for a shared plan */
+        post: operations["create_support_offer_api_plans__plan_id__support_offers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post?: never;
-    /** Withdraw a support offer */
-    delete: operations["withdraw_support_offer_api_support_offers__offer_id__delete"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/activities": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/support-offers/{offer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Withdraw a support offer */
+        delete: operations["withdraw_support_offer_api_support_offers__offer_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List active activities */
-    get: operations["list_activities_api_activities_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/health": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/plans/{plan_id}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List plan notifications */
+        get: operations["list_plan_notifications_api_plans__plan_id__notifications_get"];
+        put?: never;
+        /**
+         * Send plan notifications
+         * @description Send one email to each selected trusted contact for a shared plan. Successful recipients are not sent again if this request is retried; failed recipients can be retried.
+         */
+        post: operations["send_plan_notifications_api_plans__plan_id__notifications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Check API health */
-    get: operations["health_health_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/api/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active activities */
+        get: operations["list_activities_api_activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/activities/{activity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an activity
+         * @description Load an activity referenced by an existing plan, including an expired activity.
+         */
+        get: operations["get_activity_api_activities__activity_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check API health */
+        get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** ActivityListResponse */
-    ActivityListResponse: {
-      /** Activities */
-      activities: components["schemas"]["ActivityResponse"][];
+    schemas: {
+        /** ActivityListResponse */
+        ActivityListResponse: {
+            /** Activities */
+            activities: components["schemas"]["ActivityResponse"][];
+        };
+        /** ActivityResponse */
+        ActivityResponse: {
+            /** Id */
+            id: number;
+            /** Dedupe Key */
+            dedupe_key: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Location */
+            location: string;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /** End At */
+            end_at?: string | null;
+            /** Cost */
+            cost?: number | null;
+            /** Currency */
+            currency: string;
+            /** Price Remarks */
+            price_remarks?: string | null;
+            /** Slots Availability */
+            slots_availability?: string | null;
+            /** Info Link */
+            info_link: string;
+            /** Signup Link */
+            signup_link?: string | null;
+            /** Mobility Notes */
+            mobility_notes?: string | null;
+            /** Intensity */
+            intensity?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Suitability Score */
+            suitability_score?: number | null;
+            /** Engagement Score */
+            engagement_score?: number | null;
+            /** Total Score */
+            total_score?: number | null;
+            /** Status */
+            status: string;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /**
+             * Last Checked At
+             * Format: date-time
+             */
+            last_checked_at: string;
+            /** Content Hash */
+            content_hash?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HouseholdCreate
+         * @example {
+         *       "name": "Lim Family"
+         *     }
+         */
+        HouseholdCreate: {
+            /** Name */
+            name: string;
+        };
+        /** HouseholdListResponse */
+        HouseholdListResponse: {
+            /** Households */
+            households: components["schemas"]["HouseholdResponse"][];
+        };
+        /**
+         * HouseholdResponse
+         * @example {
+         *       "name": "Lim Family"
+         *     }
+         */
+        HouseholdResponse: {
+            /** Name */
+            name: string;
+            /** Id */
+            id: number;
+            /** Created By */
+            created_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** HouseholdUpdate */
+        HouseholdUpdate: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * OlderAdultCreate
+         * @example {
+         *       "age": 75,
+         *       "household_id": 1,
+         *       "language": "English",
+         *       "mobility_notes": "Prefers seated activities",
+         *       "name": "Mary Lim",
+         *       "preferred_name": "Mary",
+         *       "sharing_mode": "family_approval",
+         *       "transport_notes": "Family can help arrange transport"
+         *     }
+         */
+        OlderAdultCreate: {
+            /** Household Id */
+            household_id: number;
+            /** Name */
+            name: string;
+            /** Preferred Name */
+            preferred_name?: string | null;
+            /** Age */
+            age?: number | null;
+            /** Language */
+            language?: string | null;
+            /** Mobility Notes */
+            mobility_notes?: string | null;
+            /** Transport Notes */
+            transport_notes?: string | null;
+            /**
+             * Sharing Mode
+             * @default family_approval
+             * @enum {string}
+             */
+            sharing_mode: "direct" | "family_approval";
+        };
+        /** OlderAdultListResponse */
+        OlderAdultListResponse: {
+            /** Older Adults */
+            older_adults: components["schemas"]["OlderAdultResponse"][];
+        };
+        /**
+         * OlderAdultResponse
+         * @example {
+         *       "age": 75,
+         *       "household_id": 1,
+         *       "language": "English",
+         *       "mobility_notes": "Prefers seated activities",
+         *       "name": "Mary Lim",
+         *       "preferred_name": "Mary",
+         *       "sharing_mode": "family_approval",
+         *       "transport_notes": "Family can help arrange transport"
+         *     }
+         */
+        OlderAdultResponse: {
+            /** Household Id */
+            household_id: number;
+            /** Name */
+            name: string;
+            /** Preferred Name */
+            preferred_name?: string | null;
+            /** Age */
+            age?: number | null;
+            /** Language */
+            language?: string | null;
+            /** Mobility Notes */
+            mobility_notes?: string | null;
+            /** Transport Notes */
+            transport_notes?: string | null;
+            /**
+             * Sharing Mode
+             * @default family_approval
+             * @enum {string}
+             */
+            sharing_mode: "direct" | "family_approval";
+            /** Id */
+            id: number;
+            /** Created By */
+            created_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** OlderAdultUpdate */
+        OlderAdultUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Preferred Name */
+            preferred_name?: string | null;
+            /** Age */
+            age?: number | null;
+            /** Language */
+            language?: string | null;
+            /** Mobility Notes */
+            mobility_notes?: string | null;
+            /** Transport Notes */
+            transport_notes?: string | null;
+            /** Sharing Mode */
+            sharing_mode?: ("direct" | "family_approval") | null;
+        };
+        /**
+         * PlanCreate
+         * @example {
+         *       "activity_id": 1,
+         *       "household_id": 1,
+         *       "older_adult_id": 1
+         *     }
+         */
+        PlanCreate: {
+            /** Household Id */
+            household_id: number;
+            /** Older Adult Id */
+            older_adult_id: number;
+            /** Activity Id */
+            activity_id: number;
+        };
+        /** PlanListResponse */
+        PlanListResponse: {
+            /** Plans */
+            plans: components["schemas"]["PlanResponse"][];
+        };
+        /**
+         * PlanNotificationCreate
+         * @example {
+         *       "contact_ids": [
+         *         1,
+         *         2
+         *       ]
+         *     }
+         */
+        PlanNotificationCreate: {
+            /** Contact Ids */
+            contact_ids: number[];
+        };
+        /** PlanResponse */
+        PlanResponse: {
+            /** Id */
+            id: number;
+            /** Household Id */
+            household_id: number;
+            /** Older Adult Id */
+            older_adult_id: number;
+            /** Activity Id */
+            activity_id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "awaiting_approval" | "shared" | "cancelled";
+            /** Created By */
+            created_by: string;
+            /** Approved By */
+            approved_by?: string | null;
+            /** Approved At */
+            approved_at?: string | null;
+            /** Shared At */
+            shared_at?: string | null;
+            /** Cancelled At */
+            cancelled_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * PlanUpdate
+         * @example {
+         *       "status": "awaiting_approval"
+         *     }
+         * @example {
+         *       "status": "shared"
+         *     }
+         * @example {
+         *       "status": "cancelled"
+         *     }
+         */
+        PlanUpdate: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "awaiting_approval" | "shared" | "cancelled";
+        };
+        /**
+         * SupportOfferCreate
+         * @example {
+         *       "note": "I can drive Mary there.",
+         *       "support_type": "transport"
+         *     }
+         */
+        SupportOfferCreate: {
+            /**
+             * Support Type
+             * @enum {string}
+             */
+            support_type: "join" | "remind" | "transport" | "alternative" | "booking" | "encourage";
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * TrustedContactCreate
+         * @example {
+         *       "email": "anna@example.com",
+         *       "name": "Anna Lim",
+         *       "older_adult_id": 1,
+         *       "phone": "+65 91234567",
+         *       "relationship": "Daughter"
+         *     }
+         */
+        TrustedContactCreate: {
+            /** Older Adult Id */
+            older_adult_id: number;
+            /** Name */
+            name: string;
+            /** Relationship */
+            relationship: string;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** TrustedContactListResponse */
+        TrustedContactListResponse: {
+            /** Trusted Contacts */
+            trusted_contacts: components["schemas"]["TrustedContactResponse"][];
+        };
+        /**
+         * TrustedContactResponse
+         * @example {
+         *       "email": "anna@example.com",
+         *       "name": "Anna Lim",
+         *       "older_adult_id": 1,
+         *       "phone": "+65 91234567",
+         *       "relationship": "Daughter"
+         *     }
+         */
+        TrustedContactResponse: {
+            /** Older Adult Id */
+            older_adult_id: number;
+            /** Name */
+            name: string;
+            /** Relationship */
+            relationship: string;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Id */
+            id: number;
+            /** Consent Status */
+            consent_status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** TrustedContactUpdate */
+        TrustedContactUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Relationship */
+            relationship?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
     };
-    /** ActivityResponse */
-    ActivityResponse: {
-      /** Id */
-      id: number;
-      /** Dedupe Key */
-      dedupe_key: string;
-      /** Name */
-      name: string;
-      /** Description */
-      description?: string | null;
-      /** Location */
-      location: string;
-      /**
-       * Start At
-       * Format: date-time
-       */
-      start_at: string;
-      /** End At */
-      end_at?: string | null;
-      /** Cost */
-      cost?: number | null;
-      /** Currency */
-      currency: string;
-      /** Price Remarks */
-      price_remarks?: string | null;
-      /** Slots Availability */
-      slots_availability?: string | null;
-      /** Info Link */
-      info_link: string;
-      /** Signup Link */
-      signup_link?: string | null;
-      /** Mobility Notes */
-      mobility_notes?: string | null;
-      /** Intensity */
-      intensity?: string | null;
-      /** Tags */
-      tags?: string[] | null;
-      /** Suitability Score */
-      suitability_score?: number | null;
-      /** Engagement Score */
-      engagement_score?: number | null;
-      /** Total Score */
-      total_score?: number | null;
-      /** Status */
-      status: string;
-      /**
-       * First Seen At
-       * Format: date-time
-       */
-      first_seen_at: string;
-      /**
-       * Last Seen At
-       * Format: date-time
-       */
-      last_seen_at: string;
-      /**
-       * Last Checked At
-       * Format: date-time
-       */
-      last_checked_at: string;
-      /** Content Hash */
-      content_hash?: string | null;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-      /**
-       * Updated At
-       * Format: date-time
-       */
-      updated_at: string;
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components["schemas"]["ValidationError"][];
-    };
-    /**
-     * HouseholdCreate
-     * @example {
-     *       "name": "Lim Family"
-     *     }
-     */
-    HouseholdCreate: {
-      /** Name */
-      name: string;
-    };
-    /** HouseholdListResponse */
-    HouseholdListResponse: {
-      /** Households */
-      households: components["schemas"]["HouseholdResponse"][];
-    };
-    /**
-     * HouseholdResponse
-     * @example {
-     *       "name": "Lim Family"
-     *     }
-     */
-    HouseholdResponse: {
-      /** Name */
-      name: string;
-      /** Id */
-      id: number;
-      /** Created By */
-      created_by: string;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** HouseholdUpdate */
-    HouseholdUpdate: {
-      /** Name */
-      name: string;
-    };
-    /**
-     * OlderAdultCreate
-     * @example {
-     *       "age": 75,
-     *       "household_id": 1,
-     *       "language": "English",
-     *       "mobility_notes": "Prefers seated activities",
-     *       "name": "Mary Lim",
-     *       "preferred_name": "Mary",
-     *       "sharing_mode": "family_approval",
-     *       "transport_notes": "Family can help arrange transport"
-     *     }
-     */
-    OlderAdultCreate: {
-      /** Household Id */
-      household_id: number;
-      /** Name */
-      name: string;
-      /** Preferred Name */
-      preferred_name?: string | null;
-      /** Age */
-      age?: number | null;
-      /** Language */
-      language?: string | null;
-      /** Mobility Notes */
-      mobility_notes?: string | null;
-      /** Transport Notes */
-      transport_notes?: string | null;
-      /**
-       * Sharing Mode
-       * @default family_approval
-       * @enum {string}
-       */
-      sharing_mode: "direct" | "family_approval";
-    };
-    /** OlderAdultListResponse */
-    OlderAdultListResponse: {
-      /** Older Adults */
-      older_adults: components["schemas"]["OlderAdultResponse"][];
-    };
-    /**
-     * OlderAdultResponse
-     * @example {
-     *       "age": 75,
-     *       "household_id": 1,
-     *       "language": "English",
-     *       "mobility_notes": "Prefers seated activities",
-     *       "name": "Mary Lim",
-     *       "preferred_name": "Mary",
-     *       "sharing_mode": "family_approval",
-     *       "transport_notes": "Family can help arrange transport"
-     *     }
-     */
-    OlderAdultResponse: {
-      /** Household Id */
-      household_id: number;
-      /** Name */
-      name: string;
-      /** Preferred Name */
-      preferred_name?: string | null;
-      /** Age */
-      age?: number | null;
-      /** Language */
-      language?: string | null;
-      /** Mobility Notes */
-      mobility_notes?: string | null;
-      /** Transport Notes */
-      transport_notes?: string | null;
-      /**
-       * Sharing Mode
-       * @default family_approval
-       * @enum {string}
-       */
-      sharing_mode: "direct" | "family_approval";
-      /** Id */
-      id: number;
-      /** Created By */
-      created_by: string;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** OlderAdultUpdate */
-    OlderAdultUpdate: {
-      /** Name */
-      name?: string | null;
-      /** Preferred Name */
-      preferred_name?: string | null;
-      /** Age */
-      age?: number | null;
-      /** Language */
-      language?: string | null;
-      /** Mobility Notes */
-      mobility_notes?: string | null;
-      /** Transport Notes */
-      transport_notes?: string | null;
-      /** Sharing Mode */
-      sharing_mode?: ("direct" | "family_approval") | null;
-    };
-    /**
-     * PlanCreate
-     * @example {
-     *       "activity_id": 1,
-     *       "household_id": 1,
-     *       "older_adult_id": 1
-     *     }
-     */
-    PlanCreate: {
-      /** Household Id */
-      household_id: number;
-      /** Older Adult Id */
-      older_adult_id: number;
-      /** Activity Id */
-      activity_id: number;
-    };
-    /**
-     * PlanUpdate
-     * @example {
-     *       "status": "awaiting_approval"
-     *     }
-     * @example {
-     *       "status": "shared"
-     *     }
-     * @example {
-     *       "status": "cancelled"
-     *     }
-     */
-    PlanUpdate: {
-      /**
-       * Status
-       * @enum {string}
-       */
-      status: "awaiting_approval" | "shared" | "cancelled";
-    };
-    /**
-     * SupportOfferCreate
-     * @example {
-     *       "note": "I can drive Mary there.",
-     *       "support_type": "transport"
-     *     }
-     */
-    SupportOfferCreate: {
-      /**
-       * Support Type
-       * @enum {string}
-       */
-      support_type:
-        | "join"
-        | "remind"
-        | "transport"
-        | "alternative"
-        | "booking"
-        | "encourage";
-      /** Note */
-      note?: string | null;
-    };
-    /**
-     * TrustedContactCreate
-     * @example {
-     *       "email": "anna@example.com",
-     *       "name": "Anna Lim",
-     *       "older_adult_id": 1,
-     *       "phone": "+65 91234567",
-     *       "relationship": "Daughter"
-     *     }
-     */
-    TrustedContactCreate: {
-      /** Older Adult Id */
-      older_adult_id: number;
-      /** Name */
-      name: string;
-      /** Relationship */
-      relationship: string;
-      /** Email */
-      email?: string | null;
-      /** Phone */
-      phone?: string | null;
-    };
-    /** TrustedContactListResponse */
-    TrustedContactListResponse: {
-      /** Trusted Contacts */
-      trusted_contacts: components["schemas"]["TrustedContactResponse"][];
-    };
-    /**
-     * TrustedContactResponse
-     * @example {
-     *       "email": "anna@example.com",
-     *       "name": "Anna Lim",
-     *       "older_adult_id": 1,
-     *       "phone": "+65 91234567",
-     *       "relationship": "Daughter"
-     *     }
-     */
-    TrustedContactResponse: {
-      /** Older Adult Id */
-      older_adult_id: number;
-      /** Name */
-      name: string;
-      /** Relationship */
-      relationship: string;
-      /** Email */
-      email?: string | null;
-      /** Phone */
-      phone?: string | null;
-      /** Id */
-      id: number;
-      /** Consent Status */
-      consent_status: string;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** TrustedContactUpdate */
-    TrustedContactUpdate: {
-      /** Name */
-      name?: string | null;
-      /** Relationship */
-      relationship?: string | null;
-      /** Email */
-      email?: string | null;
-      /** Phone */
-      phone?: string | null;
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-      /** Input */
-      input?: unknown;
-      /** Context */
-      ctx?: Record<string, never>;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  list_households_api_households_get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path?: never;
-      cookie?: never;
+    create_voice_session_api_voice_session_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    list_households_api_households_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["HouseholdListResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  create_household_api_households_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path?: never;
-      cookie?: never;
+    create_household_api_households_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HouseholdCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["HouseholdCreate"];
-      };
+    get_household_api_households__household_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    update_household_api_households__household_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["HouseholdResponse"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HouseholdUpdate"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseholdResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  get_household_api_households__household_id__get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        household_id: number;
-      };
-      cookie?: never;
+    create_older_adult_api_older_adults_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OlderAdultCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OlderAdultResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    list_older_adults_api_households__household_id__older_adults_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                household_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["HouseholdResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OlderAdultListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  update_household_api_households__household_id__patch: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        household_id: number;
-      };
-      cookie?: never;
+    get_older_adult_api_older_adults__older_adult_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                older_adult_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OlderAdultResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["HouseholdUpdate"];
-      };
+    update_older_adult_api_older_adults__older_adult_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                older_adult_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OlderAdultUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OlderAdultResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    list_trusted_contacts_api_older_adults__older_adult_id__trusted_contacts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                older_adult_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["HouseholdResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  create_older_adult_api_older_adults_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path?: never;
-      cookie?: never;
+    create_trusted_contact_api_trusted_contacts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustedContactCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["OlderAdultCreate"];
-      };
+    delete_trusted_contact_api_trusted_contacts__contact_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                contact_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    update_trusted_contact_api_trusted_contacts__contact_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                contact_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["OlderAdultResponse"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustedContactUpdate"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  list_older_adults_api_households__household_id__older_adults_get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        household_id: number;
-      };
-      cookie?: never;
+    list_plans_api_plans_get: {
+        parameters: {
+            query: {
+                household_id: number;
+                status?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    create_plan_api_plans_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["OlderAdultListResponse"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanCreate"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  get_older_adult_api_older_adults__older_adult_id__get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        older_adult_id: number;
-      };
-      cookie?: never;
+    get_plan_api_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    update_plan_api_plans__plan_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["OlderAdultResponse"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanUpdate"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  update_older_adult_api_older_adults__older_adult_id__patch: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        older_adult_id: number;
-      };
-      cookie?: never;
+    list_support_offers_api_plans__plan_id__support_offers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["OlderAdultUpdate"];
-      };
+    create_support_offer_api_plans__plan_id__support_offers_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportOfferCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    withdraw_support_offer_api_support_offers__offer_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                offer_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["OlderAdultResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  list_trusted_contacts_api_older_adults__older_adult_id__trusted_contacts_get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        older_adult_id: number;
-      };
-      cookie?: never;
+    list_plan_notifications_api_plans__plan_id__notifications_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    send_plan_notifications_api_plans__plan_id__notifications_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["TrustedContactListResponse"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanNotificationCreate"];
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  create_trusted_contact_api_trusted_contacts_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path?: never;
-      cookie?: never;
+    list_activities_api_activities_get: {
+        parameters: {
+            query?: {
+                location?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["TrustedContactCreate"];
-      };
+    get_activity_api_activities__activity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    health_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["TrustedContactResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
     };
-  };
-  delete_trusted_contact_api_trusted_contacts__contact_id__delete: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        contact_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  update_trusted_contact_api_trusted_contacts__contact_id__patch: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        contact_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["TrustedContactUpdate"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["TrustedContactResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  list_plans_api_plans_get: {
-    parameters: {
-      query: {
-        household_id: number;
-        status?: string | null;
-      };
-      header?: {
-        authorization?: string | null;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  create_plan_api_plans_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["PlanCreate"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  get_plan_api_plans__plan_id__get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        plan_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  update_plan_api_plans__plan_id__patch: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        plan_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["PlanUpdate"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  list_support_offers_api_plans__plan_id__support_offers_get: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        plan_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  create_support_offer_api_plans__plan_id__support_offers_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        plan_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["SupportOfferCreate"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  withdraw_support_offer_api_support_offers__offer_id__delete: {
-    parameters: {
-      query?: never;
-      header?: {
-        authorization?: string | null;
-      };
-      path: {
-        offer_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  list_activities_api_activities_get: {
-    parameters: {
-      query?: {
-        location?: string | null;
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ActivityListResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  health_health_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: string;
-          };
-        };
-      };
-    };
-  };
 }

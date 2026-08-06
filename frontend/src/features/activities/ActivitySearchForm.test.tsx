@@ -6,7 +6,11 @@ describe("ActivitySearchForm", () => {
   it("reports each keystroke immediately, with no submit step", async () => {
     const user = userEvent.setup();
     const onSearch = vi.fn();
-    render(<ActivitySearchForm onSearch={onSearch} query="" />);
+    function Harness() {
+      const [query, setQuery] = useState("");
+      return <ActivitySearchForm onSearch={(value) => { onSearch(value); setQuery(value); }} query={query} />;
+    }
+    render(<Harness />);
 
     await user.type(
       screen.getByLabelText(/search by activity, neighborhood, or venue/i),
@@ -48,3 +52,4 @@ describe("ActivitySearchForm", () => {
     expect(screen.getByLabelText(/search by activity/i)).toHaveValue("");
   });
 });
+import { useState } from "react";

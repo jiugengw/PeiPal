@@ -617,7 +617,7 @@ Verify on desktop and mobile:
 5. `feat: build activity discovery` - completed
    - Activity query, filters, list/detail selection, empty states, and typed interaction.
 
-6. `feat: add plan workflow`
+6. `feat: add plan workflow` - completed
    - Plan creation, direct sharing, family approval, cancellation, and plan detail route.
 
 7. `feat: add notifications and family support`

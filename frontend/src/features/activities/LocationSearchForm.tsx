@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   fieldClass,
   labelClass,
@@ -22,8 +22,6 @@ export function LocationSearchForm({
   onSearch,
 }: LocationSearchFormProps) {
   const [value, setValue] = useState(location);
-
-  useEffect(() => setValue(location), [location]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

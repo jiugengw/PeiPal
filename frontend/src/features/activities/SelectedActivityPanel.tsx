@@ -10,12 +10,16 @@ import {
 
 interface SelectedActivityPanelProps {
   activity: Activity | null;
+  canMakePlan?: boolean;
   onClear: () => void;
+  onMakePlan?: () => void;
 }
 
 export function SelectedActivityPanel({
   activity,
+  canMakePlan = false,
   onClear,
+  onMakePlan,
 }: SelectedActivityPanelProps) {
   if (!activity) {
     return (
@@ -42,10 +46,7 @@ export function SelectedActivityPanel({
 
   return (
     <div className="rounded-2xl bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
-      <p className="text-sm font-extrabold tracking-[0.02em] text-foreground/70 uppercase">
-        Selected activity
-      </p>
-      <h2 className="mt-1 text-2xl font-bold text-foreground">
+      <h2 className="text-2xl font-bold text-foreground">
         {activity.title}
       </h2>
 
@@ -78,13 +79,14 @@ export function SelectedActivityPanel({
       <div className="mt-6 space-y-3">
         <button
           className={`${primaryButtonClass} w-full`}
-          disabled
+          disabled={!canMakePlan}
+          onClick={onMakePlan}
           type="button"
         >
           Make a plan
         </button>
         <p className="text-sm text-foreground">
-          Plan creation is coming in the next step. Nothing is sent yet.
+          Review the details before creating anything. No email is sent yet.
         </p>
         <button
           className={`${secondaryButtonClass} w-full`}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   activitiesQueryOptions,
@@ -9,56 +9,44 @@ import type { Activity } from "@/features/activities/types";
 import { LocationSearchForm } from "@/features/activities/LocationSearchForm";
 import { ActivityResultsList } from "@/features/activities/ActivityResultsList";
 import { SelectedActivityPanel } from "@/features/activities/SelectedActivityPanel";
+import { PlanConfirmationPanel } from "@/features/plans/PlanConfirmationPanel";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function ActivityDiscovery() {
-  const { olderAdult } = useSetupProgress();
+  const { household, olderAdult } = useSetupProgress();
   const [location, setLocation] = useState("");
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
   );
   const [unavailableNotice, setUnavailableNotice] = useState("");
+  const [isReviewingPlan, setIsReviewingPlan] = useState(false);
 
   const activitiesQuery = useQuery(
     activitiesQueryOptions({ location, limit: DEFAULT_ACTIVITY_RESULTS_LIMIT }),
   );
   const activities = (activitiesQuery.data?.activities ?? []).map(toActivity);
-
-  // Keep the selection honest: if a refreshed result set no longer contains the
-  // chosen activity, drop the selection and say so rather than letting someone
-  // continue toward a plan for something that is no longer there.
-  useEffect(() => {
-    if (
-      !selectedActivity ||
-      activitiesQuery.isPending ||
-      activitiesQuery.isError
-    )
-      return;
-
-    const rows = activitiesQuery.data?.activities ?? [];
-    const stillAvailable = rows.some(
-      (row) => row.dedupe_key === selectedActivity.dedupeKey,
-    );
-    if (!stillAvailable) {
-      setSelectedActivity(null);
-      setUnavailableNotice(
-        "That activity is no longer available. Choose another one below.",
-      );
-    }
-  }, [
-    activitiesQuery.data,
-    activitiesQuery.isError,
-    activitiesQuery.isPending,
-    selectedActivity,
-  ]);
+  const selectionUnavailable = Boolean(
+    selectedActivity &&
+      !activitiesQuery.isPending &&
+      !activitiesQuery.isError &&
+      !(activitiesQuery.data?.activities ?? []).some(
+        (row) => row.dedupe_key === selectedActivity.dedupeKey,
+      ),
+  );
+  const visibleSelection = selectionUnavailable ? null : selectedActivity;
+  const visibleUnavailableNotice = selectionUnavailable
+    ? "That activity is no longer available. Choose another one below."
+    : unavailableNotice;
 
   function selectActivity(activity: Activity) {
     setUnavailableNotice("");
     setSelectedActivity(activity);
+    setIsReviewingPlan(false);
   }
 
   function clearSelection() {
     setSelectedActivity(null);
+    setIsReviewingPlan(false);
   }
 
   function searchLocation(nextLocation: string) {
@@ -84,14 +72,18 @@ export function ActivityDiscovery() {
             </p>
           </header>
 
-          <LocationSearchForm location={location} onSearch={searchLocation} />
+          <LocationSearchForm
+            key={location}
+            location={location}
+            onSearch={searchLocation}
+          />
 
-          {unavailableNotice ? (
+          {visibleUnavailableNotice ? (
             <p
               className="mt-6 rounded-xl border border-input bg-background p-4 text-base font-bold text-foreground"
               role="alert"
             >
-              {unavailableNotice}
+              {visibleUnavailableNotice}
             </p>
           ) : null}
 
@@ -102,16 +94,33 @@ export function ActivityDiscovery() {
               onClearLocation={() => searchLocation("")}
               onSelect={selectActivity}
               query={activitiesQuery}
-              selectedDedupeKey={selectedActivity?.dedupeKey ?? null}
+              selectedDedupeKey={visibleSelection?.dedupeKey ?? null}
             />
           </div>
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
-          <SelectedActivityPanel
-            activity={selectedActivity}
-            onClear={clearSelection}
-          />
+          {isReviewingPlan && visibleSelection && household && olderAdult ? (
+            <PlanConfirmationPanel
+              activity={visibleSelection}
+              household={household}
+              olderAdult={olderAdult}
+              onBack={() => setIsReviewingPlan(false)}
+              onUnavailable={() => {
+                clearSelection();
+                setUnavailableNotice(
+                  "That activity is no longer available. Choose another one below.",
+                );
+              }}
+            />
+          ) : (
+            <SelectedActivityPanel
+              activity={visibleSelection}
+              canMakePlan={Boolean(household && olderAdult)}
+              onClear={clearSelection}
+              onMakePlan={() => setIsReviewingPlan(true)}
+            />
+          )}
         </aside>
       </div>
     </section>

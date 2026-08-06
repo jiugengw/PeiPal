@@ -6,6 +6,13 @@ import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { fetchClient } from "@/lib/fetchClient";
 import { createQueryClient } from "@/lib/queryClient";
 
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
+
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  useNavigate: () => navigate,
+}));
+
 vi.mock("@/features/setup/useSetupProgress", () => ({
   useSetupProgress: vi.fn(),
 }));
@@ -41,8 +48,23 @@ function renderPage() {
 
 describe("ActivityDiscovery", () => {
   beforeEach(() => {
+    navigate.mockReset();
     mockedProgress.mockReturnValue({
-      olderAdult: { preferred_name: "Mary" },
+      household: {
+        id: 1,
+        name: "Lim Family",
+        created_by: "user-1",
+        created_at: "2030-01-01T00:00:00Z",
+      },
+      olderAdult: {
+        id: 2,
+        household_id: 1,
+        name: "Mary Lim",
+        preferred_name: "Mary",
+        sharing_mode: "family_approval",
+        created_by: "user-1",
+        created_at: "2030-01-01T00:00:00Z",
+      },
     } as never);
   });
 
@@ -141,5 +163,62 @@ describe("ActivityDiscovery", () => {
     expect(
       screen.getByLabelText(/search by neighborhood or venue/i),
     ).toHaveValue("");
+  });
+
+  it("reviews the selected activity and creates a plan with its numeric database ID", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
+      data: { activities: [activityResponse({ id: 27 })] },
+      response: new Response(null, { status: 200 }),
+    } as never);
+    const post = vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
+      data: {
+        id: 9,
+        household_id: 1,
+        older_adult_id: 2,
+        activity_id: 27,
+        status: "draft",
+        created_by: "user-1",
+        created_at: "2030-01-01T00:00:00Z",
+        updated_at: "2030-01-01T00:00:00Z",
+      },
+      response: new Response(null, { status: 201 }),
+    } as never);
+
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: /choose this activity/i }));
+    await user.click(screen.getByRole("button", { name: /make a plan/i }));
+
+    expect(screen.getByRole("heading", { name: /review this plan/i })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /confirm and create plan/i }));
+
+    await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans", {
+      body: { household_id: 1, older_adult_id: 2, activity_id: 27 },
+    }));
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/plans/$planId",
+      params: { planId: "9" },
+    });
+  });
+
+  it("returns to discovery when the selected activity becomes unavailable during creation", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
+      data: { activities: [activityResponse()] },
+      response: new Response(null, { status: 200 }),
+    } as never);
+    vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
+      error: { detail: "Active activity not found." },
+      response: new Response(null, { status: 404 }),
+    } as never);
+
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: /choose this activity/i }));
+    await user.click(screen.getByRole("button", { name: /make a plan/i }));
+    await user.click(screen.getByRole("button", { name: /confirm and create plan/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/active activity not found/i);
+    await user.click(screen.getByRole("button", { name: /return to activities/i }));
+    expect(screen.getByText(/no activity chosen yet/i)).toBeVisible();
   });
 });

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   fieldClass,
   labelClass,
@@ -19,12 +18,7 @@ export function ActivitySearchForm({
   query,
   onSearch,
 }: ActivitySearchFormProps) {
-  const [value, setValue] = useState(query);
-
-  useEffect(() => setValue(query), [query]);
-
   function change(nextValue: string) {
-    setValue(nextValue);
     onSearch(nextValue);
   }
 
@@ -38,7 +32,7 @@ export function ActivitySearchForm({
           onChange={(event) => change(event.target.value)}
           placeholder="For example, Gentle Yoga or Bishan"
           type="search"
-          value={value}
+          value={query}
         />
       </label>
       {query ? (

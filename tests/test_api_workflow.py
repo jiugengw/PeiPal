@@ -24,6 +24,7 @@ client = TestClient(app)
         ("get", "/api/plans/1/support-offers"),
         ("post", "/api/plans/1/notifications"),
         ("get", "/api/plans/1/notifications"),
+        ("post", "/api/voice/session"),
     ],
 )
 def test_core_workflow_requires_authentication(method, path):

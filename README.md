@@ -57,9 +57,40 @@ credentials are loaded from `.env`; keep `SUPABASE_SERVICE_ROLE_KEY` on the
 server only. Set `CORS_ORIGINS` to the deployed website origin before hosting
 the API.
 
+#### API documentation
+
+FastAPI publishes interactive documentation automatically:
+
+```text
+http://127.0.0.1:8000/docs       Swagger UI
+http://127.0.0.1:8000/redoc      ReDoc
+http://127.0.0.1:8000/openapi.json  OpenAPI schema
+```
+
+The docs are grouped in the intended workflow order:
+
+1. **System** — health checks.
+2. **Activities** — find active activities.
+3. **Households** — create and manage a family household.
+4. **Older adults** — save practical profile details.
+5. **Trusted contacts** — manage people who can help.
+6. **Plans** — create and update a plan's lifecycle status.
+7. **Support offers** — offer or withdraw practical help.
+
+When adding a new endpoint, keep it in the matching tag group and provide a
+short `summary` in the route decorator. Use the workflow order above when
+adding new groups so the generated docs remain easy to follow.
+
 The static website requests saved activities from `/api/activities` when the
 backend is running. If the API is unavailable, it keeps the demo activities so
 the prototype remains usable offline.
+
+The authenticated API also supports the core planning workflow. A signed-in
+household member can create and retrieve household setup data, update the
+older-adult profile and trusted contacts, choose direct or family-approved
+sharing, update the plan status when needed, and add or withdraw support offers.
+Plans and support offers are stored in Supabase. The current API does not yet
+send notifications or connect these workflow endpoints to the React screens.
 
 ### React frontend
 

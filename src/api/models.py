@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -168,3 +169,15 @@ class ActivityResponse(BaseModel):
 
 class ActivityListResponse(BaseModel):
     activities: list[ActivityResponse]
+
+
+class HouseholdListResponse(BaseModel):
+    households: list[HouseholdResponse]
+
+
+class OlderAdultListResponse(BaseModel):
+    older_adults: list[OlderAdultResponse]
+
+
+class TrustedContactListResponse(BaseModel):
+    trusted_contacts: list[TrustedContactResponse]

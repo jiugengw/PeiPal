@@ -76,6 +76,7 @@ def test_plan_notification_requires_at_least_one_contact():
         ("/api/plans/{plan_id}/notifications", "post", "200", "NotificationDeliveryListResponse"),
         ("/api/plans/{plan_id}/notifications", "get", "200", "PlanNotificationListResponse"),
         ("/api/activities/{activity_id}", "get", "200", "ActivityResponse"),
+        ("/api/voice/session", "post", "200", "VoiceSessionResponse"),
     ],
 )
 def test_setup_routes_publish_typed_openapi_responses(path, method, status_code, schema_name):

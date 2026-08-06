@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -118,6 +118,12 @@ class PlanNotificationCreate(BaseModel):
     }]})
 
     contact_ids: list[int] = Field(min_length=1, max_length=20)
+
+
+class VoiceSessionResponse(BaseModel):
+    client_secret: str
+    expires_at: int | None = None
+    session: dict[str, Any] | None = None
 
 
 class HouseholdResponse(HouseholdCreate):

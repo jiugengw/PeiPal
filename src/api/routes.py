@@ -43,6 +43,7 @@ from src.api.models import (
     TrustedContactListResponse,
     TrustedContactResponse,
     TrustedContactUpdate,
+    VoiceSessionResponse,
 )
 from src.services.notifications import send_plan_email
 from src.services.realtime import create_realtime_client_secret
@@ -53,6 +54,7 @@ router = APIRouter(prefix="/api")
 
 @router.post(
     "/voice/session",
+    response_model=VoiceSessionResponse,
     tags=["Voice"],
     summary="Create a browser voice session",
     description=(

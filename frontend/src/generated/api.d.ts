@@ -825,6 +825,17 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** VoiceSessionResponse */
+        VoiceSessionResponse: {
+            /** Client Secret */
+            client_secret: string;
+            /** Expires At */
+            expires_at?: number | null;
+            /** Session */
+            session?: {
+                [key: string]: unknown;
+            } | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -851,9 +862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["VoiceSessionResponse"];
                 };
             };
             /** @description Validation Error */

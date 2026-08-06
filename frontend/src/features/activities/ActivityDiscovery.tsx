@@ -1,11 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import {
-  activitiesQueryOptions,
-  DEFAULT_ACTIVITY_RESULTS_LIMIT,
-} from "@/features/activities/api/activityQueries";
-import { toActivity } from "@/features/activities/api/toActivity";
-import type { Activity } from "@/features/activities/types";
+import { useActivityWorkflow } from "@/features/activities/activityWorkflowContext";
 import { LocationSearchForm } from "@/features/activities/LocationSearchForm";
 import { ActivityResultsList } from "@/features/activities/ActivityResultsList";
 import { SelectedActivityPanel } from "@/features/activities/SelectedActivityPanel";
@@ -14,45 +7,19 @@ import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function ActivityDiscovery() {
   const { household, olderAdult } = useSetupProgress();
-  const [location, setLocation] = useState("");
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
-    null,
-  );
-  const [unavailableNotice, setUnavailableNotice] = useState("");
-  const [isReviewingPlan, setIsReviewingPlan] = useState(false);
-
-  const activitiesQuery = useQuery(
-    activitiesQueryOptions({ location, limit: DEFAULT_ACTIVITY_RESULTS_LIMIT }),
-  );
-  const activities = (activitiesQuery.data?.activities ?? []).map(toActivity);
-  const selectionUnavailable = Boolean(
-    selectedActivity &&
-      !activitiesQuery.isPending &&
-      !activitiesQuery.isError &&
-      !(activitiesQuery.data?.activities ?? []).some(
-        (row) => row.dedupe_key === selectedActivity.dedupeKey,
-      ),
-  );
-  const visibleSelection = selectionUnavailable ? null : selectedActivity;
-  const visibleUnavailableNotice = selectionUnavailable
-    ? "That activity is no longer available. Choose another one below."
-    : unavailableNotice;
-
-  function selectActivity(activity: Activity) {
-    setUnavailableNotice("");
-    setSelectedActivity(activity);
-    setIsReviewingPlan(false);
-  }
-
-  function clearSelection() {
-    setSelectedActivity(null);
-    setIsReviewingPlan(false);
-  }
-
-  function searchLocation(nextLocation: string) {
-    setUnavailableNotice("");
-    setLocation(nextLocation);
-  }
+  const {
+    location,
+    activities,
+    selectedActivity,
+    unavailableNotice,
+    isReviewingPlan,
+    activitiesQuery,
+    searchActivities,
+    selectActivity,
+    clearSelection,
+    setIsReviewingPlan,
+    markSelectionUnavailable,
+  } = useActivityWorkflow();
 
   const greetingName = olderAdult?.preferred_name || olderAdult?.name;
 
@@ -75,15 +42,15 @@ export function ActivityDiscovery() {
           <LocationSearchForm
             key={location}
             location={location}
-            onSearch={searchLocation}
+            onSearch={searchActivities}
           />
 
-          {visibleUnavailableNotice ? (
+          {unavailableNotice ? (
             <p
               className="mt-6 rounded-xl border border-input bg-background p-4 text-base font-bold text-foreground"
               role="alert"
             >
-              {visibleUnavailableNotice}
+              {unavailableNotice}
             </p>
           ) : null}
 
@@ -91,31 +58,26 @@ export function ActivityDiscovery() {
             <ActivityResultsList
               activities={activities}
               locationFilter={location}
-              onClearLocation={() => searchLocation("")}
+              onClearLocation={() => searchActivities("")}
               onSelect={selectActivity}
               query={activitiesQuery}
-              selectedDedupeKey={visibleSelection?.dedupeKey ?? null}
+              selectedDedupeKey={selectedActivity?.dedupeKey ?? null}
             />
           </div>
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
-          {isReviewingPlan && visibleSelection && household && olderAdult ? (
+          {isReviewingPlan && selectedActivity && household && olderAdult ? (
             <PlanConfirmationPanel
-              activity={visibleSelection}
+              activity={selectedActivity}
               household={household}
               olderAdult={olderAdult}
               onBack={() => setIsReviewingPlan(false)}
-              onUnavailable={() => {
-                clearSelection();
-                setUnavailableNotice(
-                  "That activity is no longer available. Choose another one below.",
-                );
-              }}
+              onUnavailable={markSelectionUnavailable}
             />
           ) : (
             <SelectedActivityPanel
-              activity={visibleSelection}
+              activity={selectedActivity}
               canMakePlan={Boolean(household && olderAdult)}
               onClear={clearSelection}
               onMakePlan={() => setIsReviewingPlan(true)}

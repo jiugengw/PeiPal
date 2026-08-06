@@ -626,7 +626,7 @@ Verify on desktop and mobile:
 8. `test: cover plan and support workflow` - completed
    - Status transitions, partial delivery, retries, conflicts, and cancellations.
 
-9. `feat: add browser voice companion`
+9. `feat: add browser voice companion` - completed
    - Realtime WebRTC session, transcript, controls, shared workflow tools, approvals, and cleanup.
 
 10. `test: cover browser voice workflow`

@@ -4,10 +4,6 @@ import createClient from 'openapi-react-query'
 import { getSupabaseClient } from '@/lib/supabase'
 import { environment } from '@/services/environment'
 
-export const fetchClient = createFetchClient<paths>({
-  baseUrl: environment.apiBaseUrl,
-})
-
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
     if (!environment.supabase) return request
@@ -20,7 +16,16 @@ const authMiddleware: Middleware = {
   },
 }
 
-fetchClient.use(authMiddleware)
+export function createApiFetchClient(fetchImplementation: typeof fetch = globalThis.fetch) {
+  const client = createFetchClient<paths>({
+    baseUrl: environment.apiBaseUrl,
+    fetch: fetchImplementation,
+  })
+  client.use(authMiddleware)
+  return client
+}
+
+export const fetchClient = createApiFetchClient()
 
 const api = createClient(fetchClient)
 

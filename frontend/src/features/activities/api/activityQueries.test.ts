@@ -9,4 +9,12 @@ describe('activitiesQueryOptions', () => {
       params: { query: { location: 'Bishan', limit: 5 } },
     }))
   })
+
+  it('uses the default limit and omits a blank location', () => {
+    const options = activitiesQueryOptions({ location: '   ' })
+
+    expect(options.queryKey).toContainEqual(expect.objectContaining({
+      params: { query: { limit: 3 } },
+    }))
+  })
 })

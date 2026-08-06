@@ -5,7 +5,7 @@ import {
   createMemoryHistory,
   createRouter,
 } from '@tanstack/react-router'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { routeTree } from '@/routeTree.gen'
 import { AuthSessionContext } from '@/features/auth/AuthSessionContext'
 import { createQueryClient } from '@/lib/queryClient'
@@ -39,31 +39,29 @@ function renderRoute(path: string, authenticated = false) {
     history: createMemoryHistory({ initialEntries: [path] }),
   })
 
-  return render(
+  const view = render(
     <QueryClientProvider client={createQueryClient()}>
       <AuthSessionContext.Provider value={auth}>
         <RouterProvider router={testRouter} context={{ auth }} />
       </AuthSessionContext.Provider>
     </QueryClientProvider>,
   )
+  return { router: testRouter, view }
 }
 
 describe('application routes', () => {
   beforeEach(() => useSetupProgress.mockReturnValue(setupProgress()))
 
   it('redirects an incomplete account to setup', async () => {
-    renderRoute('/', true)
-    expect(
-      await screen.findByRole('heading', {
-        name: /who are we setting this up for/i,
-      }),
-    ).toBeVisible()
+    const { router } = renderRoute('/', true)
+    await waitFor(() => expect(router.state.location.pathname).toBe('/setup'))
+    expect(await screen.findByRole('heading', { name: /who are we setting this up for/i })).toBeVisible()
   })
 
   it('redirects a complete account to discovery', async () => {
     useSetupProgress.mockReturnValue(setupProgress(true))
-    renderRoute('/', true)
-    expect(await screen.findByRole('heading', { name: /trusted circle is ready/i })).toBeVisible()
+    const { router } = renderRoute('/', true)
+    await waitFor(() => expect(router.state.location.pathname).toBe('/discover'))
   })
 
   it('renders a helpful not-found page for an authenticated user', async () => {

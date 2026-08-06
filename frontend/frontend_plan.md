@@ -602,19 +602,19 @@ Verify on desktop and mobile:
 
 ## Commit-by-Commit Delivery Plan
 
-1. `feat: add typed frontend api client` — completed
+1. `feat: add typed frontend api client` - completed
    - Generated OpenAPI declarations, authentication-aware client, and TanStack Query helpers.
 
-2. `test: cover frontend api contracts` — completed
+2. `test: cover frontend api contracts` - completed
    - Covers authentication middleware, typed query/path/body serialization, no-content and error responses, and activity query defaults.
 
-3. `feat: build household setup flow` — completed
+3. `feat: build household setup flow` - completed
    - Household, profile, sharing mode, trusted contacts, review, and redirect logic.
 
-4. `test: cover household setup flow`
+4. `test: cover household setup flow` - completed
    - Validation, persistence, failure recovery, and setup routing.
 
-5. `feat: build activity discovery`
+5. `feat: build activity discovery` - completed
    - Activity query, filters, list/detail selection, empty states, and typed interaction.
 
 6. `feat: add plan workflow`

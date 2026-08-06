@@ -20,6 +20,7 @@ from src.api.dependencies import (
 )
 from src.api.models import (
     ActivityListResponse,
+    ActivityResponse,
     HouseholdCreate,
     HouseholdListResponse,
     HouseholdResponse,
@@ -29,7 +30,9 @@ from src.api.models import (
     OlderAdultResponse,
     OlderAdultUpdate,
     PlanCreate,
+    PlanListResponse,
     PlanNotificationCreate,
+    PlanResponse,
     PlanUpdate,
     SupportOfferCreate,
     TrustedContactCreate,
@@ -295,7 +298,7 @@ def delete_trusted_contact(
         raise HTTPException(status_code=502, detail="Could not delete trusted contact.") from error
 
 
-@router.post("/plans", status_code=status.HTTP_201_CREATED, tags=["Plans"], summary="Create a plan")
+@router.post("/plans", status_code=status.HTTP_201_CREATED, response_model=PlanResponse, tags=["Plans"], summary="Create a plan")
 def create_plan(
     payload: PlanCreate,
     user: Any = Depends(require_user),
@@ -344,7 +347,7 @@ def create_plan(
         raise HTTPException(status_code=502, detail="Could not create plan.") from error
 
 
-@router.get("/plans", tags=["Plans"], summary="List household plans")
+@router.get("/plans", response_model=PlanListResponse, tags=["Plans"], summary="List household plans")
 def list_plans(
     household_id: int,
     status_filter: str | None = Query(default=None, alias="status"),
@@ -361,7 +364,7 @@ def list_plans(
         raise HTTPException(status_code=502, detail="Could not load plans.") from error
 
 
-@router.get("/plans/{plan_id}", tags=["Plans"], summary="Get a plan")
+@router.get("/plans/{plan_id}", response_model=PlanResponse, tags=["Plans"], summary="Get a plan")
 def get_plan(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -381,6 +384,7 @@ def get_plan(
 
 @router.patch(
     "/plans/{plan_id}",
+    response_model=PlanResponse,
     tags=["Plans"],
     summary="Update a plan status",
     description=(
@@ -697,3 +701,25 @@ def list_activities(
         return {"activities": query.execute().data}
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not load activities.") from error
+
+
+@router.get(
+    "/activities/{activity_id}",
+    response_model=ActivityResponse,
+    tags=["Activities"],
+    summary="Get an activity",
+    description="Load an activity referenced by an existing plan, including an expired activity.",
+)
+def get_activity(
+    activity_id: int,
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    try:
+        result = client.table("activities").select("*").eq("id", activity_id).limit(1).execute().data
+        if not result:
+            raise HTTPException(status_code=404, detail="Activity not found.")
+        return result[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not load activity.") from error

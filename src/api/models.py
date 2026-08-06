@@ -181,3 +181,22 @@ class OlderAdultListResponse(BaseModel):
 
 class TrustedContactListResponse(BaseModel):
     trusted_contacts: list[TrustedContactResponse]
+
+
+class PlanResponse(BaseModel):
+    id: int
+    household_id: int
+    older_adult_id: int
+    activity_id: int
+    status: Literal["draft", "awaiting_approval", "shared", "cancelled"]
+    created_by: str
+    approved_by: str | None = None
+    approved_at: datetime | None = None
+    shared_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PlanListResponse(BaseModel):
+    plans: list[PlanResponse]

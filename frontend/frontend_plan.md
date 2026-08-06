@@ -605,8 +605,8 @@ Verify on desktop and mobile:
 1. `feat: add typed frontend api client` — completed
    - Generated OpenAPI declarations, authentication-aware client, and TanStack Query helpers.
 
-2. `test: cover frontend api contracts` — partially completed
-   - Activity query options are covered; middleware, remaining endpoints, view-model mapping, and error behavior still need tests.
+2. `test: cover frontend api contracts` — completed
+   - Covers authentication middleware, typed query/path/body serialization, no-content and error responses, and activity query defaults.
 
 3. `feat: build household setup flow`
    - Household, profile, sharing mode, trusted contacts, review, and redirect logic.

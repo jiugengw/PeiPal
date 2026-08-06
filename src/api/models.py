@@ -117,9 +117,6 @@ class PlanNotificationCreate(BaseModel):
         "contact_ids": [1, 2],
     }]})
 
-<<<<<<< HEAD
-    contact_ids: list[int] = Field(min_length=1, max_length=20)
-=======
     contact_ids: list[int] = Field(min_length=1, max_length=20)
 
 
@@ -184,4 +181,3 @@ class OlderAdultListResponse(BaseModel):
 
 class TrustedContactListResponse(BaseModel):
     trusted_contacts: list[TrustedContactResponse]
->>>>>>> 15d74689130bdee904e86234e3664af222ff993a

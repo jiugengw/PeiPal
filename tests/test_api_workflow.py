@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from src.api.main import app
-from src.api.models import OlderAdultCreate, PlanCreate, SupportOfferCreate
+from src.api.models import OlderAdultCreate, PlanCreate, PlanNotificationCreate, SupportOfferCreate
 
 
 client = TestClient(app)
@@ -22,6 +22,8 @@ client = TestClient(app)
         ("patch", "/api/plans/1"),
         ("post", "/api/plans/1/support-offers"),
         ("get", "/api/plans/1/support-offers"),
+        ("post", "/api/plans/1/notifications"),
+        ("get", "/api/plans/1/notifications"),
     ],
 )
 def test_core_workflow_requires_authentication(method, path):
@@ -44,3 +46,8 @@ def test_older_adult_sharing_mode_defaults_to_family_approval():
     profile = OlderAdultCreate(household_id=1, name="Mary Lim")
 
     assert profile.sharing_mode == "family_approval"
+
+
+def test_plan_notification_requires_at_least_one_contact():
+    with pytest.raises(ValidationError):
+        PlanNotificationCreate(contact_ids=[])

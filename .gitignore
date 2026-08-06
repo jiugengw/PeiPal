@@ -10,3 +10,4 @@ evals/activity_extraction/latest_report.json
 evals/activity_extraction/latest_report.md
 evals/activity_extraction/unlabelled.jsonl
 evals/activity_extraction/predictions.jsonl
+.workbuddy-ai/

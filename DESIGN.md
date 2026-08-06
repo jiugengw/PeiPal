@@ -1,210 +1,194 @@
 ---
 name: Count Me In
-description: A gentle care companion for older adults and the family members who support them.
+description: A calm metallic care companion for older adults and the people who support them.
 colors:
-  ink: "#17211d"
-  muted: "#66736d"
-  soft: "#f5f1e7"
-  panel: "#fffdf8"
-  line: "#d9ded4"
-  green: "#2f6f4f"
-  green-dark: "#204d38"
-  blue: "#335c81"
-  coral: "#c85f4d"
-  gold: "#d69f34"
+  royal-blue: "#3D52A0"
+  cornflower-blue: "#7091E6"
+  steel-blue: "#8697C4"
+  pale-blue-grey: "#ADBBDA"
+  light-lavender: "#EDE8F5"
+  dark-navy: "#252C40"
+  white: "#FFFFFF"
 typography:
   display:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
-    fontSize: "clamp(2rem, 4vw, 3.15rem)"
+    fontFamily: "Arial, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    fontSize: "clamp(3.5rem, 8vw, 7.7rem)"
     fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "normal"
+    lineHeight: 0.9
+    letterSpacing: "-0.04em"
   headline:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(1.8rem, 4vw, 3rem)"
+    fontFamily: "Arial, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(2.2rem, 5vw, 4.8rem)"
     fontWeight: 700
-    lineHeight: 1.05
+    lineHeight: 0.95
+    letterSpacing: "-0.035em"
   body:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.02rem"
+    fontFamily: "Arial, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.125rem"
     fontWeight: 400
-    lineHeight: 1.65
+    lineHeight: 1.55
   label:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.78rem"
+    fontFamily: "Arial, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.9rem"
     fontWeight: 800
     lineHeight: 1.2
-    letterSpacing: "normal"
 rounded:
-  md: "8px"
-  pill: "999px"
+  sm: "7px"
+  md: "12px"
+  lg: "16px"
 spacing:
   xs: "8px"
-  sm: "14px"
-  md: "18px"
-  lg: "28px"
-  xl: "46px"
+  sm: "12px"
+  md: "20px"
+  lg: "30px"
+  xl: "48px"
 components:
   button-primary:
-    backgroundColor: "{colors.green}"
-    textColor: "#ffffff"
+    backgroundColor: "{colors.royal-blue}"
+    textColor: "{colors.white}"
     rounded: "{rounded.md}"
     padding: "0 22px"
-    height: "50px"
+    height: "60px"
   button-secondary:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.dark-navy}"
     rounded: "{rounded.md}"
     padding: "0 22px"
-    height: "50px"
+    height: "60px"
   field:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.dark-navy}"
     rounded: "{rounded.md}"
-    padding: "0 14px"
-    height: "52px"
-  card:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "20px"
+    padding: "0 18px"
+    height: "68px"
+  surface:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.dark-navy}"
+    rounded: "{rounded.lg}"
+    padding: "30px"
+---
 
 # Design System: Count Me In
 
 ## Overview
 
-**Creative North Star: "The Gentle Care Companion"**
+**Creative North Star: "The Calm Metallic Companion"**
 
-The incumbent interface expresses Count Me In as a calm, warm setup space for a family member helping an older adult. It combines a deep green progress rail with a softly tinted paper-like canvas, generous copy, and friendly circular avatars. The tone is human and reassuring, with practical information presented in approachable steps.
+Count Me In uses a cool, metallic-inspired visual system that feels calm, credible, and contemporary without becoming clinical. White space and dark navy typography keep tasks readable, while a controlled family of softened blues communicates action, interaction, and support.
 
-The current palette, 8px card geometry, and Inter-only type system are documented as the existing implementation, not as permanent brand commitments. Future visual work may evolve them while preserving the product's warmth, clarity, dignity, and low-pressure support model.
+The experience remains designed first for older adults: large type, generous touch targets, plain language, obvious state changes, and one clear decision at a time. Family coordination should feel visible and practical without taking agency away from the older adult.
 
 **Key Characteristics:**
 
-- Warm paper surfaces against a calm green anchor.
-- Clear step-by-step progression and large readable headings.
-- Softly lifted cards with restrained borders.
-- Human support represented through circles, initials, and orbit motifs.
+- White reading surfaces with soft lavender or pale blue-grey atmosphere.
+- Deep royal blue actions with quiet cornflower and steel-blue interaction states.
+- Oversized, highly legible headings balanced by spacious body copy.
+- Fine borders, restrained depth, and gently rounded controls.
+- Privacy and approval boundaries stated directly in text.
+
+**The Calm Clarity Rule.** Visual expression may feel polished and modern, but it must never compete with the current task or make support feel urgent.
 
 ## Colors
 
-The current palette is earthy and supportive: green carries trust and action, cream and white create a gentle base, blue supports secondary information, and coral/gold provide human accents.
+The frontmatter palette is normative. Do not substitute legacy green, coral, gold, beige, or unrelated accent colors.
 
 ### Primary
 
-- **Garden Green** (`#2f6f4f`): Primary actions, approval cues, progress states, and the main trust signal.
-- **Deep Green** (`#204d38`): Hover state and darker anchor surfaces.
+- **Deep Royal Blue:** Primary buttons, decisive actions, active navigation, and strong accents.
+- **Dark Navy:** All headings, body text, and high-contrast structure.
 
 ### Secondary
 
-- **Quiet Blue** (`#335c81`): Informational accents and secondary avatar color.
+- **Cornflower Blue:** Secondary accents, interactive highlights, and prominent selected states. Pair with dark navy text when used as a surface.
+- **Muted Steel Blue:** Supporting controls, secondary labels, and lower-priority structural accents.
 
-### Tertiary
+### Neutral and Surface
 
-- **Warm Coral** (`#c85f4d`): Human accent, emphasis, and caution-adjacent support cues.
-- **Soft Gold** (`#d69f34`): Progress completion and warm highlight.
+- **White:** Main page and elevated reading surfaces.
+- **Pale Blue-Grey:** Borders, dividers, soft surfaces, and gentle left-side gradient starts.
+- **Very Light Lavender:** Quiet section backgrounds and alternate left-side gradient starts.
 
-### Neutral
+### Gradient Rule
 
-- **Ink** (`#17211d`): Primary text.
-- **Muted Sage** (`#66736d`): Supporting text and descriptions.
-- **Warm Paper** (`#f5f1e7`): Soft note and background surface.
-- **Panel Cream** (`#fffdf8`): Main content surface.
-- **Quiet Line** (`#d9ded4`): Borders and dividers.
+Use only soft left-to-right gradients from Pale Blue-Grey or Very Light Lavender into White. Keep the transition broad and understated; do not use strong gradients, multiple saturated stops, gradient text, or unrelated hues.
 
-### Named Rules
+**The Closed Palette Rule.** Every interface color must come from the seven approved tokens. Opacity variations are allowed only when they preserve contrast and do not appear as a new accent.
 
-**The Low-Pressure Accent Rule.** Accent colors should clarify trust, support, or state; they should not make the experience feel urgent or promotional.
+**The Semantic Contrast Rule.** Color can reinforce state but never carry meaning alone; pair selection, approval, errors, and completion with text, icons, borders, or position.
 
 ## Typography
 
-**Display Font:** Inter (with system sans-serif fallbacks)
+Use a clear workhorse sans-serif stack. Hierarchy comes from scale and weight rather than decorative type.
 
-**Body Font:** Inter (with system sans-serif fallbacks)
+- **Display:** Reserved for decisive page-level questions and opening statements; keep copy short and balanced.
+- **Headline:** Section headings and major task transitions.
+- **Body:** Minimum comfortable reading size is approximately 18px on desktop, with spacious line height and a maximum measure near 65 characters.
+- **Label:** Strong, concise metadata and control labels; avoid long uppercase passages.
 
-**Character:** A single sans-serif family keeps the setup practical and legible. Weight and scale create hierarchy rather than decorative type, which supports older-adult readability and family-member scanability.
-
-### Hierarchy
-
-- **Display** (700, `clamp(2rem, 4vw, 3.15rem)`, `1`): Large sidebar statement and product-level orientation.
-- **Headline** (700, `clamp(1.8rem, 4vw, 3rem)`, `1.05`): Main screen titles and decisive setup moments.
-- **Title** (700, `1.05rem`, default line-height): Card and subsection labels.
-- **Body** (400, `1.02rem`, `1.65`): Explanations, reassurance, and practical context.
-- **Label** (800, `0.78rem`, uppercase): Kicker labels, metadata, and approval state.
-
-### Named Rules
-
-**The Readable Step Rule.** Keep explanatory copy comfortable and spacious; the interface should feel easy to follow aloud as well as on screen.
+**The Read-Aloud Rule.** Copy and line breaks should remain comfortable when a user reads the interface aloud or follows it while listening.
 
 ## Layout
 
-The desktop setup uses a centered two-column shell, with a 340px green sidebar and a flexible content panel inside a maximum 1180px frame. The shell has a minimum height of `min(760px, calc(100vh - 56px))` and is surrounded by 28px page padding. Content screens use 46px padding and generous gaps between sections.
+Prefer strong editorial grouping over dense dashboards. Use generous white space, fine dividers, and a clear top-to-bottom task sequence. Large screens may use a slim navigation or progress spine beside a broad reading column. Forms and activity lists should remain visually aligned and easy to compare.
 
-The information architecture is progressive: one setup screen is visible at a time, while the sidebar shows six named steps. Forms use two-column grids where space allows. At 920px and below, the layout becomes a full-width stacked flow, the progress steps become a compact grid, and form/content grids collapse to one column. At 520px and below, padding tightens, steps use two columns, and action buttons stack full-width.
+At tablet and mobile widths, collapse split layouts into one column, remove decorative side structures, and make primary task buttons full-width where helpful. Never shrink touch targets below 48px or body copy below a comfortable reading size.
+
+**The One Decision Rule.** Each viewport should make its current question and primary action obvious within seconds.
 
 ## Elevation & Depth
 
-The incumbent system is softly lifted rather than flat. The main shell uses an ambient `0 24px 60px rgba(42, 52, 46, 0.16)` shadow; the central avatar uses a smaller green-tinted lift. Cards rely on white tonal contrast and quiet borders first, with shadow reserved for the overall frame and signature visual.
+The system is mostly tonal and flat. Use borders and background changes for everyday grouping. Reserve a soft, downward ambient shadow for one meaningful focal surface, such as a privacy explanation or active plan; do not float every section.
 
-### Shadow Vocabulary
-
-- **Shell ambient:** `0 24px 60px rgba(42, 52, 46, 0.16)` for the page-level setup frame.
-- **Avatar lift:** `0 12px 28px rgba(47, 111, 79, 0.22)` for the primary profile avatar.
-
-### Named Rules
-
-**The Soft Lift Rule.** Use depth to establish a calm container or meaningful focal point; do not make every card float.
+**The Restrained Lift Rule.** A surface may use a border or a shadow according to its role, not both as decoration.
 
 ## Shapes
 
-Most panels, fields, buttons, rows, and progress items use a consistent 8px radius. Avatars, status marks, and orbit elements use fully circular geometry (`999px`) to provide the human counterpoint to the practical rectangular surfaces. Borders are quiet and slightly green-tinted or neutral. On mobile, the outer shell loses its radius and border to become a full-bleed experience.
+Controls and practical surfaces use gently rounded corners between 12px and 16px. Small tags may use a tighter 7px radius. Avoid excessive pills; reserve fully rounded shapes for avatars or genuinely compact status controls.
+
+Borders use Pale Blue-Grey or Muted Steel Blue. Corners should feel precise and modern rather than playful or bubbly.
 
 ## Components
 
 ### Buttons
 
-- **Shape:** Dependable medium radius (`8px`), minimum height `50px`.
-- **Primary:** Garden Green background, white text, `0 22px` horizontal padding, heavy weight.
-- **Hover / Focus:** Primary darkens to Deep Green on hover. Visible focus uses a blue translucent 3px outline with 2px offset.
-- **Secondary:** White background, ink text, quiet border, same dimensions as primary.
+- Primary buttons use Deep Royal Blue with White text and a minimum height near 60px.
+- Primary hover or pressed states may deepen to Dark Navy.
+- Secondary buttons use White with Dark Navy text and a Muted Steel Blue border.
+- Cornflower Blue may mark a selected secondary action, paired with Dark Navy text.
+- Every button requires a visible Dark Navy focus outline with clear offset.
 
-### Cards / Containers
+### Inputs
 
-- **Corner Style:** Medium 8px radius; circular geometry is reserved for people and completion states.
-- **Background:** White cards on Panel Cream or soft tinted surfaces.
-- **Shadow Strategy:** Shell and central avatar only; most cards use border and tonal contrast.
-- **Border:** `1px solid #d9ded4` for standard cards and rows.
-- **Internal Padding:** Common values are 14px, 18px, 20px, 22px, 24px, and 46px according to component scale.
+- Inputs use White, Dark Navy text, Muted Steel Blue borders, and large internal padding.
+- Placeholder text must remain readable and should not be the only label.
+- Errors must identify the problem and the recovery in persistent text.
 
-### Inputs / Fields
+### Surfaces and Lists
 
-- **Style:** White fill, `1px solid #cfd7ce`, 8px radius, minimum height 52px, 14px horizontal padding.
-- **Focus:** 3px translucent blue outline with 2px offset.
-- **Error:** Warm red/coral text with a persistent message area to avoid layout jumps.
+- Prefer ruled lists and grouped bands over grids of equal cards.
+- Use Very Light Lavender or Pale Blue-Grey for quiet section separation.
+- Selected items require a written state or visible mark in addition to a color change.
 
 ### Navigation
 
-- **Style:** The sidebar's six-step list is the primary navigation. Steps are outlined, rounded rows with circular markers. Active and completed states receive a translucent light surface; completed markers use gold.
-- **Mobile treatment:** The sidebar becomes a top section and the steps become a compact grid without visible markers.
-
-### Support Circle Visual
-
-The welcome preview uses a central initial-based avatar, orbit rings, and smaller surrounding avatars to make the trusted-circle concept immediately legible without relying on photography or fabricated people imagery.
+- Keep the number of visible destinations small and labels literal.
+- On mobile, transform side navigation into a compact top control rather than preserving a narrow rail.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** keep hierarchy explicit through scale, weight, and one-screen-at-a-time progression.
-- **Do** use warm, plain-language explanations alongside controls.
-- **Do** preserve strong visible focus states and large touch-friendly controls.
-- **Do** use circles and initials to express people, trust, and support.
-- **Do** treat the current palette and 8px radius as documented incumbent choices that may be refined later.
+- **Do** use only the approved metallic blue, lavender, navy, and white palette.
+- **Do** use soft left-to-right lavender/blue-grey-to-white gradients for atmosphere.
+- **Do** preserve large controls, obvious focus states, and high text contrast.
+- **Do** make privacy, sharing, and approval states explicit in words.
+- **Do** let White and Dark Navy carry most reading surfaces and text.
 
 ### Don't:
 
-- **Don't** introduce urgency, gamification, or promotional visual language into care-support flows.
-- **Don't** hide important approval or sharing boundaries behind decorative UI.
-- **Don't** rely on color alone to communicate progress, permission, or errors.
-- **Don't** replace readable supporting copy with dense menus or unexplained icons.
-- **Don't** fabricate testimonials, customer proof, or live integrations in the interface.
+- **Don't** reintroduce green, coral, gold, beige, neon, or unrelated semantic colors.
+- **Don't** use harsh, multicolor, radial, or high-contrast gradients.
+- **Don't** rely on pale blue text over white or white text over Cornflower Blue without checking contrast.
+- **Don't** turn the interface into a dense dashboard or decorative card mosaic.
+- **Don't** use urgency, gamification, or promotional language in care-support flows.
+- **Don't** hide consent or sharing boundaries behind icons or color alone.

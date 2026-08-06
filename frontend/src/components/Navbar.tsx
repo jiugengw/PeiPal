@@ -3,7 +3,7 @@ import { LogoutButton } from '@/features/auth/LogoutButton'
 import { useAuthSession } from '@/features/auth/AuthSessionContext'
 
 const navigation = [
-  { to: '/', label: 'Discover' },
+  { to: '/discover', label: 'Discover' },
   { to: '/setup', label: 'Setup' },
   { to: '/family', label: 'Family view' },
 ] as const
@@ -37,7 +37,7 @@ export function Navbar() {
               <li key={item.to}>
                 <Link
                   className={navLinkClass}
-                  activeOptions={{ exact: item.to === '/' }}
+                  activeOptions={{ exact: true }}
                   activeProps={{
                     className:
                       'bg-background text-primary underline decoration-2 underline-offset-4 shadow-[0_5px_16px_rgb(37_44_64_/_0.10)]',

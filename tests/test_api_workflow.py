@@ -52,3 +52,20 @@ def test_older_adult_sharing_mode_defaults_to_family_approval():
 def test_plan_notification_requires_at_least_one_contact():
     with pytest.raises(ValidationError):
         PlanNotificationCreate(contact_ids=[])
+
+
+@pytest.mark.parametrize(
+    "path,method,status_code,schema_name",
+    [
+        ("/api/households", "get", "200", "HouseholdListResponse"),
+        ("/api/households/{household_id}", "get", "200", "HouseholdResponse"),
+        ("/api/households/{household_id}/older-adults", "get", "200", "OlderAdultListResponse"),
+        ("/api/older-adults/{older_adult_id}", "patch", "200", "OlderAdultResponse"),
+        ("/api/older-adults/{older_adult_id}/trusted-contacts", "get", "200", "TrustedContactListResponse"),
+        ("/api/trusted-contacts/{contact_id}", "patch", "200", "TrustedContactResponse"),
+    ],
+)
+def test_setup_routes_publish_typed_openapi_responses(path, method, status_code, schema_name):
+    response_schema = app.openapi()["paths"][path][method]["responses"][status_code]["content"]["application/json"]["schema"]
+
+    assert response_schema["$ref"] == f"#/components/schemas/{schema_name}"

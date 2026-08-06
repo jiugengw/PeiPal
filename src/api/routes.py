@@ -19,15 +19,22 @@ from src.api.dependencies import (
     user_id,
 )
 from src.api.models import (
+    ActivityListResponse,
     HouseholdCreate,
+    HouseholdListResponse,
+    HouseholdResponse,
     HouseholdUpdate,
     OlderAdultCreate,
+    OlderAdultListResponse,
+    OlderAdultResponse,
     OlderAdultUpdate,
     PlanCreate,
     PlanNotificationCreate,
     PlanUpdate,
     SupportOfferCreate,
     TrustedContactCreate,
+    TrustedContactListResponse,
+    TrustedContactResponse,
     TrustedContactUpdate,
 )
 from src.services.notifications import send_plan_email
@@ -57,7 +64,7 @@ def create_voice_session(
         raise HTTPException(status_code=502, detail="Could not create browser voice session.") from error
 
 
-@router.post("/households", status_code=status.HTTP_201_CREATED, tags=["Households"], summary="Create a household")
+@router.post("/households", status_code=status.HTTP_201_CREATED, response_model=HouseholdResponse, tags=["Households"], summary="Create a household")
 def create_household(
     payload: HouseholdCreate,
     user: Any = Depends(require_user),
@@ -82,7 +89,7 @@ def create_household(
         raise HTTPException(status_code=502, detail="Could not create household.") from error
 
 
-@router.get("/households", tags=["Households"], summary="List my households")
+@router.get("/households", response_model=HouseholdListResponse, tags=["Households"], summary="List my households")
 def list_households(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
@@ -100,7 +107,7 @@ def list_households(
         raise HTTPException(status_code=502, detail="Could not load households.") from error
 
 
-@router.get("/households/{household_id}", tags=["Households"], summary="Get a household")
+@router.get("/households/{household_id}", response_model=HouseholdResponse, tags=["Households"], summary="Get a household")
 def get_household(
     household_id: int,
     user: Any = Depends(require_user),
@@ -118,7 +125,7 @@ def get_household(
         raise HTTPException(status_code=502, detail="Could not load household.") from error
 
 
-@router.patch("/households/{household_id}", tags=["Households"], summary="Update a household")
+@router.patch("/households/{household_id}", response_model=HouseholdResponse, tags=["Households"], summary="Update a household")
 def update_household(
     household_id: int,
     payload: HouseholdUpdate,
@@ -137,7 +144,7 @@ def update_household(
         raise HTTPException(status_code=502, detail="Could not update household.") from error
 
 
-@router.post("/older-adults", status_code=status.HTTP_201_CREATED, tags=["Older adults"], summary="Create an older-adult profile")
+@router.post("/older-adults", status_code=status.HTTP_201_CREATED, response_model=OlderAdultResponse, tags=["Older adults"], summary="Create an older-adult profile")
 def create_older_adult(
     payload: OlderAdultCreate,
     user: Any = Depends(require_user),
@@ -152,7 +159,7 @@ def create_older_adult(
         raise HTTPException(status_code=502, detail="Could not create older-adult profile.") from error
 
 
-@router.get("/households/{household_id}/older-adults", tags=["Older adults"], summary="List household older-adult profiles")
+@router.get("/households/{household_id}/older-adults", response_model=OlderAdultListResponse, tags=["Older adults"], summary="List household older-adult profiles")
 def list_older_adults(
     household_id: int,
     user: Any = Depends(require_user),
@@ -166,7 +173,7 @@ def list_older_adults(
         raise HTTPException(status_code=502, detail="Could not load older-adult profiles.") from error
 
 
-@router.get("/older-adults/{older_adult_id}", tags=["Older adults"], summary="Get an older-adult profile")
+@router.get("/older-adults/{older_adult_id}", response_model=OlderAdultResponse, tags=["Older adults"], summary="Get an older-adult profile")
 def get_older_adult(
     older_adult_id: int,
     user: Any = Depends(require_user),
@@ -184,7 +191,7 @@ def get_older_adult(
         raise HTTPException(status_code=502, detail="Could not load older-adult profile.") from error
 
 
-@router.patch("/older-adults/{older_adult_id}", tags=["Older adults"], summary="Update an older-adult profile")
+@router.patch("/older-adults/{older_adult_id}", response_model=OlderAdultResponse, tags=["Older adults"], summary="Update an older-adult profile")
 def update_older_adult(
     older_adult_id: int,
     payload: OlderAdultUpdate,
@@ -206,7 +213,7 @@ def update_older_adult(
         raise HTTPException(status_code=502, detail="Could not update older-adult profile.") from error
 
 
-@router.get("/older-adults/{older_adult_id}/trusted-contacts", tags=["Trusted contacts"], summary="List trusted contacts")
+@router.get("/older-adults/{older_adult_id}/trusted-contacts", response_model=TrustedContactListResponse, tags=["Trusted contacts"], summary="List trusted contacts")
 def list_trusted_contacts(
     older_adult_id: int,
     user: Any = Depends(require_user),
@@ -220,7 +227,7 @@ def list_trusted_contacts(
         raise HTTPException(status_code=502, detail="Could not load trusted contacts.") from error
 
 
-@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED, tags=["Trusted contacts"], summary="Add a trusted contact")
+@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED, response_model=TrustedContactResponse, tags=["Trusted contacts"], summary="Add a trusted contact")
 def create_trusted_contact(
     payload: TrustedContactCreate,
     user: Any = Depends(require_user),
@@ -247,7 +254,7 @@ def create_trusted_contact(
         raise HTTPException(status_code=502, detail="Could not create trusted contact.") from error
 
 
-@router.patch("/trusted-contacts/{contact_id}", tags=["Trusted contacts"], summary="Update a trusted contact")
+@router.patch("/trusted-contacts/{contact_id}", response_model=TrustedContactResponse, tags=["Trusted contacts"], summary="Update a trusted contact")
 def update_trusted_contact(
     contact_id: int,
     payload: TrustedContactUpdate,
@@ -670,7 +677,7 @@ def list_plan_notifications(
         raise HTTPException(status_code=502, detail="Could not load plan notifications.") from error
 
 
-@router.get("/activities", tags=["Activities"], summary="List active activities")
+@router.get("/activities", response_model=ActivityListResponse, tags=["Activities"], summary="List active activities")
 def list_activities(
     location: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=3, ge=1, le=20),

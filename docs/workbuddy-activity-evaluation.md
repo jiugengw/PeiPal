@@ -92,6 +92,11 @@ comfortable retaining the labelled URLs and metadata.
 
 Ensure `.env` contains `PARALLEL_API_KEY`, then run:
 
+Windows:
+```bash
+.venv/Scripts/python.exe scripts/capture_activity_eval.py --area Bishan --start-date 2026-08-05 --end-date 2026-09-05 --timing Morning --preference "fun and educational" --mobility "Gentle, no steps"
+```
+Linux/macOS:
 ```bash
 .venv/bin/python scripts/capture_activity_eval.py \
   --area Bishan \
@@ -101,6 +106,7 @@ Ensure `.env` contains `PARALLEL_API_KEY`, then run:
   --preference "fun and educational" \
   --mobility "Gentle, no steps"
 ```
+
 
 This command does not require Supabase credentials and does not save
 activities. It produces:
@@ -113,9 +119,14 @@ evals/activity_extraction/predictions.jsonl
 Build a larger test set by repeating the command with different preferences or
 areas and adding `--append`:
 
+Windows:
+```bash
+.venv/Scripts/python.exe scripts/capture_activity_eval.py --area "Toa Payoh" --preference "creative and social" --append
+```
+Linux/macOS:
 ```bash
 .venv/bin/python scripts/capture_activity_eval.py \
-  --area Toa Payoh \
+  --area "Toa Payoh" \
   --preference "creative and social" \
   --append
 ```
@@ -155,7 +166,11 @@ preference, area and mobility suitability. Human confirmation is recorded as
 `human_confirmed` or `human_corrected`.
 
 ## Step 3: Run the evaluation
-
+Windows:
+```bash
+.venv/Scripts/python.exe scripts/evaluate_activity_extraction.py --cases evals/activity_extraction/gold_cases.jsonl --predictions evals/activity_extraction/predictions.jsonl
+```
+Linux/macOS:
 ```bash
 .venv/bin/python scripts/evaluate_activity_extraction.py \
   --cases evals/activity_extraction/gold_cases.jsonl \

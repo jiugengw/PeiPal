@@ -1,0 +1,346 @@
+[
+  {
+    "id": "d651be3e8e5d260a",
+    "title": "Senior Workshops & Active Ageing Singapore | Edufarm",
+    "url": "https://www.edufarm.com.sg/seniors",
+    "actual": {
+      "is_event": false,
+      "date": null,
+      "start_time": null,
+      "venue": "Edufarm Learning Centre, Islandwide, Flexible",
+      "registration_url": "https://wa.me/6591866763",
+      "decision_reason": "human decision: accepted"
+    }
+  },
+  {
+    "id": "dd9c061af1dcc33d",
+    "title": "Bishan parkrun",
+    "url": "https://www.parkrun.sg/bishan/",
+    "actual": {
+      "is_event": true,
+      "date": "15/8/2026",
+      "start_time": "7:30 AM",
+      "venue": "Bishan-Ang Mo Kio Park 1380 Ang Mo Kio Avenue 1 Singapore 569931",
+      "registration_url": null,
+      "decision_reason": "human decision: accepted"
+    }
+  },
+  {
+    "id": "dd9c061af1dcc33d",
+    "title": "Bishan parkrun 22/8/2026",
+    "url": "https://www.parkrun.sg/bishan/",
+    "actual": {
+      "is_event": true,
+      "date": "22/8/2026",
+      "start_time": "7:30 AM",
+      "venue": "Bishan-Ang Mo Kio Park 1380 Ang Mo Kio Avenue 1 Singapore 569931",
+      "registration_url": null,
+      "decision_reason": "human decision: accepted"
+    }
+  },
+  {
+    "id": "dd9c061af1dcc33d",
+    "title": "Bishan parkrun 29/8/2026",
+    "url": "https://www.parkrun.sg/bishan/",
+    "actual": {
+      "is_event": true,
+      "date": "29/8/2026",
+      "start_time": "7:30 AM",
+      "venue": "Bishan-Ang Mo Kio Park 1380 Ang Mo Kio Avenue 1 Singapore 569931",
+      "registration_url": null,
+      "decision_reason": "human decision: accepted"
+    }
+  },
+  {
+    "id": "1d44ce4402af31d5",
+    "title": "Seniors-Meet-Seniors @ NLB (Bishan Public Library)",
+    "url": "https://www.eventbrite.sg/e/sms-seniors-meet-seniors-nlb-on-27-august-2026-thursday-tickets-1996192559682",
+    "actual": {
+      "is_event": true,
+      "date": "27/8/2026",
+      "start_time": "2:00 PM",
+      "venue": "NLB (Bishan Public Library) 5 Bishan Place Singapore 579841",
+      "registration_url": "https://www.nationalmuseum.nhb.gov.sg/whats-on/programme/reunion-senior-programmes/events",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "d939348d118634c7",
+    "title": "Walk For Health",
+    "url": "https://southeast.cdc.gov.sg/what-we-do/seniors/wfh/",
+    "actual": {
+      "is_event": true,
+      "date": "22/8/2026",
+      "start_time": "10:00 AM",
+      "venue": "The Kallang 1 Stadium Drive Singapore 397629",
+      "registration_url": "https://go.gov.sg/wfhlaunch2026",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "82928b66d80e3429",
+    "title": "Singapore Botanic Gardens Heritage Festival Opening",
+    "url": "https://sbg.nparks.gov.sg/events/sbg-heritage-festival/",
+    "actual": {
+      "is_event": true,
+      "date": "5/9/2026",
+      "start_time": "9:00 AM",
+      "venue": "Singapore Botanic Gardens 1 Cluny Road Singapore 259569",
+      "registration_url": "https://www.nparks.gov.sg/visit/events?searchquery=Singapore+Botanic+Gardens",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "cb8a5c8d1eee6dc0",
+    "title": "Matcha and Chill",
+    "url": "https://www.onepa.gov.sg/Events/search?outlet=The+Serangoon+CC",
+    "actual": {
+      "is_event": true,
+      "date": "29/08/2026",
+      "start_time": "1:00 PM",
+      "venue": "The Serangoon CC Serangoon New Town",
+      "registration_url": "https://www.onepa.gov.sg/events/matcha-and-chill-on-29-august-2026-e35958258",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "bfb9ba565adbe310",
+    "title": "Sunday Afternoon Jam at The Serangoon Community Club 16/8/26",
+    "url": "https://www.onepa.gov.sg/events/sunday-afternoon-jam-at-the-serangoon",
+    "actual": {
+      "is_event": true,
+      "date": "16/08/2026",
+      "start_time": "2:00 PM",
+      "venue": "The Serangoon CC Serangoon New Town",
+      "registration_url": "https://www.onepa.gov.sg/events/sunday-afternoon-jam-at-the-serangoon-community-club-16-8-26-e56850063",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "95f4646d6bd8dc03",
+    "title": "Roney Tan - Discovering Golden Bell",
+    "url": "https://www.eventbrite.sg/e/roney-tan-discovering-golden-bell-tickets-1995051870851?aff=ebdssbcategorybrowse",
+    "actual": {
+      "is_event": true,
+      "date": "15/08/2026",
+      "start_time": "10:00 AM",
+      "venue": "Danish Seamen's Church Singapore 10 Pender Road Singapore 099171",
+      "registration_url": "https://www.eventbrite.sg/e/roney-tan-discovering-golden-bell-tickets-1995051870851?aff=ebdssbcategorybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "fe660c2a5fd26605",
+    "title": "One SG61 with ANTICA",
+    "url": "https://www.eventbrite.sg/e/one-sg61-with-antica-tickets-1993398455441?aff=ebdssbcategorybrowse",
+    "actual": {
+      "is_event": true,
+      "date": "22/08/2026",
+      "start_time": "12:00 PM",
+      "venue": "Perennial Business City 1 Venture Avenue Singapore 608521",
+      "registration_url": "https://www.eventbrite.sg/e/one-sg61-with-antica-tickets-1993398455441?aff=ebdssbcategorybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "f7c66b8059bc9743",
+    "title": "Battle of Bukit Chandu tour by Mr Sarafian",
+    "url": "https://www.eventbrite.com/e/battle-of-bukit-chandu-tour-by-mr-sarafian-tickets-1996344855202?aff=ebdssbcategorybrowse",
+    "actual": {
+      "is_event": true,
+      "date": "15/08/2026",
+      "start_time": "09:00 AM",
+      "venue": "Geneo, Singapore 7 Science Park Drive #1, 5 Singapore, 118221",
+      "registration_url": "https://www.eventbrite.com/e/battle-of-bukit-chandu-tour-by-mr-sarafian-tickets-1996344855202?aff=ebdssbcategorybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "44a1a2fd98cf8d92",
+    "title": "Hands-On Workshop: Grow Organic Herbs at Home",
+    "url": "https://thelivingcentre.sg/event/hands-on-workshop-grow-organic-herbs-at-home-29-august-2026/",
+    "actual": {
+      "is_event": true,
+      "date": "29/8/2026",
+      "start_time": "3:00 PM",
+      "venue": "The Counselling Paradigm 52 Telok Blangah Road #04-04A Singapore 098829",
+      "registration_url": "https://www.eventbrite.com/e/battle-of-bukit-chandu-tour-by-mr-sarafian-tickets-1996344855202?aff=ebdssbcategorybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "22e4628ff4f0b686",
+    "title": "Speak Up and Stand Out: Free Public Speaking Course @ Jurong Green CC",
+    "url": "https://www.eventbrite.sg/e/speak-up-and-stand-out-free-public-speaking-course-jurong-green-cc-tickets-606361653027?aff=ebdssbdestsearch",
+    "actual": {
+      "is_event": true,
+      "is_recommendable": true,
+      "date": "14/08/2026",
+      "start_time": "7:30 PM",
+      "venue": "Jurong Green Community Club 6 Jurong West Avenue 1 Singapore 649520",
+      "registration_url": "https://www.eventbrite.sg/e/speak-up-and-stand-out-free-public-speaking-course-jurong-green-cc-tickets-606361653027?aff=ebdssbdestsearch",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "22e4628ff4f0b686",
+    "title": "Speak Up and Stand Out: Free Public Speaking Course @ Jurong Green CC",
+    "url": "https://www.eventbrite.sg/e/speak-up-and-stand-out-free-public-speaking-course-jurong-green-cc-tickets-606361653027?aff=ebdssbdestsearch",
+    "actual": {
+      "is_event": true,
+      "is_recommendable": true,
+      "date": "28/08/2026",
+      "start_time": "7:30 PM",
+      "venue": "Jurong Green Community Club 6 Jurong West Avenue 1 Singapore 649520",
+      "registration_url": "https://www.eventbrite.sg/e/speak-up-and-stand-out-free-public-speaking-course-jurong-green-cc-tickets-606361653027?aff=ebdssbdestsearch",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "da9a618b07b1d865",
+    "title": "Garden Yoga (Hatha) at Jurong Central Park (15 Aug 2026)",
+    "url": "https://www.eventbrite.sg/e/garden-yoga-hatha-at-jurong-central-park-15-aug-2026-tickets-1994301552629?aff=ebdssbdestsearch/",
+    "actual": {
+      "is_event": true,
+      "date": "15/08/2026",
+      "start_time": "8:30 AM",
+      "venue": "Jurong Central Park, Singapore",
+      "registration_url": "https://www.eventbrite.sg/e/garden-yoga-hatha-at-jurong-central-park-15-aug-2026-tickets-1994301552629?aff=ebdssbdestsearch",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "0c7b7e274c0f707a",
+    "title": "Mat Pilates Sess",
+    "url": "https://www.eventbrite.com/e/mat-pilates-sess-tickets-1990625634860?aff=ebdssbdestsearch",
+    "actual": {
+      "is_event": true,
+      "date": "15/08/2026",
+      "start_time": "2:00 PM",
+      "venue": "Auro Ya Studio at d'Arena 511 Upper Jurong Road Block E #01-02 Singapore 638366",
+      "registration_url": "https://www.eventbrite.com/e/mat-pilates-sess-tickets-1990625634860?aff=ebdssbdestsearch",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "c9fde5320c6d9e0c",
+    "title": "Sembawang Central CACC Smart Guitar Workshop on 15 August 2026",
+    "url": "https://www.onepa.gov.sg/events/sembawang-central-cacc-smart-guitar-workshop-on-15-august-2026-e39802466",
+    "actual": {
+      "is_event": true,
+      "date": "15/08/2026",
+      "start_time": "12:00 PM",
+      "venue": "Sembawang CC 21 Canberra Link #01-63 Singapore 756973",
+      "registration_url": "https://www.onepa.gov.sg/events/sembawang-central-cacc-smart-guitar-workshop-on-15-august-2026-e39802466",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "8dc1c2b5b5f370c0",
+    "title": "CSN Golf Interest Group - 27 August 2026",
+    "url": "https://www.onepa.gov.sg/events/csn-golf-interest-group-27-august-2026-e86023843",
+    "actual": {
+      "is_event": true,
+      "date": "27/08/2026",
+      "start_time": "7:00 PM",
+      "venue": "Orchid Country Club Golf Driving Range 1 Orchid Club Rd Singapore 769162",
+      "registration_url": "https://www.onepa.gov.sg/events/csn-golf-interest-group-27-august-2026-e86023843",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "0be5e054bac2c11b",
+    "title": "One SG61 with ANTICA",
+    "url": "https://www.eventbrite.sg/e/one-sg61-with-antica-tickets-1993398455441?aff=ebdssbcategorybrowse",
+    "actual": {
+      "is_event": true,
+      "date": "22/08/2026",
+      "start_time": "12:00 PM",
+      "venue": "Perennial Business City 1 Venture Avenue Singapore 608521",
+      "registration_url": "https://www.eventbrite.sg/e/one-sg61-with-antica-tickets-1993398455441?aff=ebdssbcategorybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "dc0cbb92d1582a7a",
+    "title": "Soundbath and Incense Making Workshop",
+    "url": "https://www.eventbrite.sg/e/soundbath-and-incense-making-workshop-tickets-1992552074894?aff=ebdssbcitybrowse",
+    "actual": {
+      "is_event": true,
+      "date": "19/08/2026",
+      "start_time": "11:00 AM",
+      "venue": "Mapletree Business City Town Hall Singapore",
+      "registration_url": "https://www.eventbrite.sg/e/soundbath-and-incense-making-workshop-tickets-1992552074894?aff=ebdssbcitybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "b76dd7aa67af8e16",
+    "title": "Launch Party: Mirror/Mirrored - Personal Discovery through Play",
+    "url": "https://www.eventbrite.com/d/singapore--bukit-timah/events/",
+    "actual": {
+      "is_event": true,
+      "date": "22/08/2026",
+      "start_time": "1:45 PM",
+      "venue": "Singapore Polytechnic Graduates' Guild",
+      "registration_url": "https://www.eventbrite.sg/e/launch-party-mirrormirrored-personal-discovery-through-play-tickets-1991165028200?aff=ebdssbcitybrowse",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "cfd354e41faa51c6",
+    "title": "SG61 Tampines GRC Briskwalk (Tampines Changkat)",
+    "url": "https://www.onepa.gov.sg/events/sg61-tampines-grc-briskwalk-tampines-changkat-e26968083",
+    "actual": {
+      "is_event": true,
+      "date": "09/08/2026",
+      "start_time": "8:00 AM",
+      "venue": "Tampines Changkat CC",
+      "registration_url": "https://www.onepa.gov.sg/events/sg61-tampines-grc-briskwalk-tampines-changkat-e26968083",
+      "name": "SG61 Tampines GRC Briskwalk (Tampines Changkat)",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "909c3d2f7d0039cf",
+    "title": "Tampines Changkat AAC Digital Class on 11 August 2026",
+    "url": "https://www.onepa.gov.sg/events/tampines-changkat-aac-digital-class-on-11-august-2026-e21722695",
+    "actual": {
+      "is_event": true,
+      "date": "11/08/2026",
+      "start_time": "2:30 PM",
+      "venue": "Tampines Changkat CC",
+      "registration_url": "https://www.onepa.gov.sg/events/tampines-changkat-aac-digital-class-on-11-august-2026-e21722695",
+      "name": "Tampines Changkat AAC Digital Class on 11 August 2026",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "b5ef6424aa87be34",
+    "title": "Hatha Yoga (Elementary) (HealthierSG)",
+    "url": "https://www.onepa.gov.sg/courses/hatha-yoga-elementary-healthiersg-c027231426",
+    "actual": {
+      "is_event": true,
+      "date": "13/08/2026",
+      "start_time": "8:00 PM",
+      "venue": "Tampines Changkat CC",
+      "registration_url": "https://www.onepa.gov.sg/courses/hatha-yoga-elementary-healthiersg-c027231426",
+      "name": "Hatha Yoga (Elementary) (HealthierSG)",
+      "decision_reason": "accepted"
+    }
+  },
+  {
+    "id": "5af568f70272baa1",
+    "title": "Learn Digital @ Tampines Changkat - August 2026",
+    "url": "https://www.onepa.gov.sg/events/learn-digital-tampines-changkat-august-2026-e18225385",
+    "actual": {
+      "is_event": true,
+      "date": "15/08/2026",
+      "start_time": "2:00 PM",
+      "venue": "Tampines Changkat CC",
+      "registration_url": "https://www.onepa.gov.sg/events/learn-digital-tampines-changkat-august-2026-e18225385",
+      "name": "Learn Digital @ Tampines Changkat - August 2026",
+      "decision_reason": "accepted"
+    }
+  }
+]

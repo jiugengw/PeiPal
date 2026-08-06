@@ -7,6 +7,9 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
+import subprocess
+import tempfile
 from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -72,13 +75,17 @@ class ParallelActivityProvider:
             "a person can directly attend or register for. Every result must have a "
             "specific event name, exact date, exact start time, physical venue, and "
             "registration, booking, or organiser contact URL. Prefer official event "
-            "listing pages from community centres, libraries, government organisations, "
-            "museums, or venues. Exclude news articles, general programme pages, "
+            "originating from listing pages from community centres, libraries, government organisations, "
+            "museums, or venues. Do not source information from news articles, general programme pages, "
             "organisation pages, directories, annual campaigns, and pages without a "
             f"specific session. {category_guidance} Treat the preference as the "
             "main activity category: social, fun, educational, creative, movement, "
             "or health. Do not substitute a health service when a recreational or "
             "educational activity was requested."
+            "Try to extract information of the event only from the event's official"
+            "information page. Do not register generic venues like town community centers"
+            "or town library as an event. They are venues that hosts multiple events, not an event. "
+            "The individual events within are the target."
         )
         queries = [
             f"{self.area} Singapore elderly {self.preference} event register {self.start_date}",
@@ -110,6 +117,8 @@ class ParallelActivityProvider:
                         "Extract the exact event date, start time, venue, location, cost, "
                         "accessibility details, registration URL, and a short description. "
                         "Only use facts stated on the page."
+                        "If the event is recurring, you can process them as multiple events"
+                        "of the same name but of different dates."
                     ),
                     "advanced_settings": {
                         "full_content": {"max_chars_per_result": 12_000},
@@ -131,56 +140,65 @@ class ParallelActivityProvider:
                 page.get("excerpts") or result.get("excerpts") or []
             )
             text = f"{text}\n{page.get('full_content') or ''}"
-            prediction = parse_activity_text(
+
+            if not url:
+                self.last_stats["skipped_missing_date_or_time"] += 1
+                if len(self.skip_examples) < 5:
+                    self.skip_examples.append(f"missing url: {result.get('title')}")
+                continue
+
+            events = parse_events_from_page(
                 text,
                 area=self.area,
                 start_date=self.start_date,
                 end_date=self.end_date,
-                source_url=url or None,
+                source_url=url,
             )
-            case_id = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16] if url else "missing-url"
-            self.last_captured_pages.append({
-                "id": case_id,
-                "title": str(page.get("title") or result.get("title") or "").strip(),
-                "url": url,
-                "search_excerpts": result.get("excerpts") or [],
-                "extracted_text": text.strip()[:12_000],
-                "search_parameters": {
-                    "area": self.area,
-                    "start_date": self.start_date,
-                    "end_date": self.end_date,
-                    "timing": self.timing,
-                    "preference": self.preference,
-                    "mobility": self.mobility,
-                },
-            })
-            self.last_predictions.append({
-                "id": case_id,
-                "title": str(page.get("title") or result.get("title") or "").strip(),
-                "url": url,
-                "actual": prediction,
-            })
-            date = prediction["date"]
-            start_time = prediction["start_time"]
-            if not prediction["is_event"] or not url:
+
+            if not events:
                 self.last_stats["skipped_missing_date_or_time"] += 1
                 if len(self.skip_examples) < 5:
                     self.skip_examples.append(
-                        f"{prediction['decision_reason']}: {result.get('title') or url}"
+                        f"no individual events found: {result.get('title') or url}"
                     )
                 continue
-            activities.append({
-                "name": str(page.get("title") or result.get("title") or "Activity").strip(),
-                "description": text[:2_000] or None,
-                "location": prediction["venue"] or self.area,
-                "date": date,
-                "start_time": start_time,
-                "cost": _event_cost(text),
-                "info_link": url,
-                "signup_link": prediction["registration_url"] or url,
-                "mobility_notes": self.mobility,
-                "tags": ["parallel", self.preference],
-            })
+
+            for index, event in enumerate(events):
+                case_id = hashlib.sha256(f"{url}#{index}".encode("utf-8")).hexdigest()[:16]
+                self.last_captured_pages.append({
+                    "id": case_id,
+                    "title": event["name"],
+                    "url": url,
+                    "search_excerpts": result.get("excerpts") or [],
+                    "extracted_text": text.strip()[:12_000],
+                    "search_parameters": {
+                        "area": self.area,
+                        "start_date": self.start_date,
+                        "end_date": self.end_date,
+                        "timing": self.timing,
+                        "preference": self.preference,
+                        "mobility": self.mobility,
+                    },
+                })
+                actual = {key: value for key, value in event.items() if key != "url"}
+                self.last_predictions.append({
+                    "id": case_id,
+                    "title": event["name"],
+                    "url": event["url"],
+                    "actual": actual,
+                })
+                activities.append({
+                    "name": event["name"],
+                    "description": text[:2_000] or None,
+                    "location": event["venue"] or self.area,
+                    "date": event["date"],
+                    "start_time": event["start_time"],
+                    "cost": _event_cost(text),
+                    "info_link": event["url"],
+                    "signup_link": event["registration_url"],
+                    "mobility_notes": self.mobility,
+                    "tags": ["parallel", self.preference],
+                })
         return activities
 
     def _request_json(self, url: str, body: dict[str, Any]) -> dict[str, Any]:
@@ -194,10 +212,187 @@ class ParallelActivityProvider:
             method="POST",
         )
         try:
-            with urlopen(request, timeout=45) as response:
+            with urlopen(request, timeout=90) as response:
                 return json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError, TimeoutError) as error:
             raise RuntimeError(f"Parallel request failed: {error}") from error
+
+
+def _events_from_parsed_response(parsed_response: Any) -> list[dict[str, Any]]:
+    """Pull the events array out of whatever shape codebuddy's stdout parsed
+    into. Without --json-schema, the exact envelope isn't guaranteed —
+    it may be a dict with structured_output, a dict with an events key
+    directly, a dict wrapping the real answer as a string under "result",
+    or the model may have output a bare JSON array of events itself."""
+    if isinstance(parsed_response, list):
+        # Case: model output the events array directly, no wrapper object.
+        if parsed_response and isinstance(parsed_response[0], dict) and (
+            "date" in parsed_response[0] or "name" in parsed_response[0]
+        ):
+            return parsed_response
+        # Case: list of message/content blocks — look for embedded JSON text.
+        for item in parsed_response:
+            if isinstance(item, dict):
+                text_field = item.get("text") or item.get("result")
+                if isinstance(text_field, str):
+                    nested = _extract_json_object(text_field)
+                    if nested is not None:
+                        return _events_from_parsed_response(nested)
+        return []
+
+    if isinstance(parsed_response, dict):
+        structured = parsed_response.get("structured_output")
+        if isinstance(structured, dict) and "events" in structured:
+            return structured["events"] or []
+        if "events" in parsed_response:
+            return parsed_response["events"] or []
+        # Case: real answer is nested as a string under "result".
+        result_field = parsed_response.get("result")
+        if isinstance(result_field, str):
+            nested = _extract_json_object(result_field)
+            if nested is not None:
+                return _events_from_parsed_response(nested)
+
+    return []
+
+
+def parse_events_from_page(
+    text: str,
+    *,
+    area: str,
+    start_date: str,
+    end_date: str,
+    source_url: str,
+) -> list[dict[str, Any]]:
+    """Split extracted page text into individual events using WorkBuddy.
+
+    Deliberately avoids passing --json-schema as a CLI argument: on Windows,
+    codebuddy is invoked through cmd.exe (since it's an npm .cmd wrapper),
+    and a long quote-heavy JSON argument appears to corrupt parsing of
+    later flags like -y and --output-format, causing the CLI to fall back
+    to normal interactive chat behaviour instead of constrained output.
+    The desired JSON shape is described in prose instead, with no literal
+    quote characters, and the response is parsed defensively.
+
+    Also runs from a temp directory (not the project root) so that
+    .codebuddy/skills content (e.g. activity-scrapper) is not auto-loaded
+    and does not hijack this narrow extraction task.
+    """
+    codebuddy_path = shutil.which("codebuddy")
+    if not codebuddy_path:
+        raise RuntimeError("codebuddy not found on PATH. Run `npm install -g <package>` first.")
+
+    prompt = (
+        f"You are extracting individual events from scraped webpage text that "
+        f"follows on stdin. Identify events happening between {start_date} and "
+        f"{end_date} in {area}, Singapore. "
+        f"Respond with exactly one JSON object and nothing else: no markdown, "
+        f"no code fences, no explanations, no questions, no suggestions, no "
+        f"greeting, no sign-off. "
+        f"The JSON object must have a single top level key named events, whose "
+        f"value is an array. Each array item must be an object with these keys: "
+        f"name, date, start_time, venue, url, registration_url, is_single_event_page. "
+        f"url is the URL of the page that describes this specific event's "
+        f"details, if identifiable from the text — this may be the same as the "
+        f"page you were given, or a different URL mentioned in the text. "
+        f"registration_url is specifically where a person goes to sign up or "
+        f"book — this is often a different domain (e.g. a Google Form, "
+        f"Eventbrite, or Peatix link) than url. If they are the same link, "
+        f"repeat it in both fields. If either cannot be determined, use null. "
+        f"Use null for any value you cannot determine from the text. "
+        f"Dates must be formatted as DD/MM/YYYY. "
+        f"If the page is a directory or listing describing multiple events, "
+        f"return one array item per event, each with is_single_event_page set "
+        f"to false. If it describes exactly one specific event, return one item "
+        f"with is_single_event_page set to true. If no identifiable event "
+        f"exists on the page, return an empty events array. "
+        f"Only use facts stated in the page text. "
+        f"Your entire response must begin with the character {{ and end with "
+        f"the character }}."
+    )
+
+    try:
+        result = subprocess.run(
+            [codebuddy_path, "-p", prompt, "--output-format", "json", "-y"],
+            input=text[:12_000],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=90,
+            cwd=tempfile.gettempdir(),
+        )
+    except subprocess.TimeoutExpired:
+        print(f"[codebuddy error] timed out processing page for {source_url}")
+        return []
+
+    if result.returncode != 0:
+        print(f"[codebuddy error] stderr: {result.stderr[:500]}")
+        print(f"[codebuddy error] stdout: {result.stdout[:500]}")
+        return []
+
+    parsed_response = _extract_json_object(result.stdout)
+    if parsed_response is None:
+        print(f"[codebuddy error] could not parse output as JSON: {result.stdout[:500]}")
+        return []
+    # print(f"[codebuddy debug] parsed_response type={type(parsed_response).__name__}")
+
+    events = _events_from_parsed_response(parsed_response)
+
+    parsed: list[dict[str, Any]] = []
+    for event in events:
+        event_date = event.get("date")
+        if not event_date or not _event_date_string_in_range(event_date, start_date, end_date):
+            continue
+        parsed.append({
+            "is_event": True,
+            "is_recommendable": True,
+            "date": event_date,
+            "start_time": event.get("start_time"),
+            "venue": event.get("venue"),
+            "url": event.get("url") or source_url,
+            "registration_url": event.get("registration_url") or event.get("url") or source_url,
+            "name": event.get("name") or "Activity",
+            "decision_reason": "accepted",
+        })
+    return parsed
+
+
+def _extract_json_object(raw_text: str) -> dict[str, Any] | None:
+    """Best-effort JSON extraction: try direct parse first, then look for
+    the first balanced {...} block in case the CLI wrapped it in prose
+    despite the prompt's instructions."""
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        pass
+
+    start = raw_text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    for index in range(start, len(raw_text)):
+        if raw_text[index] == "{":
+            depth += 1
+        elif raw_text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                candidate = raw_text[start:index + 1]
+                try:
+                    return json.loads(candidate)
+                except json.JSONDecodeError:
+                    return None
+    return None
+
+
+def _event_date_string_in_range(date_str: str, start_date: str, end_date: str) -> bool:
+    """Check whether an already-formatted DD/MM/YYYY string falls in [start_date, end_date]."""
+    from datetime import date as _date
+    try:
+        event_day = datetime.strptime(date_str, "%d/%m/%Y").date()
+    except ValueError:
+        return False
+    return _date.fromisoformat(start_date) <= event_day <= _date.fromisoformat(end_date)
 
 
 def _event_date(text: str) -> str | None:
@@ -296,12 +491,17 @@ def parse_activity_text(
     end_date: str,
     source_url: str | None = None,
 ) -> dict[str, Any]:
-    """Parse extracted page text without making any database changes."""
-    date = _event_date_in_range(text, start_date, end_date)
+    """Parse extracted page text without making any database changes.
+
+    Kept for reference / potential fast single-event fallback use; the
+    main search() loop uses parse_events_from_page() so multi-event
+    listing pages are no longer collapsed into a single generic activity.
+    """
+    date_value = _event_date_in_range(text, start_date, end_date)
     start_time = _event_time(text)
     location = _event_location(text, area)
-    is_event = bool(date and start_time)
-    if not date:
+    is_event = bool(date_value and start_time)
+    if not date_value:
         reason = "missing in-range date"
     elif not start_time:
         reason = "missing start time"
@@ -310,7 +510,7 @@ def parse_activity_text(
     return {
         "is_event": is_event,
         "is_recommendable": is_event,
-        "date": date,
+        "date": date_value,
         "start_time": start_time,
         "venue": location if location != area else None,
         "registration_url": source_url if is_event else None,

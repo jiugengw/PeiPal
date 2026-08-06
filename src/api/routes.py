@@ -19,19 +19,15 @@ from src.api.dependencies import (
     user_id,
 )
 from src.api.models import (
-    ActivityListResponse,
     HouseholdCreate,
-    HouseholdResponse,
     HouseholdUpdate,
     OlderAdultCreate,
-    OlderAdultResponse,
     OlderAdultUpdate,
     PlanCreate,
     PlanNotificationCreate,
     PlanUpdate,
     SupportOfferCreate,
     TrustedContactCreate,
-    TrustedContactResponse,
     TrustedContactUpdate,
 )
 from src.services.notifications import send_plan_email
@@ -141,7 +137,7 @@ def update_household(
         raise HTTPException(status_code=502, detail="Could not update household.") from error
 
 
-@router.post("/older-adults", status_code=status.HTTP_201_CREATED, response_model=OlderAdultResponse, tags=["Older adults"], summary="Create an older-adult profile")
+@router.post("/older-adults", status_code=status.HTTP_201_CREATED, tags=["Older adults"], summary="Create an older-adult profile")
 def create_older_adult(
     payload: OlderAdultCreate,
     user: Any = Depends(require_user),
@@ -224,7 +220,7 @@ def list_trusted_contacts(
         raise HTTPException(status_code=502, detail="Could not load trusted contacts.") from error
 
 
-@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED, response_model=TrustedContactResponse, tags=["Trusted contacts"], summary="Add a trusted contact")
+@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED, tags=["Trusted contacts"], summary="Add a trusted contact")
 def create_trusted_contact(
     payload: TrustedContactCreate,
     user: Any = Depends(require_user),

@@ -33,7 +33,7 @@ from src.api.models import (
 router = APIRouter(prefix="/api")
 
 
-@router.post("/households", status_code=status.HTTP_201_CREATED)
+@router.post("/households", status_code=status.HTTP_201_CREATED, tags=["Households"], summary="Create a household")
 def create_household(
     payload: HouseholdCreate,
     user: Any = Depends(require_user),
@@ -58,7 +58,7 @@ def create_household(
         raise HTTPException(status_code=502, detail="Could not create household.") from error
 
 
-@router.get("/households")
+@router.get("/households", tags=["Households"], summary="List my households")
 def list_households(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
@@ -76,7 +76,7 @@ def list_households(
         raise HTTPException(status_code=502, detail="Could not load households.") from error
 
 
-@router.get("/households/{household_id}")
+@router.get("/households/{household_id}", tags=["Households"], summary="Get a household")
 def get_household(
     household_id: int,
     user: Any = Depends(require_user),
@@ -94,7 +94,7 @@ def get_household(
         raise HTTPException(status_code=502, detail="Could not load household.") from error
 
 
-@router.patch("/households/{household_id}")
+@router.patch("/households/{household_id}", tags=["Households"], summary="Update a household")
 def update_household(
     household_id: int,
     payload: HouseholdUpdate,
@@ -113,7 +113,7 @@ def update_household(
         raise HTTPException(status_code=502, detail="Could not update household.") from error
 
 
-@router.post("/older-adults", status_code=status.HTTP_201_CREATED)
+@router.post("/older-adults", status_code=status.HTTP_201_CREATED, tags=["Older adults"], summary="Create an older-adult profile")
 def create_older_adult(
     payload: OlderAdultCreate,
     user: Any = Depends(require_user),
@@ -128,7 +128,7 @@ def create_older_adult(
         raise HTTPException(status_code=502, detail="Could not create older-adult profile.") from error
 
 
-@router.get("/households/{household_id}/older-adults")
+@router.get("/households/{household_id}/older-adults", tags=["Older adults"], summary="List household older-adult profiles")
 def list_older_adults(
     household_id: int,
     user: Any = Depends(require_user),
@@ -142,7 +142,7 @@ def list_older_adults(
         raise HTTPException(status_code=502, detail="Could not load older-adult profiles.") from error
 
 
-@router.get("/older-adults/{older_adult_id}")
+@router.get("/older-adults/{older_adult_id}", tags=["Older adults"], summary="Get an older-adult profile")
 def get_older_adult(
     older_adult_id: int,
     user: Any = Depends(require_user),
@@ -160,7 +160,7 @@ def get_older_adult(
         raise HTTPException(status_code=502, detail="Could not load older-adult profile.") from error
 
 
-@router.patch("/older-adults/{older_adult_id}")
+@router.patch("/older-adults/{older_adult_id}", tags=["Older adults"], summary="Update an older-adult profile")
 def update_older_adult(
     older_adult_id: int,
     payload: OlderAdultUpdate,
@@ -182,7 +182,7 @@ def update_older_adult(
         raise HTTPException(status_code=502, detail="Could not update older-adult profile.") from error
 
 
-@router.get("/older-adults/{older_adult_id}/trusted-contacts")
+@router.get("/older-adults/{older_adult_id}/trusted-contacts", tags=["Trusted contacts"], summary="List trusted contacts")
 def list_trusted_contacts(
     older_adult_id: int,
     user: Any = Depends(require_user),
@@ -196,7 +196,7 @@ def list_trusted_contacts(
         raise HTTPException(status_code=502, detail="Could not load trusted contacts.") from error
 
 
-@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED)
+@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED, tags=["Trusted contacts"], summary="Add a trusted contact")
 def create_trusted_contact(
     payload: TrustedContactCreate,
     user: Any = Depends(require_user),
@@ -223,7 +223,7 @@ def create_trusted_contact(
         raise HTTPException(status_code=502, detail="Could not create trusted contact.") from error
 
 
-@router.patch("/trusted-contacts/{contact_id}")
+@router.patch("/trusted-contacts/{contact_id}", tags=["Trusted contacts"], summary="Update a trusted contact")
 def update_trusted_contact(
     contact_id: int,
     payload: TrustedContactUpdate,
@@ -246,7 +246,7 @@ def update_trusted_contact(
         raise HTTPException(status_code=502, detail="Could not update trusted contact.") from error
 
 
-@router.delete("/trusted-contacts/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/trusted-contacts/{contact_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Trusted contacts"], summary="Remove a trusted contact")
 def delete_trusted_contact(
     contact_id: int,
     user: Any = Depends(require_user),
@@ -264,7 +264,7 @@ def delete_trusted_contact(
         raise HTTPException(status_code=502, detail="Could not delete trusted contact.") from error
 
 
-@router.post("/plans", status_code=status.HTTP_201_CREATED)
+@router.post("/plans", status_code=status.HTTP_201_CREATED, tags=["Plans"], summary="Create a draft plan")
 def create_plan(
     payload: PlanCreate,
     user: Any = Depends(require_user),
@@ -299,7 +299,7 @@ def create_plan(
         raise HTTPException(status_code=502, detail="Could not create plan.") from error
 
 
-@router.get("/plans")
+@router.get("/plans", tags=["Plans"], summary="List household plans")
 def list_plans(
     household_id: int,
     status_filter: str | None = Query(default=None, alias="status"),
@@ -316,7 +316,7 @@ def list_plans(
         raise HTTPException(status_code=502, detail="Could not load plans.") from error
 
 
-@router.get("/plans/{plan_id}")
+@router.get("/plans/{plan_id}", tags=["Plans"], summary="Get a plan")
 def get_plan(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -334,7 +334,7 @@ def get_plan(
         raise HTTPException(status_code=502, detail="Could not load plan.") from error
 
 
-@router.post("/plans/{plan_id}/request-approval")
+@router.post("/plans/{plan_id}/request-approval", tags=["Plans"], summary="Request plan approval")
 def request_plan_approval(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -353,7 +353,7 @@ def request_plan_approval(
         raise HTTPException(status_code=502, detail="Could not request plan approval.") from error
 
 
-@router.post("/plans/{plan_id}/approve")
+@router.post("/plans/{plan_id}/approve", tags=["Plans"], summary="Approve and share a plan")
 def approve_plan(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -379,7 +379,7 @@ def approve_plan(
         raise HTTPException(status_code=502, detail="Could not approve plan.") from error
 
 
-@router.post("/plans/{plan_id}/cancel")
+@router.post("/plans/{plan_id}/cancel", tags=["Plans"], summary="Cancel a plan")
 def cancel_plan(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -401,7 +401,7 @@ def cancel_plan(
         raise HTTPException(status_code=502, detail="Could not cancel plan.") from error
 
 
-@router.post("/plans/{plan_id}/support-offers", status_code=status.HTTP_201_CREATED)
+@router.post("/plans/{plan_id}/support-offers", status_code=status.HTTP_201_CREATED, tags=["Support offers"], summary="Offer support for a shared plan")
 def create_support_offer(
     plan_id: int,
     payload: SupportOfferCreate,
@@ -435,7 +435,7 @@ def create_support_offer(
         raise HTTPException(status_code=502, detail="Could not create support offer.") from error
 
 
-@router.get("/plans/{plan_id}/support-offers")
+@router.get("/plans/{plan_id}/support-offers", tags=["Support offers"], summary="List support offers")
 def list_support_offers(
     plan_id: int,
     user: Any = Depends(require_user),
@@ -456,7 +456,7 @@ def list_support_offers(
         raise HTTPException(status_code=502, detail="Could not load support offers.") from error
 
 
-@router.delete("/support-offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/support-offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Support offers"], summary="Withdraw a support offer")
 def withdraw_support_offer(
     offer_id: int,
     user: Any = Depends(require_user),
@@ -476,7 +476,7 @@ def withdraw_support_offer(
         raise HTTPException(status_code=502, detail="Could not withdraw support offer.") from error
 
 
-@router.get("/activities")
+@router.get("/activities", tags=["Activities"], summary="List active activities")
 def list_activities(
     location: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=3, ge=1, le=20),

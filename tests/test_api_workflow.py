@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from src.api.main import app
-from src.api.models import PlanCreate, SupportOfferCreate
+from src.api.models import OlderAdultCreate, PlanCreate, SupportOfferCreate
 
 
 client = TestClient(app)
@@ -38,3 +38,9 @@ def test_plan_create_requires_the_three_relationship_ids():
 def test_support_offer_rejects_unknown_support_type():
     with pytest.raises(ValidationError):
         SupportOfferCreate(support_type="send_money")
+
+
+def test_older_adult_sharing_mode_defaults_to_family_approval():
+    profile = OlderAdultCreate(household_id=1, name="Mary Lim")
+
+    assert profile.sharing_mode == "family_approval"

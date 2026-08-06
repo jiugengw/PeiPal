@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from src.api.main import app
 from src.api.models import OlderAdultCreate, PlanCreate, PlanNotificationCreate, SupportOfferCreate
+from src.api.routes import get_activity
 
 
 client = TestClient(app)
@@ -63,9 +64,35 @@ def test_plan_notification_requires_at_least_one_contact():
         ("/api/older-adults/{older_adult_id}", "patch", "200", "OlderAdultResponse"),
         ("/api/older-adults/{older_adult_id}/trusted-contacts", "get", "200", "TrustedContactListResponse"),
         ("/api/trusted-contacts/{contact_id}", "patch", "200", "TrustedContactResponse"),
+        ("/api/plans", "post", "201", "PlanResponse"),
+        ("/api/plans", "get", "200", "PlanListResponse"),
+        ("/api/plans/{plan_id}", "get", "200", "PlanResponse"),
+        ("/api/plans/{plan_id}", "patch", "200", "PlanResponse"),
+        ("/api/activities/{activity_id}", "get", "200", "ActivityResponse"),
     ],
 )
 def test_setup_routes_publish_typed_openapi_responses(path, method, status_code, schema_name):
     response_schema = app.openapi()["paths"][path][method]["responses"][status_code]["content"]["application/json"]["schema"]
 
     assert response_schema["$ref"] == f"#/components/schemas/{schema_name}"
+
+
+def test_activity_detail_returns_an_expired_activity_for_existing_plans():
+    activity = {"id": 7, "status": "expired", "name": "Past activity"}
+
+    class Query:
+        def select(self, *_args): return self
+        def eq(self, field, value):
+            assert (field, value) == ("id", 7)
+            return self
+        def limit(self, value):
+            assert value == 1
+            return self
+        def execute(self): return type("Result", (), {"data": [activity]})()
+
+    class Client:
+        def table(self, name):
+            assert name == "activities"
+            return Query()
+
+    assert get_activity(7, Client()) == activity

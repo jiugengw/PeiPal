@@ -608,7 +608,7 @@ Verify on desktop and mobile:
 2. `test: cover frontend api contracts` — completed
    - Covers authentication middleware, typed query/path/body serialization, no-content and error responses, and activity query defaults.
 
-3. `feat: build household setup flow`
+3. `feat: build household setup flow` — completed
    - Household, profile, sharing mode, trusted contacts, review, and redirect logic.
 
 4. `test: cover household setup flow`

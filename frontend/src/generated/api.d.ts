@@ -349,6 +349,11 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** HouseholdListResponse */
+        HouseholdListResponse: {
+            /** Households */
+            households: components["schemas"]["HouseholdResponse"][];
+        };
         /**
          * HouseholdResponse
          * @example {
@@ -407,6 +412,11 @@ export interface components {
              * @enum {string}
              */
             sharing_mode: "direct" | "family_approval";
+        };
+        /** OlderAdultListResponse */
+        OlderAdultListResponse: {
+            /** Older Adults */
+            older_adults: components["schemas"]["OlderAdultResponse"][];
         };
         /**
          * OlderAdultResponse
@@ -542,6 +552,11 @@ export interface components {
             /** Phone */
             phone?: string | null;
         };
+        /** TrustedContactListResponse */
+        TrustedContactListResponse: {
+            /** Trusted Contacts */
+            trusted_contacts: components["schemas"]["TrustedContactResponse"][];
+        };
         /**
          * TrustedContactResponse
          * @example {
@@ -623,9 +638,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["HouseholdListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -693,9 +706,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["HouseholdResponse"];
                 };
             };
             /** @description Validation Error */
@@ -732,9 +743,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["HouseholdResponse"];
                 };
             };
             /** @description Validation Error */
@@ -802,9 +811,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["OlderAdultListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -837,9 +844,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["OlderAdultResponse"];
                 };
             };
             /** @description Validation Error */
@@ -876,9 +881,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["OlderAdultResponse"];
                 };
             };
             /** @description Validation Error */
@@ -911,9 +914,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TrustedContactListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1016,9 +1017,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TrustedContactResponse"];
                 };
             };
             /** @description Validation Error */

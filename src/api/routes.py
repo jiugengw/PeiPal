@@ -265,7 +265,7 @@ def delete_trusted_contact(
         raise HTTPException(status_code=502, detail="Could not delete trusted contact.") from error
 
 
-@router.post("/plans", status_code=status.HTTP_201_CREATED, tags=["Plans"], summary="Create a draft plan")
+@router.post("/plans", status_code=status.HTTP_201_CREATED, tags=["Plans"], summary="Create a plan")
 def create_plan(
     payload: PlanCreate,
     user: Any = Depends(require_user),
@@ -291,8 +291,22 @@ def create_plan(
         )
         if not activity:
             raise HTTPException(status_code=404, detail="Active activity not found.")
+        profile = (
+            client.table("older_adult_profiles")
+            .select("sharing_mode")
+            .eq("id", payload.older_adult_id)
+            .limit(1)
+            .execute()
+            .data
+        )
+        sharing_mode = profile[0]["sharing_mode"] if profile else "family_approval"
         values = payload.model_dump()
         values["created_by"] = user_id(user)
+        if sharing_mode == "direct":
+            values.update({
+                "status": "shared",
+                "shared_at": datetime.now(timezone.utc).isoformat(),
+            })
         return client.table("plans").insert(values).execute().data[0]
     except HTTPException:
         raise
@@ -341,7 +355,8 @@ def get_plan(
     summary="Update a plan status",
     description=(
         "Use this resource update for the plan lifecycle. Valid transitions are "
-        "draft → awaiting_approval → shared, or cancellation from any active state. "
+        "draft → awaiting_approval → shared for family approval, or cancellation "
+        "from any active state. Direct-sharing profiles create plans as shared. "
         "Sharing requires the household owner."
     ),
 )

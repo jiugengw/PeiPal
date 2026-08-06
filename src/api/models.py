@@ -26,6 +26,7 @@ class OlderAdultCreate(BaseModel):
         "language": "English",
         "mobility_notes": "Prefers seated activities",
         "transport_notes": "Family can help arrange transport",
+        "sharing_mode": "family_approval",
     }]})
 
     household_id: int
@@ -35,6 +36,7 @@ class OlderAdultCreate(BaseModel):
     language: str | None = Field(default=None, max_length=80)
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
+    sharing_mode: Literal["direct", "family_approval"] = "family_approval"
 
 
 class OlderAdultUpdate(BaseModel):
@@ -44,6 +46,7 @@ class OlderAdultUpdate(BaseModel):
     language: str | None = Field(default=None, max_length=80)
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
+    sharing_mode: Literal["direct", "family_approval"] | None = None
 
 
 class TrustedContactCreate(BaseModel):

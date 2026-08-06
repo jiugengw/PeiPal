@@ -11,8 +11,10 @@ from supabase import Client
 from src.api.dependencies import (
     get_supabase_client,
     household_id_for_older_adult,
+    require_household_owner,
     require_household_member,
     require_older_adult_access,
+    require_plan_access,
     require_user,
     user_id,
 )
@@ -21,6 +23,8 @@ from src.api.models import (
     HouseholdUpdate,
     OlderAdultCreate,
     OlderAdultUpdate,
+    PlanCreate,
+    SupportOfferCreate,
     TrustedContactCreate,
     TrustedContactUpdate,
 )
@@ -258,6 +262,218 @@ def delete_trusted_contact(
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not delete trusted contact.") from error
+
+
+@router.post("/plans", status_code=status.HTTP_201_CREATED)
+def create_plan(
+    payload: PlanCreate,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_household_member(client, payload.household_id, user)
+    older_adult_household_id = household_id_for_older_adult(client, payload.older_adult_id)
+    if older_adult_household_id != payload.household_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The older-adult profile does not belong to this household.",
+        )
+    try:
+        activity = (
+            client.table("activities")
+            .select("id")
+            .eq("id", payload.activity_id)
+            .eq("status", "active")
+            .gte("start_at", datetime.now(timezone.utc).isoformat())
+            .limit(1)
+            .execute()
+            .data
+        )
+        if not activity:
+            raise HTTPException(status_code=404, detail="Active activity not found.")
+        values = payload.model_dump()
+        values["created_by"] = user_id(user)
+        return client.table("plans").insert(values).execute().data[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not create plan.") from error
+
+
+@router.get("/plans")
+def list_plans(
+    household_id: int,
+    status_filter: str | None = Query(default=None, alias="status"),
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_household_member(client, household_id, user)
+    query = client.table("plans").select("*").eq("household_id", household_id).order("created_at", desc=True)
+    if status_filter:
+        query = query.eq("status", status_filter)
+    try:
+        return {"plans": query.execute().data or []}
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not load plans.") from error
+
+
+@router.get("/plans/{plan_id}")
+def get_plan(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    try:
+        result = client.table("plans").select("*").eq("id", plan_id).limit(1).execute().data
+        if not result:
+            raise HTTPException(status_code=404, detail="Plan not found.")
+        return result[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not load plan.") from error
+
+
+@router.post("/plans/{plan_id}/request-approval")
+def request_plan_approval(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    try:
+        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
+        if plan["status"] != "draft":
+            raise HTTPException(status_code=409, detail="Only draft plans can request approval.")
+        result = client.table("plans").update({"status": "awaiting_approval"}).eq("id", plan_id).execute().data
+        return result[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not request plan approval.") from error
+
+
+@router.post("/plans/{plan_id}/approve")
+def approve_plan(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    household_id = require_plan_access(client, plan_id, user)
+    require_household_owner(client, household_id, user)
+    try:
+        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
+        if plan["status"] != "awaiting_approval":
+            raise HTTPException(status_code=409, detail="Only plans awaiting approval can be approved.")
+        now = datetime.now(timezone.utc).isoformat()
+        result = client.table("plans").update({
+            "status": "shared",
+            "approved_by": user_id(user),
+            "approved_at": now,
+            "shared_at": now,
+        }).eq("id", plan_id).execute().data
+        return result[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not approve plan.") from error
+
+
+@router.post("/plans/{plan_id}/cancel")
+def cancel_plan(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    try:
+        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
+        if plan["status"] == "cancelled":
+            raise HTTPException(status_code=409, detail="Plan is already cancelled.")
+        result = client.table("plans").update({
+            "status": "cancelled",
+            "cancelled_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", plan_id).execute().data
+        return result[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not cancel plan.") from error
+
+
+@router.post("/plans/{plan_id}/support-offers", status_code=status.HTTP_201_CREATED)
+def create_support_offer(
+    plan_id: int,
+    payload: SupportOfferCreate,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    try:
+        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
+        if plan["status"] != "shared":
+            raise HTTPException(status_code=409, detail="Support can only be offered on a shared plan.")
+        existing = (
+            client.table("plan_support_offers")
+            .select("id")
+            .eq("plan_id", plan_id)
+            .eq("offered_by", user_id(user))
+            .eq("support_type", payload.support_type)
+            .eq("status", "offered")
+            .limit(1)
+            .execute()
+            .data
+        )
+        if existing:
+            raise HTTPException(status_code=409, detail="You already offered this type of support.")
+        values = payload.model_dump()
+        values.update({"plan_id": plan_id, "offered_by": user_id(user)})
+        return client.table("plan_support_offers").insert(values).execute().data[0]
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not create support offer.") from error
+
+
+@router.get("/plans/{plan_id}/support-offers")
+def list_support_offers(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    try:
+        result = (
+            client.table("plan_support_offers")
+            .select("*")
+            .eq("plan_id", plan_id)
+            .eq("status", "offered")
+            .order("created_at")
+            .execute()
+        )
+        return {"support_offers": result.data or []}
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not load support offers.") from error
+
+
+@router.delete("/support-offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
+def withdraw_support_offer(
+    offer_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> None:
+    try:
+        offer = client.table("plan_support_offers").select("plan_id, offered_by").eq("id", offer_id).limit(1).execute().data
+        if not offer:
+            raise HTTPException(status_code=404, detail="Support offer not found.")
+        require_plan_access(client, offer[0]["plan_id"], user)
+        if offer[0]["offered_by"] != user_id(user):
+            raise HTTPException(status_code=403, detail="You can only withdraw your own support offer.")
+        client.table("plan_support_offers").update({"status": "withdrawn"}).eq("id", offer_id).execute()
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not withdraw support offer.") from error
 
 
 @router.get("/activities")

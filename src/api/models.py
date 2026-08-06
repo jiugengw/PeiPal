@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -45,3 +47,21 @@ class TrustedContactUpdate(BaseModel):
     relationship: str | None = Field(default=None, min_length=1, max_length=80)
     email: str | None = Field(default=None, max_length=320)
     phone: str | None = Field(default=None, max_length=40)
+
+
+class PlanCreate(BaseModel):
+    household_id: int
+    older_adult_id: int
+    activity_id: int
+
+
+class SupportOfferCreate(BaseModel):
+    support_type: Literal[
+        "join",
+        "remind",
+        "transport",
+        "alternative",
+        "booking",
+        "encourage",
+    ]
+    note: str | None = Field(default=None, max_length=2_000)

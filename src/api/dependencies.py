@@ -86,3 +86,40 @@ def require_older_adult_access(
     household_id = household_id_for_older_adult(client, older_adult_id)
     require_household_member(client, household_id, user)
     return household_id
+
+
+def household_id_for_plan(client: Client, plan_id: int) -> int:
+    result = (
+        client.table("plans")
+        .select("household_id")
+        .eq("id", plan_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Plan not found.")
+    return int(result[0]["household_id"])
+
+
+def require_plan_access(client: Client, plan_id: int, user: Any) -> int:
+    household_id = household_id_for_plan(client, plan_id)
+    require_household_member(client, household_id, user)
+    return household_id
+
+
+def require_household_owner(client: Client, household_id: int, user: Any) -> None:
+    result = (
+        client.table("household_members")
+        .select("household_id")
+        .eq("household_id", household_id)
+        .eq("user_id", user_id(user))
+        .eq("role", "owner")
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the household owner can approve this plan.",
+        )

@@ -107,6 +107,18 @@ During development, Vite proxies `/api` and `/health` to the FastAPI server at
 `http://127.0.0.1:8000`. Copy `.env.example` to `.env` only when you need to
 override that API URL or add future public Supabase browser credentials.
 
+The frontend API types are generated from FastAPI's OpenAPI document. After
+changing an API path, parameter, request model, or response model, keep the
+backend running and regenerate the declarations:
+
+```powershell
+cd frontend
+npm.cmd run generate:api
+```
+
+Application code should use the typed client in `src/lib/fetchClient.ts`
+instead of declaring duplicate transport types or calling `fetch` directly.
+
 ### Refreshing activities with Parallel
 
 The backend can use Parallel Search and Extract to discover current activities

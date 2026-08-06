@@ -106,12 +106,13 @@ The endpoint groups follow this order:
 
 1. **System** — health checks.
 2. **Activities** — find active activities.
-3. **Households** — create and manage a family household.
-4. **Older adults** — save practical profile details and sharing mode.
-5. **Trusted contacts** — manage people who can help.
-6. **Plans** — create and update a plan lifecycle.
-7. **Notifications** — send and inspect plan email delivery.
-8. **Support offers** — offer or withdraw practical help.
+3. **Voice** — create a short-lived browser voice session.
+4. **Households** — create and manage a family household.
+5. **Older adults** — save practical profile details and sharing mode.
+6. **Trusted contacts** — manage people who can help.
+7. **Plans** — create and update a plan lifecycle.
+8. **Notifications** — send and inspect plan email delivery.
+9. **Support offers** — offer or withdraw practical help.
 
 When adding an endpoint, put it in the matching tag group and provide a short `summary` in the route decorator.
 
@@ -130,6 +131,11 @@ Create household
 → notify selected contacts
 → record support offers
 ```
+
+For browser voice, the frontend first calls `POST /api/voice/session`. The API
+returns a short-lived client secret; the frontend uses it to connect to the
+OpenAI Realtime session over WebRTC. Voice actions and click actions then use
+the same REST endpoints above.
 
 Sharing modes:
 

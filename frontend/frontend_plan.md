@@ -629,7 +629,7 @@ Verify on desktop and mobile:
 9. `feat: add browser voice companion` - completed
    - Realtime WebRTC session, transcript, controls, shared workflow tools, approvals, and cleanup.
 
-10. `test: cover browser voice workflow`
+10. `test: cover browser voice workflow` - completed
     - Session states, tool guards, human approval, failures, and fallback interaction.
 
 11. `test: add core workflow browser coverage`

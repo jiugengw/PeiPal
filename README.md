@@ -1,62 +1,46 @@
 # Count Me In
-Count Me In is a voice-first companion agent that helps older adults find nearby activities and share their interest with trusted family or friends. Instead of making direct invitations, it creates low-pressure plans others can support by joining, reminding, arranging transport, or suggesting alternatives.
 
-## Local voice demo
+Count Me In is a family-assisted companion that helps older adults find nearby activities and ask their trusted circle for small, practical support.
 
-The first voice prototype runs locally from the terminal. It uses the computer's
-default microphone and speakers, and it does not save transcripts. Its only
-optional external action is a confirmed email notification through Resend.
+The product is designed around a simple, low-pressure idea:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env and replace the placeholder with your real API key.
-python -m src.demo.voice_cli
-```
+> “I would like to go” should not feel like “someone must take responsibility.”
 
-To use the same agent and tools as a typed chat instead:
+Instead of sending a direct invitation to one person, Count Me In turns an older adult’s interest into a shared plan. Family and friends can choose a small way to help, such as joining, arranging transport, setting a reminder, suggesting an easier alternative, or helping with booking.
 
-```bash
-python -m src.demo.chat_cli
-```
+## The experience
 
-### Email notifications
+1. A family member helps create an older-adult profile.
+2. The household adds trusted contacts and practical preferences.
+3. The older adult discovers a nearby activity that feels comfortable.
+4. The plan is either shared directly or sent for family approval.
+5. Selected trusted contacts receive the plan by email.
+6. Each person can offer one small kind of support.
 
-The agent can send a simple activity invitation through Resend after showing
-the complete email and receiving explicit confirmation. Copy
-`contacts.example.json` to `contacts.json`, add trusted contacts, then set
-`RESEND_API_KEY` and `EMAIL_FROM` in `.env`. `EMAIL_FROM` must use a domain
-verified in Resend. You may also set `EMAIL_REPLY_TO` if replies should go to a
-different address. The local `contacts.json` file is excluded from Git.
+## What the prototype demonstrates
 
-Each selected contact receives a separate email, so recipients never see one
-another's addresses. Emails are notifications only and do not include RSVP
-buttons or booking actions.
+- Family-assisted setup for an older adult
+- Mobility, language, and transport context
+- Nearby activity discovery
+- Direct sharing or family-approved sharing
+- Shared activity plans
+- Support choices such as joining, reminders, transport, and booking help
+- Per-contact email delivery tracking, including failed deliveries that can be retried
+- A voice-first companion prototype for natural activity planning
 
-The voice and chat commands share the same agent instructions, activity
-recommendation tool, and email tools. Only the input/output mode is different.
-Type `/exit` to stop chat mode.
+## Why it matters
 
-The CLI automatically reads `OPENAI_API_KEY` from `.env`. The file is excluded
-from Git, so keep your real key there and never commit or share it. On macOS,
-grant your terminal microphone permission when prompted. Press `Ctrl+C` to stop
-the demo.
+Older adults may want to participate in activities without feeling that they are burdening a particular family member. Count Me In makes support visible, optional, and distributed across a trusted circle while keeping the older adult’s choice at the centre.
 
-### Backend API
+## Hackathon demo story
 
-Install dependencies and start the website API with:
+Mary wants to do something relaxing nearby but does not want to trouble anyone. Her daughter creates Mary’s profile, adds the trusted circle, and chooses family approval for shared plans. Mary selects a quiet activity. The family approves the plan, trusted contacts receive the details, and each person can offer a practical kind of help without being assigned the entire responsibility.
 
-```bash
-uvicorn src.api.main:app --reload
-```
+## Current scope
 
-The health check is available at `http://127.0.0.1:8000/health`. Supabase
-credentials are loaded from `.env`; keep `SUPABASE_SERVICE_ROLE_KEY` on the
-server only. Set `CORS_ORIGINS` to the deployed website origin before hosting
-the API.
+The current prototype focuses on planning and coordination. It does not yet arrange transport, complete bookings, track RSVP responses, or provide full browser-based voice interaction.
 
+<<<<<<< HEAD
 #### API documentation
 
 FastAPI publishes interactive documentation automatically:
@@ -221,3 +205,6 @@ invitation responses, or make bookings.
 - [Realtime Agents Guide — OpenAI Agents SDK for Python](https://openai.github.io/openai-agents-python/realtime/guide/)
 - [Realtime Transport — OpenAI Agents SDK for Python](https://openai.github.io/openai-agents-python/realtime/transport/)
 - [Voice agents — OpenAI API](https://developers.openai.com/api/docs/guides/voice-agents)
+=======
+Technical setup, API documentation, migrations, testing, activity ingestion, and troubleshooting are in [DEVELOPMENT.md](DEVELOPMENT.md).
+>>>>>>> 480d72aadcaa9ea20c0b887c978575090f5192d5

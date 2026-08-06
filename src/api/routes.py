@@ -27,18 +27,41 @@ from src.api.models import (
     OlderAdultResponse,
     OlderAdultUpdate,
     PlanCreate,
+    PlanNotificationCreate,
     PlanUpdate,
     SupportOfferCreate,
     TrustedContactCreate,
     TrustedContactResponse,
     TrustedContactUpdate,
 )
+from src.services.notifications import send_plan_email
+from src.services.realtime import create_realtime_client_secret
 
 
 router = APIRouter(prefix="/api")
 
 
-@router.post("/households", status_code=status.HTTP_201_CREATED, response_model=HouseholdResponse, tags=["Households"], summary="Create a household")
+@router.post(
+    "/voice/session",
+    tags=["Voice"],
+    summary="Create a browser voice session",
+    description=(
+        "Create a short-lived OpenAI Realtime credential for the signed-in browser. "
+        "The permanent OpenAI API key is never returned."
+    ),
+)
+def create_voice_session(
+    user: Any = Depends(require_user),
+) -> dict[str, Any]:
+    try:
+        return create_realtime_client_secret(user_id(user))
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="Browser voice is not available.") from error
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not create browser voice session.") from error
+
+
+@router.post("/households", status_code=status.HTTP_201_CREATED, tags=["Households"], summary="Create a household")
 def create_household(
     payload: HouseholdCreate,
     user: Any = Depends(require_user),
@@ -478,7 +501,180 @@ def withdraw_support_offer(
         raise HTTPException(status_code=502, detail="Could not withdraw support offer.") from error
 
 
-@router.get("/activities", response_model=ActivityListResponse, tags=["Activities"], summary="List active activities")
+@router.post(
+    "/plans/{plan_id}/notifications",
+    tags=["Notifications"],
+    summary="Send plan notifications",
+    description=(
+        "Send one email to each selected trusted contact for a shared plan. "
+        "Successful recipients are not sent again if this request is retried; "
+        "failed recipients can be retried."
+    ),
+)
+def send_plan_notifications(
+    plan_id: int,
+    payload: PlanNotificationCreate,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    selected_contact_ids = list(dict.fromkeys(payload.contact_ids))
+    try:
+        plan_rows = (
+            client.table("plans")
+            .select("status, older_adult_id, activity_id")
+            .eq("id", plan_id)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if not plan_rows:
+            raise HTTPException(status_code=404, detail="Plan not found.")
+        plan = plan_rows[0]
+        if plan["status"] != "shared":
+            raise HTTPException(status_code=409, detail="Only shared plans can send notifications.")
+
+        contacts = (
+            client.table("trusted_contacts")
+            .select("id, name, email")
+            .eq("older_adult_id", plan["older_adult_id"])
+            .in_("id", selected_contact_ids)
+            .execute()
+            .data
+            or []
+        )
+        contacts_by_id = {int(contact["id"]): contact for contact in contacts}
+        missing_ids = [contact_id for contact_id in selected_contact_ids if contact_id not in contacts_by_id]
+        if missing_ids:
+            raise HTTPException(status_code=404, detail=f"Trusted contacts not found: {missing_ids}")
+
+        profile = (
+            client.table("older_adult_profiles")
+            .select("name, preferred_name")
+            .eq("id", plan["older_adult_id"])
+            .limit(1)
+            .execute()
+            .data[0]
+        )
+        activity = (
+            client.table("activities")
+            .select("name, location, start_at, info_link")
+            .eq("id", plan["activity_id"])
+            .limit(1)
+            .execute()
+            .data[0]
+        )
+        person_name = profile.get("preferred_name") or profile["name"]
+        subject = f"{person_name} is interested in an activity"
+        body = (
+            f"{person_name} is interested in {activity['name']} at {activity['location']} "
+            f"on {activity['start_at']}.\n\n"
+            "Would you like to join, help with transport, remind them, or offer another kind of support? "
+            "There is no obligation.\n\n"
+            f"More information: {activity['info_link']}"
+        )
+
+        deliveries: list[dict[str, Any]] = []
+        for contact_id in selected_contact_ids:
+            contact = contacts_by_id[contact_id]
+            existing = (
+                client.table("plan_notifications")
+                .select("id, status")
+                .eq("plan_id", plan_id)
+                .eq("trusted_contact_id", contact_id)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+            if existing and existing[0]["status"] == "sent":
+                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "already_sent"})
+                continue
+
+            if existing:
+                notification_id = existing[0]["id"]
+                client.table("plan_notifications").update({
+                    "status": "pending",
+                    "recipient_name": contact["name"],
+                    "recipient_email": contact.get("email"),
+                    "error_message": None,
+                    "attempted_at": datetime.now(timezone.utc).isoformat(),
+                }).eq("id", notification_id).execute()
+            else:
+                notification_id = (
+                    client.table("plan_notifications")
+                    .insert({
+                        "plan_id": plan_id,
+                        "trusted_contact_id": contact_id,
+                        "recipient_name": contact["name"],
+                        "recipient_email": contact.get("email"),
+                        "status": "pending",
+                        "attempted_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                    .execute()
+                    .data[0]["id"]
+                )
+
+            if not contact.get("email"):
+                error_message = "This trusted contact has no email address."
+                client.table("plan_notifications").update({
+                    "status": "failed",
+                    "error_message": error_message,
+                }).eq("id", notification_id).execute()
+                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "failed", "error": error_message})
+                continue
+
+            try:
+                provider_id = send_plan_email(
+                    recipient_email=contact["email"],
+                    subject=subject,
+                    body=body,
+                    idempotency_key=f"plan-notification/{plan_id}/{contact_id}",
+                )
+            except Exception:
+                error_message = "Email delivery failed."
+                client.table("plan_notifications").update({
+                    "status": "failed",
+                    "error_message": error_message,
+                }).eq("id", notification_id).execute()
+                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "failed", "error": error_message})
+            else:
+                client.table("plan_notifications").update({
+                    "status": "sent",
+                    "provider_id": provider_id,
+                    "sent_at": datetime.now(timezone.utc).isoformat(),
+                    "error_message": None,
+                }).eq("id", notification_id).execute()
+                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "sent", "provider_id": provider_id})
+
+        return {"deliveries": deliveries}
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not send plan notifications.") from error
+
+
+@router.get("/plans/{plan_id}/notifications", tags=["Notifications"], summary="List plan notifications")
+def list_plan_notifications(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    try:
+        result = (
+            client.table("plan_notifications")
+            .select("*")
+            .eq("plan_id", plan_id)
+            .order("created_at")
+            .execute()
+        )
+        return {"notifications": result.data or []}
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not load plan notifications.") from error
+
+
+@router.get("/activities", tags=["Activities"], summary="List active activities")
 def list_activities(
     location: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=3, ge=1, le=20),

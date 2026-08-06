@@ -19,6 +19,10 @@ OPENAPI_TAGS = [
         "description": "Browse active activities available for planning.",
     },
     {
+        "name": "Voice",
+        "description": "Create short-lived browser voice sessions.",
+    },
+    {
         "name": "Households",
         "description": "Create and manage the family household.",
     },
@@ -33,6 +37,10 @@ OPENAPI_TAGS = [
     {
         "name": "Plans",
         "description": "Create plans and move them through approval and sharing.",
+    },
+    {
+        "name": "Notifications",
+        "description": "Send and inspect plan email delivery results.",
     },
     {
         "name": "Support offers",
@@ -64,8 +72,12 @@ The signed-in user becomes the household owner.
    with `{"status":"awaiting_approval"}`, then update it to
    `{"status":"shared"}` using the owner token. Direct-sharing plans are
    already `shared` after creation.
-8. Call **Support offers → Offer support for a shared plan**.
-9. Use **Plans → Get a plan** and **Support offers → List support offers** to
+8. Call **Notifications → Send plan notifications** with selected trusted-contact IDs.
+   Each recipient is recorded as `sent` or `failed`; retrying the same request
+   skips recipients that were already sent successfully.
+9. Call **Support offers → Offer support for a shared plan**.
+10. Use **Plans → Get a plan**, **Support offers → List support offers**, and
+   **Notifications → List plan notifications** to
    confirm the final state.
 
 The API responses provide the IDs needed by the next step. Protected endpoints
@@ -74,7 +86,7 @@ require the same `Bearer` token and only allow access within the user's househol
 ## Endpoint groups
 
 The sections below follow the same workflow order: Activities, Households,
-Older adults, Trusted contacts, Plans, then Support offers.
+Older adults, Trusted contacts, Plans, Notifications, then Support offers.
         """
     ),
     openapi_tags=OPENAPI_TAGS,

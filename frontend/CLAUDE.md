@@ -30,6 +30,8 @@ src/
 |   |-- layout/   # Navigation, headers, containers, and page structure
 |   `-- ui/       # Generic controls such as buttons, inputs, cards, and dialogs
 |-- features/     # Business capabilities grouped by product domain
+|-- generated/    # Generated API declarations; do not edit manually
+|   `-- api.d.ts  # Generated from FastAPI OpenAPI
 |-- hooks/        # Hooks genuinely reused across multiple features
 |-- lib/          # Foundational helpers and configured third-party libraries
 |-- routes/       # TanStack file routes and route-level guards
@@ -51,7 +53,7 @@ Do not create empty folders for symmetry. Add a folder when real code needs it.
 2. Put route-specific screens directly in their owning files under `routes/`. Creating a route file should create the route without a parallel `pages/` file.
 3. Put reusable visual components in `components/`. Do not move a component there until it is useful outside its original route or feature.
 4. Put global application wiring in `app/`, not in a feature or route.
-5. Put external boundaries in `services/`. Generic HTTP behavior belongs in `services/api/`; feature-specific requests belong in `features/<feature>/api/` once that feature grows.
+5. Keep the configured OpenAPI client in `lib/fetchClient.ts`. Put feature-specific query options and mutations in `features/<feature>/api/`.
 6. Prefer colocated tests, for example `ActivityCard.test.tsx` beside `ActivityCard.tsx`.
 7. Avoid catch-all files or folders named `helpers`, `common`, or `misc`. Choose a specific owner.
 8. Split into smaller logical components as much as possible. Each component should ideally be in its own file.
@@ -108,11 +110,10 @@ The interface is intended to be comfortable for older adults:
 
 During local development, Vite proxies `/api` and `/health` to the FastAPI backend. Prefer relative API paths so the proxy and same-origin deployments work consistently.
 
-- Keep generic request and error handling in the service layer.
-- Validate or narrow unknown response data before using it.
-- Pass `AbortSignal` where requests may be cancelled.
-- Show understandable user-facing errors; do not expose raw internal error messages.
-- Supabase browser configuration is a future boundary only. Never place `SUPABASE_SERVICE_ROLE_KEY` in this project.
+- Use `lib/fetchClient.ts` for API requests and keep feature-specific queries and mutations in the owning feature's `api/` folder.
+- Use the types in `generated/api.d.ts`; do not duplicate API request or response interfaces.
+- Do not edit `generated/api.d.ts` manually. After changing the backend API contract, start FastAPI and run `npm.cmd run generate:api` from `frontend/`.
+- Never expose server secrets such as `SUPABASE_SERVICE_ROLE_KEY` in frontend code.
 
 ## Styling
 

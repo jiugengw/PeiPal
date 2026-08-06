@@ -61,6 +61,13 @@ The static website requests saved activities from `/api/activities` when the
 backend is running. If the API is unavailable, it keeps the demo activities so
 the prototype remains usable offline.
 
+The authenticated API also supports the core planning workflow. A signed-in
+household member can create and retrieve household setup data, update the
+older-adult profile and trusted contacts, create a plan from an active activity,
+request approval, approve and share the plan, and add or withdraw support offers.
+Plans and support offers are stored in Supabase. The current API does not yet
+send notifications or connect these workflow endpoints to the React screens.
+
 ### React frontend
 
 The production frontend foundation lives in `frontend/` and uses React,

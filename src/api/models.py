@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -109,3 +110,54 @@ class SupportOfferCreate(BaseModel):
         "encourage",
     ]
     note: str | None = Field(default=None, max_length=2_000)
+
+
+class HouseholdResponse(HouseholdCreate):
+    id: int
+    created_by: str
+    created_at: datetime
+
+
+class OlderAdultResponse(OlderAdultCreate):
+    id: int
+    created_by: str
+    created_at: datetime
+
+
+class TrustedContactResponse(TrustedContactCreate):
+    id: int
+    consent_status: str
+    created_at: datetime
+
+
+class ActivityResponse(BaseModel):
+    id: int
+    dedupe_key: str
+    name: str
+    description: str | None = None
+    location: str
+    start_at: datetime
+    end_at: datetime | None = None
+    cost: float | None = None
+    currency: str
+    price_remarks: str | None = None
+    slots_availability: str | None = None
+    info_link: str
+    signup_link: str | None = None
+    mobility_notes: str | None = None
+    intensity: str | None = None
+    tags: list[str] | None = None
+    suitability_score: float | None = None
+    engagement_score: float | None = None
+    total_score: float | None = None
+    status: str
+    first_seen_at: datetime
+    last_seen_at: datetime
+    last_checked_at: datetime
+    content_hash: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ActivityListResponse(BaseModel):
+    activities: list[ActivityResponse]

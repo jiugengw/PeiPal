@@ -109,3 +109,11 @@ class SupportOfferCreate(BaseModel):
         "encourage",
     ]
     note: str | None = Field(default=None, max_length=2_000)
+
+
+class PlanNotificationCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{
+        "contact_ids": [1, 2],
+    }]})
+
+    contact_ids: list[int] = Field(min_length=1, max_length=20)

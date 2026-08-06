@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class HouseholdCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family"}]})
+
     name: str = Field(min_length=1, max_length=120)
 
 
@@ -16,6 +18,16 @@ class HouseholdUpdate(BaseModel):
 
 
 class OlderAdultCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{
+        "household_id": 1,
+        "name": "Mary Lim",
+        "preferred_name": "Mary",
+        "age": 75,
+        "language": "English",
+        "mobility_notes": "Prefers seated activities",
+        "transport_notes": "Family can help arrange transport",
+    }]})
+
     household_id: int
     name: str = Field(min_length=1, max_length=120)
     preferred_name: str | None = Field(default=None, max_length=120)
@@ -35,6 +47,14 @@ class OlderAdultUpdate(BaseModel):
 
 
 class TrustedContactCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{
+        "older_adult_id": 1,
+        "name": "Anna Lim",
+        "relationship": "Daughter",
+        "email": "anna@example.com",
+        "phone": "+65 91234567",
+    }]})
+
     older_adult_id: int
     name: str = Field(min_length=1, max_length=120)
     relationship: str = Field(min_length=1, max_length=80)
@@ -50,12 +70,33 @@ class TrustedContactUpdate(BaseModel):
 
 
 class PlanCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{
+        "household_id": 1,
+        "older_adult_id": 1,
+        "activity_id": 1,
+    }]})
+
     household_id: int
     older_adult_id: int
     activity_id: int
 
 
+class PlanUpdate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [
+        {"status": "awaiting_approval"},
+        {"status": "shared"},
+        {"status": "cancelled"},
+    ]})
+
+    status: Literal["awaiting_approval", "shared", "cancelled"]
+
+
 class SupportOfferCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{
+        "support_type": "transport",
+        "note": "I can drive Mary there.",
+    }]})
+
     support_type: Literal[
         "join",
         "remind",

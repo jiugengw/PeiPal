@@ -24,6 +24,7 @@ from src.api.models import (
     OlderAdultCreate,
     OlderAdultUpdate,
     PlanCreate,
+    PlanUpdate,
     SupportOfferCreate,
     TrustedContactCreate,
     TrustedContactUpdate,
@@ -334,71 +335,53 @@ def get_plan(
         raise HTTPException(status_code=502, detail="Could not load plan.") from error
 
 
-@router.post("/plans/{plan_id}/request-approval", tags=["Plans"], summary="Request plan approval")
-def request_plan_approval(
+@router.patch(
+    "/plans/{plan_id}",
+    tags=["Plans"],
+    summary="Update a plan status",
+    description=(
+        "Use this resource update for the plan lifecycle. Valid transitions are "
+        "draft → awaiting_approval → shared, or cancellation from any active state. "
+        "Sharing requires the household owner."
+    ),
+)
+def update_plan(
     plan_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    try:
-        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
-        if plan["status"] != "draft":
-            raise HTTPException(status_code=409, detail="Only draft plans can request approval.")
-        result = client.table("plans").update({"status": "awaiting_approval"}).eq("id", plan_id).execute().data
-        return result[0]
-    except HTTPException:
-        raise
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not request plan approval.") from error
-
-
-@router.post("/plans/{plan_id}/approve", tags=["Plans"], summary="Approve and share a plan")
-def approve_plan(
-    plan_id: int,
+    payload: PlanUpdate,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
     household_id = require_plan_access(client, plan_id, user)
-    require_household_owner(client, household_id, user)
     try:
         plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
-        if plan["status"] != "awaiting_approval":
-            raise HTTPException(status_code=409, detail="Only plans awaiting approval can be approved.")
+        current_status = plan["status"]
+        next_status = payload.status
+        valid_transitions = {
+            "draft": {"awaiting_approval", "cancelled"},
+            "awaiting_approval": {"shared", "cancelled"},
+            "shared": {"cancelled"},
+            "cancelled": set(),
+        }
+        if next_status not in valid_transitions[current_status]:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Cannot change a plan from {current_status} to {next_status}.",
+            )
+
+        values: dict[str, Any] = {"status": next_status}
         now = datetime.now(timezone.utc).isoformat()
-        result = client.table("plans").update({
-            "status": "shared",
-            "approved_by": user_id(user),
-            "approved_at": now,
-            "shared_at": now,
-        }).eq("id", plan_id).execute().data
+        if next_status == "shared":
+            require_household_owner(client, household_id, user)
+            values.update({"approved_by": user_id(user), "approved_at": now, "shared_at": now})
+        elif next_status == "cancelled":
+            values["cancelled_at"] = now
+
+        result = client.table("plans").update(values).eq("id", plan_id).execute().data
         return result[0]
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not approve plan.") from error
-
-
-@router.post("/plans/{plan_id}/cancel", tags=["Plans"], summary="Cancel a plan")
-def cancel_plan(
-    plan_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    try:
-        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
-        if plan["status"] == "cancelled":
-            raise HTTPException(status_code=409, detail="Plan is already cancelled.")
-        result = client.table("plans").update({
-            "status": "cancelled",
-            "cancelled_at": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", plan_id).execute().data
-        return result[0]
-    except HTTPException:
-        raise
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not cancel plan.") from error
+        raise HTTPException(status_code=502, detail="Could not update plan.") from error
 
 
 @router.post("/plans/{plan_id}/support-offers", status_code=status.HTTP_201_CREATED, tags=["Support offers"], summary="Offer support for a shared plan")

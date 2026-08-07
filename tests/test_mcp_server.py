@@ -37,6 +37,10 @@ def test_tool_discovery_exposes_expected_tools():
     assert {tool.name for tool in mcp._tool_manager.list_tools()} == {
         "search_activities",
         "recommend_activities",
+        "recommend_activity_for_person",
+        "prepare_family_approval",
+        "confirm_activity_plan",
+        "explain_activity_match",
         "list_households",
         "list_older_adults",
         "create_plan",
@@ -87,6 +91,21 @@ def test_recommendation_tool_forwards_person_specific_request():
     assert result["ok"] is True
     assert result["recommendations"][0]["recommendation_score"] == 92
     assert fake.calls[0][2]["params"] == {"limit": 3, "interest": "music", "max_cost": 10}
+
+
+def test_task_tools_prepare_and_confirm_family_plan():
+    fake = FakeApi({
+        ("GET", "/api/older-adults/8"): {"id": 8, "household_id": 3},
+        ("POST", "/api/plans"): {"id": 22, "status": "draft"},
+        ("PATCH", "/api/plans/22"): {"id": 22, "status": "awaiting_approval"},
+    })
+    prepared = call_tool(fake, "prepare_family_approval", {"activity_id": 1, "older_adult_id": 8})
+    assert prepared["approval_status"] == "awaiting_approval"
+    assert fake.calls[-1][2]["json"] == {"status": "awaiting_approval"}
+
+    fake.responses[("PATCH", "/api/plans/22")] = {"id": 22, "status": "shared"}
+    confirmed = call_tool(fake, "confirm_activity_plan", {"plan_id": 22})
+    assert confirmed["plan"]["status"] == "shared"
 
 
 def test_backend_errors_are_returned_without_claiming_success():

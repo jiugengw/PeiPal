@@ -741,6 +741,8 @@ def list_activity_recommendations(
     location: str | None = Query(default=None, max_length=120),
     interest: str | None = Query(default=None, max_length=240),
     max_cost: float | None = Query(default=None, ge=0),
+    mobility: str | None = Query(default=None, max_length=240),
+    activity_id: int | None = Query(default=None, ge=1),
     limit: int = Query(default=20, ge=1, le=20),
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
@@ -753,6 +755,8 @@ def list_activity_recommendations(
             interest=interest,
             max_cost=max_cost,
             location=location,
+            mobility=mobility,
+            activity_id=activity_id,
             limit=limit,
         )
         return {"recommendations": recommendations}

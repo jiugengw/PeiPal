@@ -26,8 +26,8 @@ def _interest_match(activity: dict[str, Any], interest: str | None) -> float:
     return round(matches / len(terms) * 100, 2)
 
 
-def _mobility_match(activity: dict[str, Any], older_adult: dict[str, Any]) -> float:
-    notes = str(older_adult.get("mobility_notes") or "").lower()
+def _mobility_match(activity: dict[str, Any], older_adult: dict[str, Any], mobility: str | None = None) -> float:
+    notes = str(mobility or older_adult.get("mobility_notes") or "").lower()
     if not notes:
         return 50.0
     intensity = str(activity.get("intensity") or "").lower()
@@ -65,10 +65,11 @@ def score_activity(
     interest: str | None,
     max_cost: float | None,
     location: str | None,
+    mobility: str | None = None,
 ) -> tuple[float, dict[str, float]]:
     factors = {
         "interest_match": _interest_match(activity, interest),
-        "mobility_match": _mobility_match(activity, older_adult),
+        "mobility_match": _mobility_match(activity, older_adult, mobility),
         "cost_match": _cost_match(activity, max_cost),
         "location_match": _location_match(activity, location),
     }
@@ -88,6 +89,8 @@ def recommend_activities(
     interest: str | None = None,
     max_cost: float | None = None,
     location: str | None = None,
+    mobility: str | None = None,
+    activity_id: int | None = None,
     limit: int = 20,
 ) -> list[dict[str, Any]]:
     profile_result = (
@@ -118,10 +121,17 @@ def recommend_activities(
         "location": location,
     }
     for activity in activities:
+        if activity_id is not None and int(activity.get("id")) != activity_id:
+            continue
         if max_cost is not None and activity.get("cost") is not None and float(activity["cost"]) > max_cost:
             continue
         score, factors = score_activity(
-            activity, older_adult, interest=interest, max_cost=max_cost, location=location
+            activity,
+            older_adult,
+            interest=interest,
+            max_cost=max_cost,
+            location=location,
+            mobility=mobility,
         )
         row = {
             "older_adult_id": older_adult_id,

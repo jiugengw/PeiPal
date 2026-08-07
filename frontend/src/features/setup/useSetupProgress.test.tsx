@@ -23,7 +23,7 @@ describe("useSetupProgress", () => {
 
   it("enables dependent setup queries only when their parent record exists", () => {
     mockedUseQuery
-      .mockReturnValueOnce(queryResult({ households: [] }) as never)
+      .mockReturnValueOnce(queryResult({ families: [] }) as never)
       .mockReturnValueOnce(queryResult(undefined) as never)
       .mockReturnValueOnce(queryResult(undefined) as never);
 
@@ -39,14 +39,14 @@ describe("useSetupProgress", () => {
   });
 
   it("loads older adults and contacts sequentially and reports completion", () => {
-    const household = { id: 1, name: "Lim Family" };
-    const olderAdult = { id: 2, household_id: 1, name: "Mary Lim" };
+    const family = { id: 1, name: "Lim Family" };
+    const olderAdult = { id: 2, family_id: 1, name: "Mary Lim" };
     const contact = { id: 3, older_adult_id: 2, name: "Anna" };
     mockedUseQuery
-      .mockReturnValueOnce(queryResult({ households: [household] }) as never)
+      .mockReturnValueOnce(queryResult({ families: [family] }) as never)
       .mockReturnValueOnce(queryResult({ older_adults: [olderAdult] }) as never)
       .mockReturnValueOnce(
-        queryResult({ trusted_contacts: [contact] }) as never,
+        queryResult({ family_members: [contact] }) as never,
       );
 
     const { result } = renderHook(() => useSetupProgress());
@@ -59,9 +59,9 @@ describe("useSetupProgress", () => {
     );
     expect(result.current).toEqual(
       expect.objectContaining({
-        household,
+        family,
         olderAdult,
-        contacts: [contact],
+        familyMembers: [contact],
         isComplete: true,
         isPending: false,
         isError: false,
@@ -71,7 +71,7 @@ describe("useSetupProgress", () => {
 
   it("combines pending and error states from the active setup queries", () => {
     mockedUseQuery
-      .mockReturnValueOnce(queryResult({ households: [{ id: 1 }] }) as never)
+      .mockReturnValueOnce(queryResult({ families: [{ id: 1 }] }) as never)
       .mockReturnValueOnce(queryResult(undefined, { isPending: true }) as never)
       .mockReturnValueOnce(queryResult(undefined, { isError: true }) as never);
 

@@ -19,17 +19,38 @@ vi.mock("@/features/setup/useSetupProgress", () => ({
 
 const mockedProgress = vi.mocked(useSetupProgress);
 
+const OLDER_ADULT = {
+  id: 2,
+  family_id: 1,
+  name: "Mary Lim",
+  preferred_name: "Mary",
+  sharing_mode: "family_approval",
+};
+
+function familyMember(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 3,
+    family_id: 1,
+    name: "Anna",
+    email: "anna@example.com",
+    relationships: [{ older_adult_id: 2, relationship: "Daughter" }],
+    created_at: "2030-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
 function progress(overrides: Record<string, unknown> = {}) {
   return {
-    household: undefined,
+    family: undefined,
     olderAdult: undefined,
-    contacts: [],
+    olderAdults: [],
+    familyMembers: [],
     isPending: false,
     isError: false,
     isComplete: false,
-    householdsQuery: { refetch: vi.fn() },
+    familiesQuery: { refetch: vi.fn() },
     olderAdultsQuery: { refetch: vi.fn() },
-    trustedContactsQuery: { refetch: vi.fn() },
+    familyMembersQuery: { refetch: vi.fn() },
     ...overrides,
   };
 }
@@ -64,7 +85,7 @@ describe("SetupWizard", () => {
     mockedProgress.mockReturnValue(
       progress({
         isError: true,
-        householdsQuery: { refetch },
+        familiesQuery: { refetch },
       }) as never,
     );
     view.rerender(
@@ -77,18 +98,18 @@ describe("SetupWizard", () => {
     expect(refetch).toHaveBeenCalledOnce();
   });
 
-  it("does not submit an empty household name", async () => {
+  it("does not submit an empty family name", async () => {
     const user = userEvent.setup();
     const post = vi.spyOn(fetchClient, "POST");
     renderWizard();
 
-    await user.click(screen.getByRole("button", { name: /create household/i }));
+    await user.click(screen.getByRole("button", { name: /create family/i }));
 
     expect(post).not.toHaveBeenCalled();
-    expect(screen.getByLabelText(/household name/i)).toBeInvalid();
+    expect(screen.getByLabelText(/family name/i)).toBeInvalid();
   });
 
-  it("creates a household and advances to profile details", async () => {
+  it("creates a family and advances to profile details", async () => {
     const user = userEvent.setup();
     vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
       data: {
@@ -101,25 +122,24 @@ describe("SetupWizard", () => {
     });
     renderWizard();
 
-    await user.type(screen.getByLabelText(/household name/i), "Lim Family");
-    await user.click(screen.getByRole("button", { name: /create household/i }));
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
 
-    expect(fetchClient.POST).toHaveBeenCalledWith("/api/households", {
-      body: { name: "Lim Family" },
+    expect(fetchClient.POST).toHaveBeenCalledWith("/api/families", {
+      body: { name: "Lim Family", owner_email: "anna@example.com" },
     });
     expect(
-      await screen.findByRole("heading", {
-        name: /what makes support comfortable/i,
-      }),
+      await screen.findByRole("heading", { name: /confirm your email address/i }),
     ).toBeVisible();
   });
 
-  it("keeps the household draft after a failed save and succeeds on retry", async () => {
+  it("keeps the family draft after a failed save and succeeds on retry", async () => {
     const user = userEvent.setup();
     const post = vi
       .spyOn(fetchClient, "POST")
       .mockResolvedValueOnce({
-        error: { detail: "Household service is unavailable." },
+        error: { detail: "Family service is unavailable." },
         response: new Response(null, { status: 503 }),
       } as never)
       .mockResolvedValueOnce({
@@ -133,32 +153,36 @@ describe("SetupWizard", () => {
       });
     renderWizard();
 
-    const householdName = screen.getByLabelText(/household name/i);
-    await user.type(householdName, "Lim Family");
-    await user.click(screen.getByRole("button", { name: /create household/i }));
+    const familyName = screen.getByLabelText(/family name/i);
+    await user.type(familyName, "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /household service is unavailable/i,
+      /family service is unavailable/i,
     );
-    expect(householdName).toHaveValue("Lim Family");
+    expect(familyName).toHaveValue("Lim Family");
 
-    await user.click(screen.getByRole("button", { name: /create household/i }));
+    await user.click(screen.getByRole("button", { name: /create family/i }));
     expect(
-      await screen.findByRole("heading", {
-        name: /what makes support comfortable/i,
-      }),
+      await screen.findByRole("heading", { name: /confirm your email address/i }),
     ).toBeVisible();
     expect(post).toHaveBeenCalledTimes(2);
   });
 
-  it("updates an existing household and profile through patch requests", async () => {
+  it("updates an existing family and profile through patch requests", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
-        household: { id: 1, name: "Lim Family" },
+        family: {
+          id: 1,
+          name: "Lim Family",
+          owner_email: "anna@example.com",
+          owner_email_verified_at: "2030-01-01T00:00:00Z",
+        },
         olderAdult: {
           id: 2,
-          household_id: 1,
+          family_id: 1,
           name: "Mary Lim",
           sharing_mode: "family_approval",
         },
@@ -167,7 +191,7 @@ describe("SetupWizard", () => {
     const patchRequest = vi.spyOn(fetchClient, "PATCH").mockResolvedValue({
       data: {
         id: 2,
-        household_id: 1,
+        family_id: 1,
         name: "Mary Lim",
         sharing_mode: "direct",
         created_by: "user-1",
@@ -180,18 +204,19 @@ describe("SetupWizard", () => {
     await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));
-    const householdName = screen.getByLabelText(/household name/i);
-    await user.clear(householdName);
-    await user.type(householdName, "Lim Household");
+    await user.click(screen.getByRole("button", { name: /back/i }));
+    const familyName = screen.getByLabelText(/family name/i);
+    await user.clear(familyName);
+    await user.type(familyName, "Lim Family");
     await user.click(
       screen.getByRole("button", { name: /save and continue/i }),
     );
 
     expect(patchRequest).toHaveBeenCalledWith(
-      "/api/households/{household_id}",
+      "/api/families/{family_id}",
       {
-        params: { path: { household_id: 1 } },
-        body: { name: "Lim Household" },
+        params: { path: { family_id: 1 } },
+        body: { name: "Lim Family" },
       },
     );
 
@@ -218,12 +243,12 @@ describe("SetupWizard", () => {
   it("resumes at profile details and submits the selected sharing mode", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
-      progress({ household: { id: 1, name: "Lim Family" } }) as never,
+      progress({ family: { id: 1, name: "Lim Family" } }) as never,
     );
     vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
       data: {
         id: 2,
-        household_id: 1,
+        family_id: 1,
         name: "Mary Lim",
         sharing_mode: "direct",
         created_by: "user-1",
@@ -246,7 +271,7 @@ describe("SetupWizard", () => {
       "/api/older-adults",
       expect.objectContaining({
         body: expect.objectContaining({
-          household_id: 1,
+          family_id: 1,
           name: "Mary Lim",
           sharing_mode: "direct",
         }),
@@ -257,7 +282,7 @@ describe("SetupWizard", () => {
   it("preserves profile fields and sharing choice while navigating back", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
-      progress({ household: { id: 1, name: "Lim Family" } }) as never,
+      progress({ family: { id: 1, name: "Lim Family" } }) as never,
     );
     renderWizard();
 
@@ -282,134 +307,87 @@ describe("SetupWizard", () => {
     ).toBeChecked();
   });
 
-  it("requires a contact method before saving a trusted contact", async () => {
+  it("requires at least one relationship before saving a family member", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
-        household: { id: 1, name: "Lim Family" },
-        olderAdult: {
-          id: 2,
-          household_id: 1,
-          name: "Mary Lim",
-          sharing_mode: "family_approval",
-        },
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
       }) as never,
     );
     renderWizard();
 
     await user.type(screen.getByLabelText(/^name/i), "Anna Lim");
-    await user.type(screen.getByLabelText(/relationship/i), "Daughter");
-    await user.click(screen.getByRole("button", { name: /add contact/i }));
+    await user.type(screen.getByLabelText(/^email/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /add family member/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /email address or phone number/i,
+      /how this person is related/i,
     );
   });
 
-  it("creates and edits trusted contacts with the correct identifiers", async () => {
+  it("creates and edits family members with the correct identifiers", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
-        household: { id: 1, name: "Lim Family" },
-        olderAdult: {
-          id: 2,
-          household_id: 1,
-          name: "Mary Lim",
-          sharing_mode: "family_approval",
-        },
-        contacts: [
-          {
-            id: 3,
-            older_adult_id: 2,
-            name: "Anna",
-            relationship: "Daughter",
-            email: "anna@example.com",
-            consent_status: "pending",
-            created_at: "2030-01-01T00:00:00Z",
-          },
-        ],
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
+        familyMembers: [familyMember()],
       }) as never,
     );
     const post = vi.spyOn(fetchClient, "POST").mockResolvedValue({
-      data: {
-        id: 4,
-        older_adult_id: 2,
-        name: "David",
-        relationship: "Son",
-        phone: "+65 90000000",
-        consent_status: "pending",
-        created_at: "2030-01-01T00:00:00Z",
-      },
+      data: familyMember({ id: 4, name: "David", relationship: "Son" }),
       response: new Response(null, { status: 201 }),
-    });
+    } as never);
     const patchRequest = vi.spyOn(fetchClient, "PATCH").mockResolvedValue({
-      data: {
-        id: 3,
-        older_adult_id: 2,
-        name: "Anna Lim",
-        relationship: "Daughter",
-        email: "anna@example.com",
-        consent_status: "pending",
-        created_at: "2030-01-01T00:00:00Z",
-      },
+      data: familyMember({ name: "Anna Lim" }),
       response: new Response(null, { status: 200 }),
-    });
+    } as never);
     renderWizard();
 
     await user.type(screen.getByLabelText(/^name/i), "David");
-    await user.type(screen.getByLabelText(/relationship/i), "Son");
-    await user.type(screen.getByLabelText(/phone/i), "+65 90000000");
-    await user.click(screen.getByRole("button", { name: /add contact/i }));
+    await user.type(screen.getByLabelText(/^email/i), "david@example.com");
+    await user.type(screen.getByLabelText(/relationship to mary/i), "Son");
+    await user.click(screen.getByRole("button", { name: /add family member/i }));
 
-    expect(post).toHaveBeenCalledWith("/api/trusted-contacts", {
-      body: expect.objectContaining({
-        older_adult_id: 2,
+    expect(post).toHaveBeenCalledWith("/api/family-members", {
+      body: {
+        family_id: 1,
         name: "David",
-        relationship: "Son",
-        phone: "+65 90000000",
-      }),
+        email: "david@example.com",
+        relationships: [{ older_adult_id: 2, relationship: "Son" }],
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /edit/i }));
     const editName = screen.getByLabelText(/^name/i);
     await user.clear(editName);
     await user.type(editName, "Anna Lim");
-    await user.click(screen.getByRole("button", { name: /save contact/i }));
+    await user.click(screen.getByRole("button", { name: /save family member/i }));
 
     expect(patchRequest).toHaveBeenCalledWith(
-      "/api/trusted-contacts/{contact_id}",
+      "/api/family-members/{family_member_id}",
       {
-        params: { path: { contact_id: 3 } },
-        body: expect.objectContaining({
+        params: { path: { family_member_id: 3 } },
+        body: {
           name: "Anna Lim",
-          relationship: "Daughter",
-        }),
+          email: "anna@example.com",
+          relationships: [{ older_adult_id: 2, relationship: "Daughter" }],
+        },
       },
     );
   });
 
-  it("removes a trusted contact only after confirmation", async () => {
+  it("removes a family member only after confirmation", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
-        household: { id: 1, name: "Lim Family" },
-        olderAdult: {
-          id: 2,
-          household_id: 1,
-          name: "Mary Lim",
-          sharing_mode: "family_approval",
-        },
-        contacts: [
-          {
-            id: 3,
-            older_adult_id: 2,
-            name: "Anna",
-            relationship: "Daughter",
-            email: "anna@example.com",
-            consent_status: "pending",
-            created_at: "2030-01-01T00:00:00Z",
-          },
-        ],
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
+        familyMembers: [familyMember()],
       }) as never,
     );
     const remove = vi.spyOn(fetchClient, "DELETE").mockResolvedValue({
@@ -426,64 +404,45 @@ describe("SetupWizard", () => {
     expect(remove).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: /remove/i }));
 
-    expect(confirm).toHaveBeenCalledWith("Remove this trusted contact?");
-    expect(remove).toHaveBeenCalledWith("/api/trusted-contacts/{contact_id}", {
-      params: { path: { contact_id: 3 } },
-    });
+    expect(confirm).toHaveBeenCalledWith("Remove this family member?");
+    expect(remove).toHaveBeenCalledWith(
+      "/api/family-members/{family_member_id}",
+      { params: { path: { family_member_id: 3 } } },
+    );
   });
 
-  it("enforces the five-contact limit", () => {
+  it("shows each relationship against the older adult it belongs to", () => {
+    const second = { ...OLDER_ADULT, id: 7, name: "Robert Lim", preferred_name: "Robert" };
     mockedProgress.mockReturnValue(
       progress({
-        household: { id: 1, name: "Lim Family" },
-        olderAdult: {
-          id: 2,
-          household_id: 1,
-          name: "Mary Lim",
-          sharing_mode: "family_approval",
-        },
-        contacts: Array.from({ length: 5 }, (_, index) => ({
-          id: index + 1,
-          older_adult_id: 2,
-          name: `Contact ${index + 1}`,
-          relationship: "Family",
-          email: `contact${index + 1}@example.com`,
-          consent_status: "pending",
-          created_at: "2030-01-01T00:00:00Z",
-        })),
-        isComplete: true,
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT, second],
+        familyMembers: [
+          familyMember({
+            relationships: [
+              { older_adult_id: 2, relationship: "Daughter" },
+              { older_adult_id: 7, relationship: "Sister" },
+            ],
+          }),
+        ],
       }) as never,
     );
     renderWizard();
 
-    expect(screen.getByText(/five people, which is the limit/i)).toBeVisible();
     expect(
-      screen.queryByRole("button", { name: /add contact/i }),
-    ).not.toBeInTheDocument();
+      screen.getByText(/Daughter of Mary · Sister of Robert/),
+    ).toBeVisible();
   });
 
   it("allows a completed setup to continue to discovery", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
-        household: { id: 1, name: "Lim Family" },
-        olderAdult: {
-          id: 2,
-          household_id: 1,
-          name: "Mary Lim",
-          sharing_mode: "family_approval",
-        },
-        contacts: [
-          {
-            id: 3,
-            older_adult_id: 2,
-            name: "Anna",
-            relationship: "Daughter",
-            email: "anna@example.com",
-            consent_status: "pending",
-            created_at: "2030-01-01T00:00:00Z",
-          },
-        ],
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
+        familyMembers: [familyMember()],
         isComplete: true,
       }) as never,
     );
@@ -491,5 +450,128 @@ describe("SetupWizard", () => {
 
     await user.click(screen.getByRole("button", { name: /finish setup/i }));
     expect(navigate).toHaveBeenCalledWith({ to: "/discover" });
+  });
+  it("verifies the emailed code before the family is used", async () => {
+    const user = userEvent.setup();
+    const post = vi
+      .spyOn(fetchClient, "POST")
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          name: "Lim Family",
+          owner_email: "anna@example.com",
+          owner_email_verified_at: null,
+          created_by: "user-1",
+          created_at: "2030-01-01T00:00:00Z",
+        },
+        response: new Response(null, { status: 201 }),
+      } as never)
+      .mockResolvedValueOnce({
+        data: { verified: true, message: "Family email verified." },
+        response: new Response(null, { status: 200 }),
+      } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
+
+    await user.type(await screen.findByLabelText(/six-digit code/i), "123456");
+    await user.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    expect(post).toHaveBeenLastCalledWith("/api/families/{family_id}/verify-email", {
+      params: { path: { family_id: 1 } },
+      body: { code: "123456" },
+    });
+    expect(
+      await screen.findByRole("heading", { name: /what makes support comfortable/i }),
+    ).toBeVisible();
+  });
+
+  it("keeps the person on the code step when the code is wrong", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "POST")
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          name: "Lim Family",
+          owner_email: "anna@example.com",
+          owner_email_verified_at: null,
+          created_by: "user-1",
+          created_at: "2030-01-01T00:00:00Z",
+        },
+        response: new Response(null, { status: 201 }),
+      } as never)
+      .mockResolvedValueOnce({
+        error: { detail: "That verification code is not valid." },
+        response: new Response(null, { status: 400 }),
+      } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
+
+    await user.type(await screen.findByLabelText(/six-digit code/i), "999999");
+    await user.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /verification code is not valid/i,
+    );
+    expect(screen.getByLabelText(/six-digit code/i)).toBeVisible();
+  });
+
+  it("says plainly when the verification email could not be sent", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
+      data: {
+        id: 1,
+        name: "Lim Family",
+        owner_email: "anna@example.com",
+        owner_email_verified_at: null,
+        verification_delivery_failed: true,
+        created_by: "user-1",
+        created_at: "2030-01-01T00:00:00Z",
+      },
+      response: new Response(null, { status: 201 }),
+    } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /could not send that email/i,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /invitations will not be delivered/i,
+    );
+  });
+
+  it("surfaces a duplicate family member from the API", async () => {
+    const user = userEvent.setup();
+    mockedProgress.mockReturnValue(
+      progress({
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
+        familyMembers: [familyMember()],
+      }) as never,
+    );
+    vi.spyOn(fetchClient, "POST").mockResolvedValue({
+      error: { detail: "This email address is already a family member." },
+      response: new Response(null, { status: 409 }),
+    } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/^name/i), "Anna Again");
+    await user.type(screen.getByLabelText(/^email/i), "anna@example.com");
+    await user.type(screen.getByLabelText(/relationship to mary/i), "Daughter");
+    await user.click(screen.getByRole("button", { name: /add family member/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /already a family member/i,
+    );
   });
 });

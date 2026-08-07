@@ -30,11 +30,12 @@ def _mobility_match(activity: dict[str, Any], older_adult: dict[str, Any], mobil
     notes = str(mobility or older_adult.get("mobility_notes") or "").lower()
     if not notes:
         return 50.0
-    intensity = str(activity.get("intensity") or "").lower()
-    activity_notes = str(activity.get("mobility_notes") or "").lower()
+    activity_text = " ".join(
+        [str(activity.get("name") or ""), str(activity.get("description") or "")]
+    ).lower()
     gentle_request = any(term in notes for term in ("seated", "gentle", "no steps", "low impact"))
-    gentle_activity = intensity in {"gentle", "light"} or any(
-        term in activity_notes for term in ("seated", "step-free", "no steps", "chair")
+    gentle_activity = any(
+        term in activity_text for term in ("seated", "gentle", "step-free", "no steps", "chair", "low impact")
     )
     if gentle_request:
         return 100.0 if gentle_activity else 20.0

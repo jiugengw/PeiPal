@@ -44,7 +44,7 @@ export async function sendPlanNotifications(
     "/api/plans/{plan_id}/notifications",
     {
       params: { path: { plan_id: planId } },
-      body: { contact_ids: contactIds },
+      body: { family_member_ids: contactIds },
     },
   );
   if (error || !data) {

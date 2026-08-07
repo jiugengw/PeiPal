@@ -53,7 +53,7 @@ describe("ActivityDiscovery", () => {
   beforeEach(() => {
     navigate.mockReset();
     mockedProgress.mockReturnValue({
-      household: {
+      family: {
         id: 1,
         name: "Lim Family",
         created_by: "user-1",
@@ -61,7 +61,7 @@ describe("ActivityDiscovery", () => {
       },
       olderAdult: {
         id: 2,
-        household_id: 1,
+        family_id: 1,
         name: "Mary Lim",
         preferred_name: "Mary",
         sharing_mode: "family_approval",
@@ -177,7 +177,7 @@ describe("ActivityDiscovery", () => {
     const post = vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
       data: {
         id: 9,
-        household_id: 1,
+        family_id: 1,
         older_adult_id: 2,
         activity_id: 27,
         status: "draft",
@@ -196,7 +196,7 @@ describe("ActivityDiscovery", () => {
     await user.click(screen.getByRole("button", { name: /confirm and create plan/i }));
 
     await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans", {
-      body: { household_id: 1, older_adult_id: 2, activity_id: 27 },
+      body: { family_id: 1, older_adult_id: 2, activity_id: 27 },
     }));
     expect(navigate).toHaveBeenCalledWith({
       to: "/plans/$planId",

@@ -1,3 +1,3 @@
 # Setup
 
-Older-adult profile and household setup UI belongs here.
+Older-adult profile and family setup UI belongs here.

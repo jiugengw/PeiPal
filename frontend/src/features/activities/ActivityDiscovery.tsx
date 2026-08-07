@@ -6,7 +6,7 @@ import { PlanConfirmationPanel } from "@/features/plans/PlanConfirmationPanel";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function ActivityDiscovery() {
-  const { household, olderAdult } = useSetupProgress();
+  const { family, olderAdult } = useSetupProgress();
   const {
     location,
     activities,
@@ -67,10 +67,10 @@ export function ActivityDiscovery() {
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
-          {isReviewingPlan && selectedActivity && household && olderAdult ? (
+          {isReviewingPlan && selectedActivity && family && olderAdult ? (
             <PlanConfirmationPanel
               activity={selectedActivity}
-              household={household}
+              family={family}
               olderAdult={olderAdult}
               onBack={() => setIsReviewingPlan(false)}
               onUnavailable={markSelectionUnavailable}
@@ -78,7 +78,7 @@ export function ActivityDiscovery() {
           ) : (
             <SelectedActivityPanel
               activity={selectedActivity}
-              canMakePlan={Boolean(household && olderAdult)}
+              canMakePlan={Boolean(family && olderAdult)}
               onClear={clearSelection}
               onMakePlan={() => setIsReviewingPlan(true)}
             />

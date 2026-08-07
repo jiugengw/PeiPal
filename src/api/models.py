@@ -2,39 +2,49 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-class HouseholdCreate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family"}]})
+class FamilyCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family", "owner_email": "anna@example.com"}]})
 
     name: str = Field(min_length=1, max_length=120)
+    owner_email: EmailStr | None = None
 
 
-class HouseholdUpdate(BaseModel):
+class FamilyEmailVerification(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+
+class FamilyUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
 
 
 class OlderAdultCreate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [{
-        "household_id": 1,
+        "family_id": 1,
         "name": "Mary Lim",
         "preferred_name": "Mary",
         "age": 75,
         "language": "English",
+        "email": "mary@example.com",
         "mobility_notes": "Prefers seated activities",
         "transport_notes": "Family can help arrange transport",
         "sharing_mode": "family_approval",
     }]})
 
-    household_id: int
+    family_id: int
     name: str = Field(min_length=1, max_length=120)
     preferred_name: str | None = Field(default=None, max_length=120)
     age: int | None = Field(default=None, ge=0, le=130)
     language: str | None = Field(default=None, max_length=80)
+    email: EmailStr | None = Field(
+        default=None,
+        description="Optional. When present, the older adult also receives the plan decision.",
+    )
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
     sharing_mode: Literal["direct", "family_approval"] = "family_approval"
@@ -45,42 +55,54 @@ class OlderAdultUpdate(BaseModel):
     preferred_name: str | None = Field(default=None, max_length=120)
     age: int | None = Field(default=None, ge=0, le=130)
     language: str | None = Field(default=None, max_length=80)
+    email: EmailStr | None = None
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
     sharing_mode: Literal["direct", "family_approval"] | None = None
 
 
-class TrustedContactCreate(BaseModel):
+class FamilyMemberRelationship(BaseModel):
+    """How one family member is related to one older adult."""
+
     model_config = ConfigDict(json_schema_extra={"examples": [{
         "older_adult_id": 1,
-        "name": "Anna Lim",
         "relationship": "Daughter",
-        "email": "anna@example.com",
-        "phone": "+65 91234567",
     }]})
 
     older_adult_id: int
-    name: str = Field(min_length=1, max_length=120)
     relationship: str = Field(min_length=1, max_length=80)
-    email: str | None = Field(default=None, max_length=320)
-    phone: str | None = Field(default=None, max_length=40)
 
 
-class TrustedContactUpdate(BaseModel):
+class FamilyMemberCreate(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{
+        "family_id": 1,
+        "name": "Anna Lim",
+        "email": "anna@example.com",
+        "relationships": [{"older_adult_id": 1, "relationship": "Daughter"}],
+    }]})
+
+    family_id: int
+    name: str = Field(min_length=1, max_length=120)
+    email: EmailStr
+    relationships: list[FamilyMemberRelationship] = Field(min_length=1, max_length=20)
+
+
+class FamilyMemberUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
-    relationship: str | None = Field(default=None, min_length=1, max_length=80)
-    email: str | None = Field(default=None, max_length=320)
-    phone: str | None = Field(default=None, max_length=40)
+    email: EmailStr | None = None
+    relationships: list[FamilyMemberRelationship] | None = Field(
+        default=None, min_length=1, max_length=20
+    )
 
 
 class PlanCreate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [{
-        "household_id": 1,
+        "family_id": 1,
         "older_adult_id": 1,
         "activity_id": 1,
     }]})
 
-    household_id: int
+    family_id: int
     older_adult_id: int
     activity_id: int
 
@@ -88,11 +110,58 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [
         {"status": "awaiting_approval"},
-        {"status": "shared"},
+        {"status": "approved"},
         {"status": "cancelled"},
     ]})
 
-    status: Literal["awaiting_approval", "shared", "cancelled"]
+    status: Literal["awaiting_approval", "approved", "rejected", "shared", "cancelled"]
+
+
+class PlanDecisionRequest(BaseModel):
+    decision: Literal["approved", "rejected"]
+    reason: str | None = Field(default=None, max_length=2_000)
+
+
+class DecisionDeliveryResponse(BaseModel):
+    recipient_role: Literal["family_member", "older_adult"]
+    name: str
+    status: Literal["sent", "already_sent", "failed"]
+    provider_id: str | None = None
+    error: str | None = None
+
+
+class PlanDecisionResponse(BaseModel):
+    plan_id: int
+    status: Literal["approved", "rejected"]
+    decided_by: str
+    decided_at: datetime
+    message: str
+    deliveries: list[DecisionDeliveryResponse] = []
+
+
+class DecisionDeliveryListResponse(BaseModel):
+    deliveries: list[DecisionDeliveryResponse]
+
+
+class PlanDecisionNotificationResponse(BaseModel):
+    id: int
+    plan_id: int
+    recipient_role: Literal["family_member", "older_adult"]
+    family_member_id: int | None = None
+    older_adult_id: int | None = None
+    recipient_name: str
+    recipient_email: str | None = None
+    status: Literal["pending", "sent", "failed"]
+    provider_id: str | None = None
+    error_message: str | None = None
+    attempted_at: datetime | None = None
+    sent_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PlanDecisionNotificationListResponse(BaseModel):
+    notifications: list[PlanDecisionNotificationResponse]
 
 
 class SupportOfferCreate(BaseModel):
@@ -114,10 +183,10 @@ class SupportOfferCreate(BaseModel):
 
 class PlanNotificationCreate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [{
-        "contact_ids": [1, 2],
+        "family_member_ids": [1, 2],
     }]})
 
-    contact_ids: list[int] = Field(min_length=1, max_length=20)
+    family_member_ids: list[int] = Field(min_length=1, max_length=20)
 
 
 class VoiceSessionResponse(BaseModel):
@@ -126,10 +195,16 @@ class VoiceSessionResponse(BaseModel):
     session: dict[str, Any] | None = None
 
 
-class HouseholdResponse(HouseholdCreate):
+class FamilyResponse(FamilyCreate):
     id: int
     created_by: str
     created_at: datetime
+    owner_email_verified_at: datetime | None = None
+
+
+class FamilyVerificationResponse(BaseModel):
+    verified: bool
+    message: str
 
 
 class OlderAdultResponse(OlderAdultCreate):
@@ -138,9 +213,12 @@ class OlderAdultResponse(OlderAdultCreate):
     created_at: datetime
 
 
-class TrustedContactResponse(TrustedContactCreate):
+class FamilyMemberResponse(BaseModel):
     id: int
-    consent_status: str
+    family_id: int
+    name: str
+    email: EmailStr
+    relationships: list[FamilyMemberRelationship]
     created_at: datetime
 
 
@@ -154,18 +232,13 @@ class ActivityResponse(BaseModel):
     end_at: datetime | None = None
     cost: float | None = None
     currency: str
-    price_remarks: str | None = None
-    slots_availability: str | None = None
     info_link: str
     signup_link: str | None = None
-    mobility_notes: str | None = None
-    intensity: str | None = None
     tags: list[str] | None = None
     status: str
     first_seen_at: datetime
     last_seen_at: datetime
     last_checked_at: datetime
-    content_hash: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -184,29 +257,32 @@ class ActivityRecommendationListResponse(BaseModel):
     recommendations: list[ActivityRecommendationResponse]
 
 
-class HouseholdListResponse(BaseModel):
-    households: list[HouseholdResponse]
+class FamilyListResponse(BaseModel):
+    families: list[FamilyResponse]
 
 
 class OlderAdultListResponse(BaseModel):
     older_adults: list[OlderAdultResponse]
 
 
-class TrustedContactListResponse(BaseModel):
-    trusted_contacts: list[TrustedContactResponse]
+class FamilyMemberListResponse(BaseModel):
+    family_members: list[FamilyMemberResponse]
 
 
 class PlanResponse(BaseModel):
     id: int
-    household_id: int
+    family_id: int
     older_adult_id: int
     activity_id: int
-    status: Literal["draft", "awaiting_approval", "shared", "cancelled"]
+    status: Literal["draft", "awaiting_approval", "approved", "rejected", "shared", "cancelled"]
     created_by: str
     approved_by: str | None = None
     approved_at: datetime | None = None
     shared_at: datetime | None = None
     cancelled_at: datetime | None = None
+    decision_by_family_member_id: int | None = None
+    decided_at: datetime | None = None
+    decision_reason: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -240,7 +316,7 @@ class SupportOfferListResponse(BaseModel):
 class PlanNotificationResponse(BaseModel):
     id: int
     plan_id: int
-    trusted_contact_id: int
+    family_member_id: int
     recipient_name: str
     recipient_email: str | None = None
     status: Literal["pending", "sent", "failed"]
@@ -257,7 +333,7 @@ class PlanNotificationListResponse(BaseModel):
 
 
 class NotificationDeliveryResponse(BaseModel):
-    contact_id: int
+    family_member_id: int
     name: str
     status: Literal["sent", "already_sent", "failed"]
     provider_id: str | None = None

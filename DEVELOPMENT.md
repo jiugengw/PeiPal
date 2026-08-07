@@ -34,7 +34,15 @@ SUPABASE_SERVICE_ROLE_KEY=...
 GMAIL_ADDRESS=...
 GMAIL_APP_PASSWORD=...
 GMAIL_FROM_NAME=PeiPal
+APP_BASE_URL=http://127.0.0.1:5173
 ```
+
+`SUPABASE_SERVICE_ROLE_KEY` is required by the backend and its tests; without it
+the API cannot start and the authentication tests fail.
+
+`APP_BASE_URL` is the origin used to build the links in verification, invitation,
+and approval emails. It must be reachable by the family members who receive them,
+so set it to the deployed frontend origin outside local development.
 
 Keep browser-safe values in `frontend/.env`:
 
@@ -49,20 +57,29 @@ Keep `VITE_API_BASE_URL` empty for normal local development so requests use the 
 
 ## Email notifications
 
-The voice agent and authenticated API send confirmed invitation emails through Gmail SMTP. Enable 2-Step Verification on the Gmail account, create a Google App Password, and configure `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`. Do not use the account's normal password. `GMAIL_FROM_NAME` is optional and defaults to `PeiPal`.
+The voice agent can send a confirmed invitation email through Gmail SMTP. Configure `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`, using a Google App Password rather than the account's normal password. Two-factor authentication must be enabled on the account before an App Password can be created.
 
-Trusted contacts can use any valid recipient address; they do not need to match the Gmail sender or the account owner's email. This integration is intended for low-volume hackathon use.
+For the local voice agent, copy `contacts.example.json` to `contacts.json` and add family members. Each selected person receives a separate email after the agent previews the full message and receives explicit confirmation.
 
-For the local voice agent, copy `contacts.example.json` to `contacts.json` and add trusted contacts. Each selected contact receives a separate email after the agent previews the full message and receives explicit confirmation.
-
-The authenticated API can send plan notifications through:
+PeiPal sends four kinds of email, all through Gmail SMTP:
 
 ```text
-POST /api/plans/{plan_id}/notifications
-GET  /api/plans/{plan_id}/notifications
+verification   six-digit code confirming the family creator's address
+invitation     signed link inviting one family member
+approval       signed approve/reject link, sent to every family member
+decision       the result, sent to every family member and the older adult
 ```
 
-Each selected trusted contact receives an individual delivery record with one of these statuses:
+The authenticated API sends and inspects them through:
+
+```text
+POST /api/plans/{plan_id}/notifications           share a plan with chosen members
+GET  /api/plans/{plan_id}/notifications
+POST /api/plans/{plan_id}/decision-notifications  retry the decision emails
+GET  /api/plans/{plan_id}/decision-notifications
+```
+
+Every recipient gets an individual delivery record with one of these statuses:
 
 ```text
 pending
@@ -70,7 +87,24 @@ sent
 failed
 ```
 
-Retrying the same request skips contacts already marked `sent`. Failed deliveries remain attached to the shared plan and can be retried.
+Retrying skips recipients already marked `sent`, so nobody is emailed twice.
+Failed deliveries stay attached to the plan and can be retried. A response never
+reports a notification as successful when delivery failed: if some recipients
+could not be reached the message says how many, and if none could it says so.
+
+### Verification and link security
+
+Codes and tokens are never stored in readable form.
+
+```text
+verification code   six digits, sha256 hash stored, expires after 30 minutes
+invitation token    32 random bytes, sha256 hash stored, expires after 7 days
+approval token      32 random bytes, sha256 hash stored, expires after 7 days
+```
+
+Approval links are deliberately reachable without a session, because family
+members are reached by email and need no account. The token in the link is what
+authorises the decision.
 
 ## Backend API
 
@@ -109,9 +143,9 @@ The endpoint groups follow this order:
 1. **System** — health checks.
 2. **Activities** — find active activities.
 3. **Voice** — create a short-lived browser voice session.
-4. **Households** — create and manage a family household.
+4. **Families** — create a family and verify the creator's email.
 5. **Older adults** — save practical profile details and sharing mode.
-6. **Trusted contacts** — manage people who can help.
+6. **Family members** — manage the people the family can ask for help.
 7. **Plans** — create and update a plan lifecycle.
 8. **Notifications** — send and inspect plan email delivery.
 9. **Support offers** — offer or withdraw practical help.
@@ -123,16 +157,31 @@ When adding an endpoint, put it in the matching tag group and provide a short `s
 The current API workflow is:
 
 ```text
-Create household
-→ create older-adult profile
+Create family with the creator's email
+→ verify that email with the six-digit code
+→ create one or more older-adult profiles
 → choose direct or family_approval sharing
-→ add trusted contacts
+→ add family members with a relationship per older adult
 → select an active activity
 → create a plan
-→ share directly or request owner approval
-→ notify selected contacts
+→ share directly, or ask the whole family to decide
+→ first approve/reject decision wins
+→ tell every family member and the older adult
 → record support offers
 ```
+
+The data model behind this is:
+
+```text
+families                    the coordinating group
+family_accounts             signed-in users, with an owner
+older_adult_profiles        the people plans are for
+family_members              people to ask, reached by email, no account needed
+family_member_older_adults  the relationship, one per older adult
+```
+
+Because the relationship lives on `family_member_older_adults`, one person can be
+a daughter to one older adult and a sister to another.
 
 For browser voice, the frontend first calls `POST /api/voice/session`. The API
 returns a short-lived client secret; the frontend uses it to connect to the
@@ -143,8 +192,24 @@ Sharing modes:
 
 ```text
 direct          plan is created as shared
-family_approval plan moves draft → awaiting_approval → shared
+family_approval plan moves draft → awaiting_approval → approved | rejected → shared
 ```
+
+Plan states:
+
+```text
+draft              nothing has been sent
+awaiting_approval  every family member has been emailed a decision link
+approved           the first family member to answer approved it
+rejected           the first family member to answer rejected it
+shared             an approved plan opened up for practical support offers
+cancelled          stopped by the family
+```
+
+Deciding is only possible through the emailed link. `PATCH /api/plans/{id}` with
+`approved` or `rejected` is refused with 403, and the decision itself is applied
+with an update guarded on `status = awaiting_approval`, so two simultaneous
+clicks cannot both win.
 
 ## Supabase migrations
 
@@ -156,16 +221,51 @@ supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
 ```
 
-Important current migrations:
+Current migrations, in order:
 
 ```text
-20260805000100_activity_and_family.sql
-20260806100000_core_workflow.sql
-20260806110000_older_adult_sharing_mode.sql
-20260806120000_plan_notifications.sql
+20260805000100_activity_and_family.sql        activities, families, older adults, family members
+20260806100000_core_workflow.sql              plans and support offers
+20260806110000_older_adult_sharing_mode.sql   direct or family_approval
+20260806120000_plan_notifications.sql         per-recipient share delivery
+20260807190000_seed_demo_activities.sql       demo catalog
+20260807191000_remove_activity_ingestion.sql
+20260807200000_remove_activity_scores.sql
+20260807201000_activity_recommendations.sql
+20260807210000_family_email_verification.sql  codes and invitation tokens
+20260807220000_family_plan_decisions.sql      approval links and decision state
+20260807230000_plan_decision_notifications.sql  per-recipient decision delivery
+20260807240000_upgrade_to_family_schema.sql   one-pass upgrade, see below
 ```
 
-If a migration has already been applied, create a new migration for later schema changes instead of editing the applied file.
+### Upgrading a database created before the family rename
+
+The family rename was made by **editing the original migration files in place**,
+so those files now describe the end state and cannot transform a database that
+already exists. A database provisioned before the rename still has `households`,
+`household_members`, and `trusted_contacts`.
+
+For that case, run one file and nothing else:
+
+```text
+20260807240000_upgrade_to_family_schema.sql
+```
+
+It renames the household tables and columns, creates `family_members` and
+`family_member_older_adults`, carries existing trusted contacts across with their
+relationships, repoints notification history, drops the removed activity columns,
+and creates the verification, invitation, approval, and decision-delivery tables.
+Every step is guarded, so it is safe on a fresh or partly migrated database, and
+running it twice changes nothing the second time.
+
+Trusted contacts with no email address are not carried across, because the family
+flow reaches people only by email.
+
+A fresh database can instead apply the files in listed order; the upgrade file
+then finds nothing left to do.
+
+From here on, create a new migration for schema changes rather than editing an
+applied file, so an existing database always has a path forward.
 
 ## React frontend
 
@@ -177,7 +277,7 @@ npm install
 npm run dev
 ```
 
-During development, Vite proxies `/api` and `/health` to `http://127.0.0.1:8000`. Run FastAPI and Vite in separate terminals. The browser app includes authentication, household setup, activity discovery, both plan-sharing modes, notification delivery status, the demo family view, support offers, and an optional browser voice companion.
+During development, Vite proxies `/api` and `/health` to `http://127.0.0.1:8000`. Run FastAPI and Vite in separate terminals. The browser app includes authentication, family setup with email verification, activity discovery, both plan-sharing modes, the account-free approval page, notification delivery status, the family view, support offers, and an optional browser voice companion.
 
 ### Route map
 
@@ -185,12 +285,13 @@ During development, Vite proxies `/api` and `/health` to `http://127.0.0.1:8000`
 | --- | --- |
 | `/auth` | Log in or create an account. |
 | `/` | Send an authenticated account to setup or discovery. |
-| `/setup` | Create the household, older-adult profile, sharing preference, and trusted contacts. |
+| `/setup` | Create the family, verify the creator email, add older-adult profiles, choose a sharing preference, and add family members. |
 | `/discover` | Search activities, choose one, and create a plan. |
 | `/plans/:planId` | Review plan status, request approval, send notifications, and inspect delivery history. |
-| `/family` | Same-account demo family view for approval and support offers. |
+| `/family` | Family view of waiting, decided, shared, and past plans, plus support offers. |
+| `/family/decision/:token` | **Public.** The approve/reject page a family member opens from their email. |
 
-Unknown authenticated routes show a recovery page. Protected routes redirect signed-out visitors to `/auth`.
+Unknown authenticated routes show a recovery page. Protected routes redirect signed-out visitors to `/auth`. `/family/decision/:token` is intentionally outside the authenticated layout, because family members decide without an account.
 
 ### Browser voice
 
@@ -216,6 +317,14 @@ Install Python dependencies and run:
 ```bash
 pip install -r requirements.txt
 pytest -q
+```
+
+`pytest` needs `SUPABASE_SERVICE_ROLE_KEY` set, or the authentication tests fail
+when the API cannot build its Supabase client. Any non-empty value works, since
+these tests never reach the network:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=dummy-key-for-tests pytest -q
 ```
 
 Useful validation commands:
@@ -262,8 +371,9 @@ server environment. Connect WorkBuddy to:
 http://127.0.0.1:8001/mcp
 ```
 
-The server exposes activity search, household and older-adult lookup, plan
-creation, plan retrieval, and plan status updates. For a hosted WorkBuddy
+The server exposes activity search, family and older-adult lookup, plan
+creation, plan retrieval, and plan status updates. It cannot approve or reject a
+plan: that belongs to the family member holding the emailed link. For a hosted WorkBuddy
 demo, deploy the MCP server behind HTTPS and provide the HTTPS `/mcp` URL.
 
 Suggested demo request:
@@ -274,17 +384,31 @@ Suggested demo request:
 
 Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 
-### Family-approval path
+### Family-approval path (first decision wins)
 
-1. Log in and complete setup without copying any database IDs manually.
-2. Choose **Family reviews first** and add at least one trusted contact with an email address.
-3. Open discovery, choose an activity, review it, and create the plan.
-4. Confirm that the plan starts as a draft and choose **Ask for family approval**.
-5. Open **Demo family view**, approve and share the waiting plan, then return to its detail page.
-6. Select the trusted contact, review the recipient list, and send the plan email.
-7. Confirm the delivery result is visible. If Gmail is not configured, confirm the failed result is honest and retryable.
-8. Return to the family view, offer one kind of practical support, and verify it appears as **You offered**.
-9. Refresh `/plans/{planId}` and confirm the shared status, activity details, notification history, and support state reload.
+1. Log in and create a family, entering your own email address.
+2. Check that email for the six-digit code and confirm the address. With Gmail SMTP
+   unconfigured, confirm the interface says the code could not be sent rather
+   than implying it arrived.
+3. Add an older adult, optionally with their own email so they hear the outcome.
+4. Choose **Family reviews first**, then add at least two family members with
+   different email addresses and a relationship each.
+5. Try adding a third member reusing one of those addresses and confirm it is
+   refused as already a family member.
+6. Open discovery, choose an activity, review it, and create the plan.
+7. Confirm the plan starts as a draft, then choose **Ask for family approval**.
+8. Confirm every family member received an email with approve and reject links.
+9. Open one member's link, approve, and confirm the result page names who
+   decided and when.
+10. Open a second member's link and confirm it reports the request as already
+    decided rather than letting them decide again.
+11. Confirm every family member, and the older adult, received the result email.
+    If some could not be reached, confirm the page names them instead of
+    claiming everyone was notified.
+12. In the family view, share the approved plan, offer one kind of practical
+    support, and verify it appears as **You offered**.
+13. Refresh `/plans/{planId}` and confirm the status, activity details,
+    notification history, and support state reload.
 
 ### Direct-sharing path
 
@@ -308,15 +432,18 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 - **No microphone input on macOS**: enable microphone access for the terminal app in System Settings.
 - **No speaker output**: select a working default input and output device, then restart the demo.
 - **API connection error**: confirm the Supabase URL, service key, API keys, network connection, and CORS origin.
-- **Notification failed**: check `GMAIL_ADDRESS`, the Google App Password, 2-Step Verification, and the contact email address. Retry the notification request for failed recipients.
+- **Notification failed**: check `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD`, and the recipient's email address. Gmail rejects a normal account password; an App Password is required. Retry the notification request for failed recipients.
+- **No verification code arrived**: check the same Gmail settings. Family creation still succeeds, and the setup page says the code could not be sent.
+- **Approval link does not open**: confirm `APP_BASE_URL` points at an origin the recipient can reach. Links expire after seven days and are single use.
+- **"Already decided" on a fresh link**: expected when another family member answered first. The first decision wins for the whole family.
 
 ## Current technical limitations
 
-- The family page is a same-account demo, not a separately authenticated trusted-contact portal.
+- Family members decide through signed email links and have no accounts of their own, so the family page shows the signed-in account's view.
 - Browser end-to-end automation is deferred; the complete demo path is verified manually.
 - The API does not yet arrange transport or complete bookings.
 - Plan completion tracking is not yet implemented.
-- Notification delivery requires a Gmail account with 2-Step Verification and an App Password.
+- Notification delivery requires Gmail SMTP configuration.
 - Browser voice requires microphone permission, WebRTC support, and a configured server-side OpenAI key.
 
 ## OpenAI documentation used

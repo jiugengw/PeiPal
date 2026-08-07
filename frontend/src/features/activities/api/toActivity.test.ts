@@ -36,9 +36,6 @@ describe("toActivity", () => {
         description: "A gentle seated class.",
         tags: ["gentle", "seated"],
         cost: 12,
-        price_remarks: "Includes a mat rental",
-        mobility_notes: "Wheelchair accessible",
-        slots_availability: "3 spots left",
         signup_link: "https://example.com/signup",
       }),
     );
@@ -48,9 +45,6 @@ describe("toActivity", () => {
     expect(activity.description).toBe("A gentle seated class.");
     expect(activity.tags).toEqual(["gentle", "seated"]);
     expect(activity.cost).toBe(12);
-    expect(activity.priceRemarks).toBe("Includes a mat rental");
-    expect(activity.mobilityNotes).toBe("Wheelchair accessible");
-    expect(activity.slotsAvailability).toBe("3 spots left");
     expect(activity.infoLink).toBe("https://example.com/senior-yoga");
     expect(activity.signupLink).toBe("https://example.com/signup");
   });
@@ -72,10 +66,7 @@ describe("toActivity", () => {
       response({
         description: null,
         cost: null,
-        price_remarks: null,
         tags: null,
-        mobility_notes: null,
-        slots_availability: null,
         signup_link: null,
         end_at: null,
       }),
@@ -83,10 +74,7 @@ describe("toActivity", () => {
 
     expect(activity.description).toBe("");
     expect(activity.cost).toBeNull();
-    expect(activity.priceRemarks).toBeNull();
     expect(activity.tags).toEqual([]);
-    expect(activity.mobilityNotes).toBeNull();
-    expect(activity.slotsAvailability).toBeNull();
     expect(activity.signupLink).toBeNull();
     expect(activity.endsAt).toBeNull();
   });

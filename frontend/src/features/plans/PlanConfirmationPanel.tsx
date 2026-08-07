@@ -16,7 +16,7 @@ import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 
 interface PlanConfirmationPanelProps {
   activity: Activity;
-  household: components["schemas"]["HouseholdResponse"];
+  family: components["schemas"]["FamilyResponse"];
   olderAdult: components["schemas"]["OlderAdultResponse"];
   onBack: () => void;
   onUnavailable: () => void;
@@ -24,7 +24,7 @@ interface PlanConfirmationPanelProps {
 
 export function PlanConfirmationPanel({
   activity,
-  household,
+  family,
   olderAdult,
   onBack,
   onUnavailable,
@@ -34,7 +34,7 @@ export function PlanConfirmationPanel({
   const createMutation = useMutation({
     mutationFn: () =>
       createPlan({
-        household_id: household.id,
+        family_id: family.id,
         older_adult_id: olderAdult.id,
         activity_id: activity.databaseId,
       }),

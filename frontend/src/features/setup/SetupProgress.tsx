@@ -1,9 +1,9 @@
-const steps = ["Household", "Profile", "Sharing", "Trusted circle"];
+const steps = ["Family", "Verify email", "Profile", "Sharing", "Family members"];
 
 export function SetupProgress({ currentStep }: { currentStep: number }) {
   return (
     <nav aria-label="Setup progress">
-      <ol className="grid gap-2 sm:grid-cols-4 lg:block lg:space-y-2">
+      <ol className="grid gap-2 sm:grid-cols-5 lg:block lg:space-y-2">
         {steps.map((label, index) => {
           const isCurrent = index === currentStep;
           const isComplete = index < currentStep;

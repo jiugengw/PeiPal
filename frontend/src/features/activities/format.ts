@@ -29,7 +29,7 @@ export function formatActivityWhen(
 
 /** Human-facing cost for an activity. Missing cost is "unavailable", never treated as free. */
 export function formatActivityCost(
-  activity: Pick<Activity, "cost" | "currency" | "priceRemarks">,
+  activity: Pick<Activity, "cost" | "currency">,
 ): string {
   if (activity.cost === null || activity.cost === undefined)
     return "Price unavailable";
@@ -38,7 +38,7 @@ export function formatActivityCost(
     activity.cost === 0
       ? "Free"
       : formatCurrencyAmount(activity.cost, activity.currency);
-  return activity.priceRemarks ? `${base} · ${activity.priceRemarks}` : base;
+  return base;
 }
 
 function formatCurrencyAmount(cost: number, currency: string): string {

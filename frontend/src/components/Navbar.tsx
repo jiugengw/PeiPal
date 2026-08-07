@@ -1,15 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
-import { useViewerRole } from "@/hooks/useViewerRole";
 
-const householdNavigation = [
+const navigation = [
   { to: "/discover", label: "Discover" },
   { to: "/setup", label: "Setup" },
-] as const;
-
-const trustedContactNavigation = [
-  { to: "/family-portal", label: "Family portal" },
+  { to: "/family", label: "Family view" },
 ] as const;
 
 const navLinkClass =
@@ -25,8 +21,6 @@ const gridColsClassByCount: Record<number, string> = {
 
 export function Navbar() {
   const { session, isLoading } = useAuthSession();
-  const { role } = useViewerRole(Boolean(session));
-  const navigation = role === "trusted_contact" ? trustedContactNavigation : householdNavigation;
 
   return (
     <header className="flex-none border-b border-border bg-background">

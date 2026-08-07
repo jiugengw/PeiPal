@@ -110,7 +110,7 @@ def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
                 "POST",
                 "/api/plans",
                 json={
-                    "household_id": profile["household_id"],
+                    "family_id": profile["family_id"],
                     "older_adult_id": older_adult_id,
                     "activity_id": activity_id,
                 },
@@ -130,7 +130,7 @@ def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
 
     @mcp.tool()
     async def confirm_activity_plan(plan_id: int) -> dict[str, Any]:
-        """Confirm a family-approved plan and share it with the household."""
+        """Confirm a family-approved plan and share it with the family."""
         try:
             plan = await backend.request(
                 "PATCH", f"/api/plans/{plan_id}", json={"status": "shared"}
@@ -176,27 +176,27 @@ def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
             return _error(error)
 
     @mcp.tool()
-    async def list_households() -> dict[str, Any]:
-        """List households available to the authenticated demo user."""
+    async def list_families() -> dict[str, Any]:
+        """List families available to the authenticated demo user."""
         try:
-            return {"ok": True, **(await backend.request("GET", "/api/households"))}
+            return {"ok": True, **(await backend.request("GET", "/api/families"))}
         except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
-    async def list_older_adults(household_id: int) -> dict[str, Any]:
-        """List older-adult profiles in a household before creating a plan."""
+    async def list_older_adults(family_id: int) -> dict[str, Any]:
+        """List older-adult profiles in a family before creating a plan."""
         try:
             return {
                 "ok": True,
-                **(await backend.request("GET", f"/api/households/{household_id}/older-adults")),
+                **(await backend.request("GET", f"/api/families/{family_id}/older-adults")),
             }
         except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
     async def create_plan(
-        household_id: int,
+        family_id: int,
         older_adult_id: int,
         activity_id: int,
     ) -> dict[str, Any]:
@@ -206,7 +206,7 @@ def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
                 "POST",
                 "/api/plans",
                 json={
-                    "household_id": household_id,
+                    "family_id": family_id,
                     "older_adult_id": older_adult_id,
                     "activity_id": activity_id,
                 },

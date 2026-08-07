@@ -70,12 +70,6 @@ export function SelectedActivityPanel({
           {activity.description}
         </p>
       ) : null}
-      {activity.mobilityNotes ? (
-        <p className="mt-3 text-base leading-relaxed text-foreground">
-          <strong>Mobility:</strong> {activity.mobilityNotes}
-        </p>
-      ) : null}
-
       <div className="mt-6 space-y-3">
         <button
           className={`${primaryButtonClass} w-full`}

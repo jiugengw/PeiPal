@@ -33,13 +33,13 @@ describe("formatActivityWhen", () => {
 describe("formatActivityCost", () => {
   it("reports unavailable pricing rather than treating it as free", () => {
     expect(
-      formatActivityCost({ cost: null, currency: "SGD", priceRemarks: null }),
+      formatActivityCost({ cost: null, currency: "SGD" }),
     ).toBe("Price unavailable");
   });
 
   it("reports zero cost as free", () => {
     expect(
-      formatActivityCost({ cost: 0, currency: "SGD", priceRemarks: null }),
+      formatActivityCost({ cost: 0, currency: "SGD" }),
     ).toBe("Free");
   });
 
@@ -47,27 +47,15 @@ describe("formatActivityCost", () => {
     const result = formatActivityCost({
       cost: 12,
       currency: "SGD",
-      priceRemarks: null,
     });
 
     expect(result).toMatch(/12/);
-  });
-
-  it("appends price remarks when present", () => {
-    const result = formatActivityCost({
-      cost: 0,
-      currency: "SGD",
-      priceRemarks: "Includes a mat rental",
-    });
-
-    expect(result).toBe("Free · Includes a mat rental");
   });
 
   it("falls back gracefully for an unrecognized currency code", () => {
     const result = formatActivityCost({
       cost: 5,
       currency: "not-a-currency",
-      priceRemarks: null,
     });
 
     expect(result).toContain("5");

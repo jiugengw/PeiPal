@@ -15,9 +15,9 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSplatRouteImport } from './routes/_authenticated/$'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
-import { Route as AuthenticatedFamilyPortalRouteImport } from './routes/_authenticated/family-portal'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedPlansPlanIdRouteImport } from './routes/_authenticated/plans/$planId'
+import { Route as FamilyDecisionTokenRouteImport } from './routes/family.decision.$token'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -48,12 +48,6 @@ const AuthenticatedFamilyRoute = AuthenticatedFamilyRouteImport.update({
   path: '/family',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedFamilyPortalRoute =
-  AuthenticatedFamilyPortalRouteImport.update({
-    id: '/family-portal',
-    path: '/family-portal',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -65,6 +59,11 @@ const AuthenticatedPlansPlanIdRoute =
     path: '/plans/$planId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const FamilyDecisionTokenRoute = FamilyDecisionTokenRouteImport.update({
+  id: '/family/decision/$token',
+  path: '/family/decision/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -72,19 +71,19 @@ export interface FileRoutesByFullPath {
   '/$': typeof AuthenticatedSplatRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
-  '/family-portal': typeof AuthenticatedFamilyPortalRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/$': typeof AuthenticatedSplatRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
-  '/family-portal': typeof AuthenticatedFamilyPortalRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/': typeof AuthenticatedIndexRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,10 +92,10 @@ export interface FileRoutesById {
   '/_authenticated/$': typeof AuthenticatedSplatRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
-  '/_authenticated/family-portal': typeof AuthenticatedFamilyPortalRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,19 +105,19 @@ export interface FileRouteTypes {
     | '/$'
     | '/discover'
     | '/family'
-    | '/family-portal'
     | '/setup'
     | '/plans/$planId'
+    | '/family/decision/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
     | '/$'
     | '/discover'
     | '/family'
-    | '/family-portal'
     | '/setup'
     | '/'
     | '/plans/$planId'
+    | '/family/decision/$token'
   id:
     | '__root__'
     | '/_authenticated'
@@ -126,15 +125,16 @@ export interface FileRouteTypes {
     | '/_authenticated/$'
     | '/_authenticated/discover'
     | '/_authenticated/family'
-    | '/_authenticated/family-portal'
     | '/_authenticated/setup'
     | '/_authenticated/'
     | '/_authenticated/plans/$planId'
+    | '/family/decision/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  FamilyDecisionTokenRoute: typeof FamilyDecisionTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,13 +181,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFamilyRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/family-portal': {
-      id: '/_authenticated/family-portal'
-      path: '/family-portal'
-      fullPath: '/family-portal'
-      preLoaderRoute: typeof AuthenticatedFamilyPortalRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/setup': {
       id: '/_authenticated/setup'
       path: '/setup'
@@ -202,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlansPlanIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/family/decision/$token': {
+      id: '/family/decision/$token'
+      path: '/family/decision/$token'
+      fullPath: '/family/decision/$token'
+      preLoaderRoute: typeof FamilyDecisionTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -209,7 +209,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSplatRoute: typeof AuthenticatedSplatRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedFamilyRoute: typeof AuthenticatedFamilyRoute
-  AuthenticatedFamilyPortalRoute: typeof AuthenticatedFamilyPortalRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPlansPlanIdRoute: typeof AuthenticatedPlansPlanIdRoute
@@ -219,7 +218,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSplatRoute: AuthenticatedSplatRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedFamilyRoute: AuthenticatedFamilyRoute,
-  AuthenticatedFamilyPortalRoute: AuthenticatedFamilyPortalRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPlansPlanIdRoute: AuthenticatedPlansPlanIdRoute,
@@ -232,6 +230,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  FamilyDecisionTokenRoute: FamilyDecisionTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

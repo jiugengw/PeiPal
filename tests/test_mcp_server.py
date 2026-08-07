@@ -41,7 +41,7 @@ def test_tool_discovery_exposes_expected_tools():
         "prepare_family_approval",
         "confirm_activity_plan",
         "explain_activity_match",
-        "list_households",
+        "list_families",
         "list_older_adults",
         "create_plan",
         "get_plan",
@@ -64,15 +64,15 @@ def test_search_filters_interest_and_cost_and_clamps_limit():
     assert fake.calls[0][2]["params"]["limit"] == 20
 
 
-def test_household_lookup_and_plan_creation_forward_to_api():
+def test_family_lookup_and_plan_creation_forward_to_api():
     fake = FakeApi({
-        ("GET", "/api/households"): {"households": [{"id": 3}]},
-        ("GET", "/api/households/3/older-adults"): {"older_adults": [{"id": 8}]},
+        ("GET", "/api/families"): {"families": [{"id": 3}]},
+        ("GET", "/api/families/3/older-adults"): {"older_adults": [{"id": 8}]},
         ("POST", "/api/plans"): {"id": 22, "status": "draft"},
     })
-    assert call_tool(fake, "list_households", {})["households"] == [{"id": 3}]
-    assert call_tool(fake, "list_older_adults", {"household_id": 3})["older_adults"] == [{"id": 8}]
-    result = call_tool(fake, "create_plan", {"household_id": 3, "older_adult_id": 8, "activity_id": 1})
+    assert call_tool(fake, "list_families", {})["families"] == [{"id": 3}]
+    assert call_tool(fake, "list_older_adults", {"family_id": 3})["older_adults"] == [{"id": 8}]
+    result = call_tool(fake, "create_plan", {"family_id": 3, "older_adult_id": 8, "activity_id": 1})
     assert result == {"ok": True, "plan": {"id": 22, "status": "draft"}}
 
 
@@ -95,7 +95,7 @@ def test_recommendation_tool_forwards_person_specific_request():
 
 def test_task_tools_prepare_and_confirm_family_plan():
     fake = FakeApi({
-        ("GET", "/api/older-adults/8"): {"id": 8, "household_id": 3},
+        ("GET", "/api/older-adults/8"): {"id": 8, "family_id": 3},
         ("POST", "/api/plans"): {"id": 22, "status": "draft"},
         ("PATCH", "/api/plans/22"): {"id": 22, "status": "awaiting_approval"},
     })
@@ -112,7 +112,7 @@ def test_backend_errors_are_returned_without_claiming_success():
     result = call_tool(
         FakeApi(error=PeiPalApiError(404, "Active activity not found.")),
         "create_plan",
-        {"household_id": 3, "older_adult_id": 8, "activity_id": 999},
+        {"family_id": 3, "older_adult_id": 8, "activity_id": 999},
     )
     assert result == {"ok": False, "error": "Active activity not found.", "status_code": 404}
 

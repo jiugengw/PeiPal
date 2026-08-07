@@ -25,7 +25,7 @@ function detailMessage(error: unknown, fallback: string) {
 
 export const planQueryKey = (planId: number) => ['plan', planId] as const
 export const activityDetailQueryKey = (activityId: number) => ['activity', activityId] as const
-export const plansQueryKey = (householdId: number, status?: string) => ['plans', householdId, status ?? 'all'] as const
+export const plansQueryKey = (familyId: number, status?: string) => ['plans', familyId, status ?? 'all'] as const
 
 export function planQueryOptions(planId: number) {
   return queryOptions({
@@ -53,12 +53,12 @@ export function activityDetailQueryOptions(activityId: number) {
   })
 }
 
-export function plansQueryOptions(householdId: number, status?: PlanStatus) {
+export function plansQueryOptions(familyId: number, status?: PlanStatus) {
   return queryOptions({
-    queryKey: plansQueryKey(householdId, status),
+    queryKey: plansQueryKey(familyId, status),
     queryFn: async () => {
       const { data, error, response } = await fetchClient.GET('/api/plans', {
-        params: { query: { household_id: householdId, status } },
+        params: { query: { family_id: familyId, status } },
       })
       if (error || !data) throw new PlanRequestError(detailMessage(error, 'We could not load your plans.'), response.status)
       return data

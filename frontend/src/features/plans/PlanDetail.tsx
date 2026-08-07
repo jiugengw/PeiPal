@@ -26,7 +26,7 @@ import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function PlanDetail({ planId }: { planId: number }) {
   const queryClient = useQueryClient();
-  const { olderAdult, contacts = [] } = useSetupProgress();
+  const { olderAdult, familyMembers = [] } = useSetupProgress();
   const hasValidPlanId = Number.isInteger(planId) && planId > 0;
   const planQuery = useQuery({
     ...planQueryOptions(planId),
@@ -48,12 +48,12 @@ export function PlanDetail({ planId }: { planId: number }) {
     onSuccess: (updatedPlan) => {
       queryClient.setQueryData(planQueryKey(planId), updatedPlan);
       void queryClient.invalidateQueries({
-        queryKey: plansQueryKey(updatedPlan.household_id),
+        queryKey: plansQueryKey(updatedPlan.family_id),
       });
       setConfirmingStatus(undefined);
       setUpdateNotice(
         updatedPlan.status === "awaiting_approval"
-          ? "The plan is ready for family review."
+          ? "The whole family has been asked to decide."
           : updatedPlan.status === "cancelled"
             ? "The plan has been cancelled."
             : "The plan has been updated.",
@@ -106,7 +106,7 @@ export function PlanDetail({ planId }: { planId: number }) {
 
   const activity = activityQuery.data ? toActivity(activityQuery.data) : null;
   const olderAdultName = olderAdult?.preferred_name || olderAdult?.name || "your family member";
-  const isActive = plan.status !== "cancelled";
+  const isActive = plan.status !== "cancelled" && plan.status !== "rejected";
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -117,7 +117,7 @@ export function PlanDetail({ planId }: { planId: number }) {
               A plan for {olderAdultName}.
             </h1>
             <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">
-              Review what has been saved and choose the next clear step. Emails are handled separately after sharing.
+              Review what has been saved and choose the next clear step. Asking for approval emails the whole family at once.
             </p>
           </header>
 
@@ -142,7 +142,7 @@ export function PlanDetail({ planId }: { planId: number }) {
             )}
           </div>
           {plan.status === "shared" ? (
-            <NotificationPanel planId={plan.id} contacts={contacts} />
+            <NotificationPanel planId={plan.id} familyMembers={familyMembers} />
           ) : null}
         </div>
 
@@ -162,8 +162,8 @@ export function PlanDetail({ planId }: { planId: number }) {
 
             {confirmingStatus === "awaiting_approval" ? (
               <div className="mt-5 rounded-xl bg-muted p-4">
-                <h3 className="font-bold text-foreground">Ask the family to review this plan?</h3>
-                <p className="mt-1 text-base leading-relaxed text-foreground">They will see it in the demo family view. Nobody is emailed at this step.</p>
+                <h3 className="font-bold text-foreground">Ask the family to decide on this plan?</h3>
+                <p className="mt-1 text-base leading-relaxed text-foreground">Every family member receives an email with approve and reject links. The first person to answer decides for everyone.</p>
                 <div className="mt-4 space-y-2">
                   <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate("awaiting_approval")} type="button">{updateMutation.isPending ? "Updating…" : "Send for family review"}</button>
                   <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus(undefined)} type="button">Not yet</button>
@@ -171,8 +171,8 @@ export function PlanDetail({ planId }: { planId: number }) {
               </div>
             ) : null}
 
-            {plan.status === "awaiting_approval" ? (
-              <Link className={`${secondaryButtonClass} mt-6 w-full no-underline`} to="/family">Open demo family view</Link>
+            {plan.status === "awaiting_approval" || plan.status === "approved" || plan.status === "rejected" ? (
+              <Link className={`${secondaryButtonClass} mt-6 w-full no-underline`} to="/family">Open the family view</Link>
             ) : null}
 
             {isActive && !confirmingStatus ? (
@@ -207,7 +207,9 @@ function PlanRow({ label, value }: { label: string; value: string }) {
 
 function statusExplanation(status: PlanStatus, sharingMode?: "direct" | "family_approval") {
   if (status === "draft") return "Nothing has been shared. Ask the family to review when the details feel right.";
-  if (status === "awaiting_approval") return "The family can review this plan in the demo family view before it is shared.";
+  if (status === "awaiting_approval") return "Every family member has been emailed an approve or reject link. The first person to answer decides for everyone.";
+  if (status === "approved") return "Your family approved this plan. Everyone was told, and it can now be shared so people can offer practical help.";
+  if (status === "rejected") return "Your family did not approve this plan this time. Everyone was told, and nothing further will be sent.";
   if (status === "shared" && sharingMode === "direct") return "This was shared after personal confirmation, so family approval was skipped.";
   if (status === "shared") return "The plan is shared. Choosing email recipients happens in the next step.";
   return "This plan is no longer active and no further action will be taken.";

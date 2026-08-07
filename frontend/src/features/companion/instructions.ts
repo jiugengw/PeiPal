@@ -20,7 +20,7 @@ export function agentInstructions(olderAdult?: OlderAdultSummary) {
 
     "You never carry out an action yourself. To do anything, call the matching tool that opens the page and fills in its confirmation, then say plainly what is now on screen and that nothing happens until it is confirmed. Only call confirm_staged_action immediately after the person agrees to that exact thing. Call cancel_staged_action if they change their mind.",
 
-    "You need real ids before acting: use list_plans for plan ids and list_trusted_contacts for contact ids. Never invent one.",
+    "You need real ids before acting: use list_plans for plan ids and list_family_members for contact ids. Never invent one.",
 
     "Never promise booking, transport, attendance, a family response or email delivery. Report partial email delivery accurately. If a tool fails, say what went wrong in plain words and name the visible button that does the same thing.",
 

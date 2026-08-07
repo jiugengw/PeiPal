@@ -50,11 +50,11 @@ def user_id(user: Any) -> str:
     return str(user.id)
 
 
-def require_household_member(client: Client, household_id: int, user: Any) -> None:
+def require_family_account(client: Client, family_id: int, user: Any) -> None:
     result = (
-        client.table("household_members")
-        .select("household_id")
-        .eq("household_id", household_id)
+        client.table("family_accounts")
+        .select("family_id")
+        .eq("family_id", family_id)
         .eq("user_id", user_id(user))
         .limit(1)
         .execute()
@@ -62,14 +62,14 @@ def require_household_member(client: Client, household_id: int, user: Any) -> No
     if not result.data:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a member of this household.",
+            detail="You are not a member of this family.",
         )
 
 
-def household_id_for_older_adult(client: Client, older_adult_id: int) -> int:
+def family_id_for_older_adult(client: Client, older_adult_id: int) -> int:
     result = (
         client.table("older_adult_profiles")
-        .select("household_id")
+        .select("family_id")
         .eq("id", older_adult_id)
         .limit(1)
         .execute()
@@ -77,21 +77,21 @@ def household_id_for_older_adult(client: Client, older_adult_id: int) -> int:
     )
     if not result:
         raise HTTPException(status_code=404, detail="Older-adult profile not found.")
-    return int(result[0]["household_id"])
+    return int(result[0]["family_id"])
 
 
 def require_older_adult_access(
     client: Client, older_adult_id: int, user: Any
 ) -> int:
-    household_id = household_id_for_older_adult(client, older_adult_id)
-    require_household_member(client, household_id, user)
-    return household_id
+    family_id = family_id_for_older_adult(client, older_adult_id)
+    require_family_account(client, family_id, user)
+    return family_id
 
 
-def household_id_for_plan(client: Client, plan_id: int) -> int:
+def family_id_for_plan(client: Client, plan_id: int) -> int:
     result = (
         client.table("plans")
-        .select("household_id")
+        .select("family_id")
         .eq("id", plan_id)
         .limit(1)
         .execute()
@@ -99,20 +99,40 @@ def household_id_for_plan(client: Client, plan_id: int) -> int:
     )
     if not result:
         raise HTTPException(status_code=404, detail="Plan not found.")
-    return int(result[0]["household_id"])
+    return int(result[0]["family_id"])
 
 
 def require_plan_access(client: Client, plan_id: int, user: Any) -> int:
-    household_id = household_id_for_plan(client, plan_id)
-    require_household_member(client, household_id, user)
-    return household_id
+    family_id = family_id_for_plan(client, plan_id)
+    require_family_account(client, family_id, user)
+    return family_id
 
 
-def require_household_owner(client: Client, household_id: int, user: Any) -> None:
+def family_id_for_family_member(client: Client, family_member_id: int) -> int:
     result = (
-        client.table("household_members")
-        .select("household_id")
-        .eq("household_id", household_id)
+        client.table("family_members")
+        .select("family_id")
+        .eq("id", family_member_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Family member not found.")
+    return int(result[0]["family_id"])
+
+
+def require_family_member_access(client: Client, family_member_id: int, user: Any) -> int:
+    family_id = family_id_for_family_member(client, family_member_id)
+    require_family_account(client, family_id, user)
+    return family_id
+
+
+def require_family_owner(client: Client, family_id: int, user: Any) -> None:
+    result = (
+        client.table("family_accounts")
+        .select("family_id")
+        .eq("family_id", family_id)
         .eq("user_id", user_id(user))
         .eq("role", "owner")
         .limit(1)
@@ -121,5 +141,5 @@ def require_household_owner(client: Client, household_id: int, user: Any) -> Non
     if not result.data:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the household owner can approve this plan.",
+            detail="Only the family owner can approve this plan.",
         )

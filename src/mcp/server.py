@@ -22,7 +22,7 @@ mcp = FastMCP(
     "PeiPal",
     instructions=(
         "Use PeiPal tools to find activities and create plans for older adults. "
-        "Never invent activity, household, older-adult, or plan IDs. Confirm before writes."
+        "Never invent activity, family, older-adult, or plan IDs. Confirm before writes."
     ),
     stateless_http=True,
     json_response=True,

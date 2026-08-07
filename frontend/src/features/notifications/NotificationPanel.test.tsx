@@ -6,14 +6,14 @@ import { fetchClient } from "@/lib/fetchClient";
 import { StagedIntentHarness } from "@/test/StagedIntentHarness";
 
 const contacts = [
-  { id: 1, older_adult_id: 2, name: "Anna Lim", relationship: "Daughter", email: "anna@example.com", consent_status: "pending", created_at: "2030-01-01T00:00:00Z" },
-  { id: 2, older_adult_id: 2, name: "David Lim", relationship: "Son", email: "david@example.com", consent_status: "pending", created_at: "2030-01-01T00:00:00Z" },
-  { id: 3, older_adult_id: 2, name: "Mei Tan", relationship: "Friend", email: null, consent_status: "pending", created_at: "2030-01-01T00:00:00Z" },
+  { id: 1, family_id: 5, name: "Anna Lim", email: "anna@example.com", relationships: [{ older_adult_id: 2, relationship: "Daughter" }], created_at: "2030-01-01T00:00:00Z" },
+  { id: 2, family_id: 5, name: "David Lim", email: "david@example.com", relationships: [{ older_adult_id: 2, relationship: "Son" }], created_at: "2030-01-01T00:00:00Z" },
+  { id: 3, family_id: 5, name: "Mei Tan", email: "", relationships: [{ older_adult_id: 2, relationship: "Friend" }], created_at: "2030-01-01T00:00:00Z" },
 ];
 
 function renderPanel() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={queryClient}><NotificationPanel planId={9} contacts={contacts} /></QueryClientProvider>);
+  return render(<QueryClientProvider client={queryClient}><NotificationPanel planId={9} familyMembers={contacts} /></QueryClientProvider>);
 }
 
 function mockHistory(notifications: unknown[] = []) {
@@ -27,7 +27,7 @@ describe("NotificationPanel", () => {
   afterEach(() => vi.restoreAllMocks());
 
   it("disables contacts without email and contacts already sent", async () => {
-    mockHistory([{ id: 10, plan_id: 9, trusted_contact_id: 1, recipient_name: "Anna Lim", status: "sent", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" }]);
+    mockHistory([{ id: 10, plan_id: 9, family_member_id: 1, recipient_name: "Anna Lim", status: "sent", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" }]);
     renderPanel();
 
     expect(await screen.findByRole("checkbox", { name: /anna lim/i })).toBeDisabled();
@@ -40,7 +40,7 @@ describe("NotificationPanel", () => {
     const user = userEvent.setup();
     mockHistory();
     const post = vi.spyOn(fetchClient, "POST").mockResolvedValue({
-      data: { deliveries: [{ contact_id: 1, name: "Anna Lim", status: "sent" }] },
+      data: { deliveries: [{ family_member_id: 1, name: "Anna Lim", status: "sent" }] },
       response: new Response(null, { status: 200 }),
     } as never);
     renderPanel();
@@ -53,7 +53,7 @@ describe("NotificationPanel", () => {
 
     await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans/{plan_id}/notifications", {
       params: { path: { plan_id: 9 } },
-      body: { contact_ids: [1] },
+      body: { family_member_ids: [1] },
     }));
     expect(await screen.findByText("Email sent")).toBeVisible();
   });
@@ -63,8 +63,8 @@ describe("NotificationPanel", () => {
     mockHistory();
     vi.spyOn(fetchClient, "POST").mockResolvedValue({
       data: { deliveries: [
-        { contact_id: 1, name: "Anna Lim", status: "sent" },
-        { contact_id: 2, name: "David Lim", status: "failed", error: "Email delivery failed." },
+        { family_member_id: 1, name: "Anna Lim", status: "sent" },
+        { family_member_id: 2, name: "David Lim", status: "failed", error: "Email delivery failed." },
       ] },
       response: new Response(null, { status: 200 }),
     } as never);
@@ -83,10 +83,10 @@ describe("NotificationPanel", () => {
   it("retries only contacts with failed history", async () => {
     const user = userEvent.setup();
     mockHistory([
-      { id: 10, plan_id: 9, trusted_contact_id: 1, recipient_name: "Anna Lim", status: "sent", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" },
-      { id: 11, plan_id: 9, trusted_contact_id: 2, recipient_name: "David Lim", status: "failed", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" },
+      { id: 10, plan_id: 9, family_member_id: 1, recipient_name: "Anna Lim", status: "sent", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" },
+      { id: 11, plan_id: 9, family_member_id: 2, recipient_name: "David Lim", status: "failed", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" },
     ]);
-    const post = vi.spyOn(fetchClient, "POST").mockResolvedValue({ data: { deliveries: [{ contact_id: 2, name: "David Lim", status: "sent" }] }, response: new Response(null, { status: 200 }) } as never);
+    const post = vi.spyOn(fetchClient, "POST").mockResolvedValue({ data: { deliveries: [{ family_member_id: 2, name: "David Lim", status: "sent" }] }, response: new Response(null, { status: 200 }) } as never);
     renderPanel();
 
     await user.click(await screen.findByRole("button", { name: /retry failed emails/i }));
@@ -95,7 +95,7 @@ describe("NotificationPanel", () => {
 
     await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans/{plan_id}/notifications", {
       params: { path: { plan_id: 9 } },
-      body: { contact_ids: [2] },
+      body: { family_member_ids: [2] },
     }));
   });
 
@@ -107,7 +107,7 @@ describe("NotificationPanel", () => {
           <StagedIntentHarness
             intent={{ id: "intent-1", path: "/plans/9", kind: "select_notification_recipients", planId, contactIds }}
           >
-            <NotificationPanel planId={9} contacts={contacts} />
+            <NotificationPanel planId={9} familyMembers={contacts} />
           </StagedIntentHarness>
         </QueryClientProvider>,
       );
@@ -136,7 +136,7 @@ describe("NotificationPanel", () => {
       const user = userEvent.setup();
       mockHistory();
       const post = vi.spyOn(fetchClient, "POST").mockResolvedValue({
-        data: { deliveries: [{ contact_id: 1, name: "Anna Lim", status: "sent" }] },
+        data: { deliveries: [{ family_member_id: 1, name: "Anna Lim", status: "sent" }] },
         response: new Response(null, { status: 200 }),
       } as never);
       renderStaged([1]);
@@ -146,7 +146,7 @@ describe("NotificationPanel", () => {
 
       await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans/{plan_id}/notifications", {
         params: { path: { plan_id: 9 } },
-        body: { contact_ids: [1] },
+        body: { family_member_ids: [1] },
       }));
     });
 

@@ -15,10 +15,6 @@ class FamilyCreate(BaseModel):
     owner_email: EmailStr | None = None
 
 
-class FamilyEmailVerification(BaseModel):
-    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
-
-
 class FamilyUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
 
@@ -199,12 +195,6 @@ class FamilyResponse(FamilyCreate):
     id: int
     created_by: str
     created_at: datetime
-    owner_email_verified_at: datetime | None = None
-
-
-class FamilyVerificationResponse(BaseModel):
-    verified: bool
-    message: str
 
 
 class OlderAdultResponse(OlderAdultCreate):

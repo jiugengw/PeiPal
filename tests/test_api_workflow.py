@@ -302,7 +302,6 @@ def test_family_decision_links_are_reachable_without_a_session():
         ("post", "/api/family-members"),
         ("patch", "/api/family-members/1"),
         ("delete", "/api/family-members/1"),
-        ("post", "/api/families/1/verify-email"),
         ("post", "/api/plans/1/decision-notifications"),
         ("get", "/api/plans/1/decision-notifications"),
     ],

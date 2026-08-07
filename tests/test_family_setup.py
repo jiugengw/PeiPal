@@ -9,13 +9,12 @@ from pydantic import ValidationError
 from src.api import routes
 from src.api.models import (
     FamilyCreate,
-    FamilyEmailVerification,
     FamilyMemberCreate,
     FamilyMemberRelationship,
     OlderAdultCreate,
 )
-from src.api.routes import create_family_member, verify_family_email
-from src.services.family_email import digest, expires_in, generate_code, generate_token
+from src.api.routes import create_family_member
+from src.services.family_email import digest, generate_token
 
 
 USER = SimpleNamespace(id="user-1")
@@ -88,21 +87,7 @@ def written(client, table, operation):
     return [values for name, op, values in client.writes if name == table and op == operation]
 
 
-# --- Verification codes and tokens -------------------------------------------------
-
-
-def test_verification_code_is_six_digits():
-    for _ in range(50):
-        code = generate_code()
-        assert len(code) == 6 and code.isdigit()
-
-
-def test_codes_are_stored_only_as_a_digest():
-    code = generate_code()
-
-    assert digest(code) != code
-    assert digest(code) == digest(code)
-    assert len(digest(code)) == 64
+# --- Invitation tokens ---------------------------------------------------------
 
 
 def test_invitation_tokens_are_unique_and_unguessable():
@@ -112,71 +97,11 @@ def test_invitation_tokens_are_unique_and_unguessable():
     assert all(len(token) >= 32 for token in tokens)
 
 
-def test_verification_payload_rejects_a_malformed_code():
-    for bad in ["12345", "1234567", "abcdef", ""]:
-        with pytest.raises(ValidationError):
-            FamilyEmailVerification(code=bad)
+def test_tokens_are_stored_only_as_a_digest():
+    token = generate_token()
 
-
-# --- Email verification ------------------------------------------------------------
-
-
-def test_verifying_with_the_right_code_marks_the_family_verified(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
-    code = "123456"
-    client = FakeClient({
-        "family_email_verifications": [
-            [{"id": 5, "code_hash": digest(code), "expires_at": expires_in(30)}],
-            [{}],
-        ],
-        "families": [[{}]],
-    })
-
-    result = verify_family_email(1, FamilyEmailVerification(code=code), USER, client)
-
-    assert result["verified"] is True
-    assert written(client, "families", "update")[0]["owner_email_verified_at"]
-
-
-def test_an_invalid_verification_code_is_rejected(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
-    client = FakeClient({
-        "family_email_verifications": [
-            [{"id": 5, "code_hash": digest("123456"), "expires_at": expires_in(30)}],
-        ],
-    })
-
-    with pytest.raises(HTTPException) as error:
-        verify_family_email(1, FamilyEmailVerification(code="999999"), USER, client)
-
-    assert error.value.status_code == 400
-    assert not written(client, "families", "update")
-
-
-def test_an_expired_verification_code_is_rejected(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
-    code = "123456"
-    client = FakeClient({
-        "family_email_verifications": [
-            [{"id": 5, "code_hash": digest(code), "expires_at": expires_in(-1)}],
-        ],
-    })
-
-    with pytest.raises(HTTPException) as error:
-        verify_family_email(1, FamilyEmailVerification(code=code), USER, client)
-
-    assert error.value.status_code == 400
-    assert not written(client, "families", "update")
-
-
-def test_verifying_without_a_pending_code_is_rejected(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
-    client = FakeClient({"family_email_verifications": [[]]})
-
-    with pytest.raises(HTTPException) as error:
-        verify_family_email(1, FamilyEmailVerification(code="123456"), USER, client)
-
-    assert error.value.status_code == 400
+    assert digest(token) != token
+    assert len(digest(token)) == 64
 
 
 # --- Family members and relationships ----------------------------------------------

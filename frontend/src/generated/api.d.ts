@@ -42,23 +42,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/families/{family_id}/verify-email": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Verify the family creator email */
-        post: operations["verify_family_email_api_families__family_id__verify_email_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/families/{family_id}": {
         parameters: {
             query?: never;
@@ -507,11 +490,6 @@ export interface components {
             /** Owner Email */
             owner_email?: string | null;
         };
-        /** FamilyEmailVerification */
-        FamilyEmailVerification: {
-            /** Code */
-            code: string;
-        };
         /** FamilyListResponse */
         FamilyListResponse: {
             /** Families */
@@ -614,20 +592,11 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
-            /** Owner Email Verified At */
-            owner_email_verified_at?: string | null;
         };
         /** FamilyUpdate */
         FamilyUpdate: {
             /** Name */
             name: string;
-        };
-        /** FamilyVerificationResponse */
-        FamilyVerificationResponse: {
-            /** Verified */
-            verified: boolean;
-            /** Message */
-            message: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1157,43 +1126,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    verify_family_email_api_families__family_id__verify_email_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                family_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FamilyEmailVerification"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FamilyVerificationResponse"];
                 };
             };
             /** @description Validation Error */

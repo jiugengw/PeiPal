@@ -24,14 +24,12 @@ from src.api.models import (
     ActivityRecommendationListResponse,
     ActivityResponse,
     FamilyCreate,
-    FamilyEmailVerification,
     FamilyListResponse,
     FamilyMemberCreate,
     FamilyMemberListResponse,
     FamilyMemberResponse,
     FamilyMemberUpdate,
     FamilyResponse,
-    FamilyVerificationResponse,
     FamilyUpdate,
     DecisionDeliveryListResponse,
     NotificationDeliveryListResponse,
@@ -54,7 +52,7 @@ from src.api.models import (
     VoiceSessionResponse,
 )
 from src.services.notifications import send_plan_email
-from src.services.family_email import digest, expires_in, generate_code, generate_token
+from src.services.family_email import digest, expires_in, generate_token
 from src.services.plan_decisions import (
     decision_message,
     delivery_summary,
@@ -210,61 +208,11 @@ def create_family(
             "user_id": user_id(user),
             "role": "owner",
         }).execute()
-        if owner_email:
-            code = generate_code()
-            client.table("family_email_verifications").insert({
-                "family_id": family["id"],
-                "email": owner_email,
-                "code_hash": digest(code),
-                "expires_at": expires_in(),
-            }).execute()
-            try:
-                send_plan_email(
-                    recipient_email=owner_email,
-                    subject=f"Your PeiPal verification code: {code}",
-                    body=f"Your PeiPal family verification code is {code}. It expires in 30 minutes.",
-                    idempotency_key=f"family-verification/{family['id']}/{digest(code)}",
-                )
-            except Exception:
-                family["verification_delivery_failed"] = True
-        family["owner_email_verified_at"] = None if owner_email else datetime.now(timezone.utc).isoformat()
         return family
     except HTTPException:
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not create family.") from error
-
-
-@router.post(
-    "/families/{family_id}/verify-email",
-    response_model=FamilyVerificationResponse,
-    tags=["Families"],
-    summary="Verify the family creator email",
-)
-def verify_family_email(
-    family_id: int,
-    payload: FamilyEmailVerification,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_family_account(client, family_id, user)
-    rows = (
-        client.table("family_email_verifications")
-        .select("id, code_hash, expires_at")
-        .eq("family_id", family_id)
-        .is_("verified_at", "null")
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute().data or []
-    )
-    if not rows or rows[0]["code_hash"] != digest(payload.code):
-        raise HTTPException(status_code=400, detail="That verification code is not valid.")
-    if datetime.fromisoformat(rows[0]["expires_at"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="That verification code has expired.")
-    now = datetime.now(timezone.utc).isoformat()
-    client.table("family_email_verifications").update({"verified_at": now}).eq("id", rows[0]["id"]).execute()
-    client.table("families").update({"owner_email_verified_at": now}).eq("id", family_id).execute()
-    return {"verified": True, "message": "Family email verified."}
 
 
 @router.get("/families", response_model=FamilyListResponse, tags=["Families"], summary="List my families")

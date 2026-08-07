@@ -35,7 +35,7 @@ export function AuthForm() {
     onSuccess: () => {
       setValues(emptyValues);
       setShowPassword(false);
-      setSuccessMessage("Signed in. Taking you to setup…");
+      setSuccessMessage("Signed in. Taking you to the right place…");
     },
     onError: (error) => {
       setSubmissionError(

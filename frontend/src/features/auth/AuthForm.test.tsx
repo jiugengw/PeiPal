@@ -71,7 +71,7 @@ describe("AuthForm", () => {
       password: "safe-passphrase",
     });
     expect(await screen.findByRole("status")).toHaveTextContent(
-      /taking you to setup/i,
+      /taking you to the right place/i,
     );
   });
 

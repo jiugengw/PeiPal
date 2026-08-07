@@ -1,24 +1,41 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
+import { useViewer } from "@/hooks/useViewer";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: HomePage,
 });
 
 function HomePage() {
-  const progress = useSetupProgress();
+  const viewer = useViewer();
+  // An older adult owns no family record, so the setup queries would 403.
+  const progress = useSetupProgress(viewer.role === "organizer");
   const navigate = useNavigate();
+  const isOlderAdult = viewer.role === "older_adult";
 
   useEffect(() => {
+    if (viewer.isPending) return;
+    // An older adult never sees setup; they arrive ready to look for activities.
+    if (isOlderAdult) {
+      void navigate({ to: "/discover", replace: true });
+      return;
+    }
     if (progress.isPending || progress.isError) return;
     void navigate({
       to: progress.isComplete ? "/discover" : "/setup",
       replace: true,
     });
-  }, [navigate, progress.isComplete, progress.isError, progress.isPending]);
+  }, [
+    isOlderAdult,
+    navigate,
+    progress.isComplete,
+    progress.isError,
+    progress.isPending,
+    viewer.isPending,
+  ]);
 
-  if (progress.isError) {
+  if (progress.isError && !isOlderAdult) {
     return (
       <section className="grid min-h-full place-items-center px-6 py-12 text-center">
         <div>

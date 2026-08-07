@@ -185,6 +185,15 @@ class PlanNotificationCreate(BaseModel):
     family_member_ids: list[int] = Field(min_length=1, max_length=20)
 
 
+class ViewerResponse(BaseModel):
+    """Which kind of person is signed in, and what they may act on."""
+
+    role: Literal["organizer", "older_adult", "unknown"]
+    family_id: int | None = None
+    older_adult_id: int | None = None
+    display_name: str | None = None
+
+
 class VoiceSessionResponse(BaseModel):
     client_secret: str
     expires_at: int | None = None

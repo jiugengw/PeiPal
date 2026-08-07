@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent } from "react";
 import { signIn } from "@/features/auth/signIn";
 import { signUp } from "@/features/auth/signUp";
+import { sendSignInLink } from "@/features/auth/sendSignInLink";
 import { SupabaseConfigurationError } from "@/lib/supabase";
 
 type AuthMode = "login" | "signup";
@@ -318,7 +319,81 @@ export function AuthForm() {
             </p>
           ) : null}
         </form>
+        <MagicLinkPanel />
       </div>
     </div>
+  );
+}
+
+/**
+ * The way in for an older adult. Their email is their login, so they receive a
+ * link rather than typing a password they would have to remember.
+ */
+function MagicLinkPanel() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const sendLink = useMutation({
+    mutationFn: () => sendSignInLink(email),
+    throwOnError: false,
+    onSuccess: () => {
+      setSent(true);
+      setError("");
+    },
+    onError: () =>
+      setError("We could not send that link. Check the address and try again."),
+  });
+
+  return (
+    <section className="mt-8 border-t border-border pt-8">
+      <h2 className="text-xl font-bold text-foreground">
+        Signing in without a password
+      </h2>
+      <p className="mt-2 text-base leading-relaxed text-foreground">
+        If your family set this up for you, enter your email and we will send you
+        a link that signs you in.
+      </p>
+      {sent ? (
+        <p
+          className="mt-4 rounded-xl bg-muted p-[18px] leading-normal font-bold text-foreground"
+          role="status"
+        >
+          Check your email for a link from PeiPal. Opening it signs you in.
+        </p>
+      ) : (
+        <form
+          className="mt-4 flex flex-col gap-3 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            sendLink.mutate();
+          }}
+        >
+          <label className="sr-only" htmlFor="magic-link-email">
+            Email me a sign-in link
+          </label>
+          <input
+            className="min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-lg text-foreground"
+            id="magic-link-email"
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+          />
+          <button
+            className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-xl border border-input bg-background px-6 font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
+            disabled={sendLink.isPending}
+            type="submit"
+          >
+            {sendLink.isPending ? "Sending\u2026" : "Email me a link"}
+          </button>
+        </form>
+      )}
+      {error ? (
+        <p className="mt-4 font-bold text-foreground" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
   );
 }

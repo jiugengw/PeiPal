@@ -11,8 +11,10 @@ import { AuthSessionContext } from "@/features/auth/AuthSessionContext";
 import { createQueryClient } from "@/lib/queryClient";
 
 const { useSetupProgress } = vi.hoisted(() => ({ useSetupProgress: vi.fn() }));
+const { useViewer } = vi.hoisted(() => ({ useViewer: vi.fn() }));
 
 vi.mock("@/features/setup/useSetupProgress", () => ({ useSetupProgress }));
+vi.mock("@/hooks/useViewer", () => ({ useViewer }));
 
 function setupProgress(complete = false) {
   return {
@@ -50,9 +52,22 @@ function renderRoute(path: string, authenticated = false) {
   return { router: testRouter, view };
 }
 
+function viewer(role: "organizer" | "older_adult" | "unknown" = "organizer") {
+  return {
+    role,
+    olderAdultId: role === "older_adult" ? 2 : undefined,
+    familyId: 1,
+    displayName: undefined,
+    isPending: false,
+    isError: false,
+    query: { refetch: vi.fn() },
+  };
+}
+
 describe("application routes", () => {
   beforeEach(() => {
     useSetupProgress.mockReturnValue(setupProgress());
+    useViewer.mockReturnValue(viewer());
   });
 
   it("redirects an incomplete account to setup", async () => {
@@ -68,6 +83,15 @@ describe("application routes", () => {
   it("redirects a complete account to discovery", async () => {
     const complete = setupProgress(true);
     useSetupProgress.mockReturnValue(complete);
+    const { router } = renderRoute("/", true);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/discover"),
+    );
+  });
+
+  it("sends an older adult straight to discovery, never to setup", async () => {
+    useViewer.mockReturnValue(viewer("older_adult"));
+    useSetupProgress.mockReturnValue(setupProgress());
     const { router } = renderRoute("/", true);
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/discover"),

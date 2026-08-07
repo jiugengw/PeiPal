@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Identify the signed-in person
+         * @description Report whether the signed-in account organizes a family or is an older adult. An older adult who signs in by magic link for the first time is matched to their profile by email address and linked here.
+         */
+        get: operations["get_viewer_api_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families": {
         parameters: {
             query?: never;
@@ -1022,6 +1042,23 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * ViewerResponse
+         * @description Which kind of person is signed in, and what they may act on.
+         */
+        ViewerResponse: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "organizer" | "older_adult" | "unknown";
+            /** Family Id */
+            family_id?: number | null;
+            /** Older Adult Id */
+            older_adult_id?: number | null;
+            /** Display Name */
+            display_name?: string | null;
+        };
         /** VoiceSessionResponse */
         VoiceSessionResponse: {
             /** Client Secret */
@@ -1060,6 +1097,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VoiceSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_viewer_api_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewerResponse"];
                 };
             };
             /** @description Validation Error */

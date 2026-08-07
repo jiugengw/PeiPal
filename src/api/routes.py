@@ -49,6 +49,7 @@ from src.api.models import (
     SupportOfferCreate,
     SupportOfferListResponse,
     SupportOfferResponse,
+    ViewerResponse,
     VoiceSessionResponse,
 )
 from src.services.notifications import send_plan_email
@@ -187,6 +188,79 @@ def create_voice_session(
         raise HTTPException(status_code=503, detail="Browser voice is not available.") from error
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not create browser voice session.") from error
+
+
+
+@router.get(
+    "/me",
+    response_model=ViewerResponse,
+    tags=["Families"],
+    summary="Identify the signed-in person",
+    description=(
+        "Report whether the signed-in account organizes a family or is an older "
+        "adult. An older adult who signs in by magic link for the first time is "
+        "matched to their profile by email address and linked here."
+    ),
+)
+def get_viewer(
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    uid = user_id(user)
+    try:
+        owner = (
+            client.table("family_accounts")
+            .select("family_id, role")
+            .eq("user_id", uid)
+            .in_("role", ["owner", "caregiver"])
+            .limit(1)
+            .execute()
+            .data
+        )
+        if owner:
+            return {"role": "organizer", "family_id": owner[0]["family_id"]}
+
+        linked = (
+            client.table("older_adult_profiles")
+            .select("id, family_id, name, preferred_name")
+            .eq("user_id", uid)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if not linked:
+            # First magic-link sign-in: claim the profile holding this address.
+            email = (getattr(user, "email", None) or "").strip().lower()
+            if not email:
+                return {"role": "unknown"}
+            match = (
+                client.table("older_adult_profiles")
+                .select("id, family_id, name, preferred_name, user_id")
+                .ilike("email", email)
+                .limit(1)
+                .execute()
+                .data
+            )
+            if not match or match[0].get("user_id"):
+                return {"role": "unknown"}
+            client.table("older_adult_profiles").update({"user_id": uid}).eq(
+                "id", match[0]["id"]
+            ).execute()
+            client.table("family_accounts").upsert(
+                {"family_id": match[0]["family_id"], "user_id": uid, "role": "older_adult"},
+                on_conflict="family_id,user_id",
+            ).execute()
+            linked = match
+
+        profile = linked[0]
+        return {
+            "role": "older_adult",
+            "family_id": profile["family_id"],
+            "older_adult_id": profile["id"],
+            "display_name": profile.get("preferred_name") or profile["name"],
+        }
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not identify the signed-in person.") from error
 
 
 @router.post("/families", status_code=status.HTTP_201_CREATED, response_model=FamilyResponse, tags=["Families"], summary="Create a family")

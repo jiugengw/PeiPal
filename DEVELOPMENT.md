@@ -31,9 +31,9 @@ Keep server secrets in the root `.env`:
 OPENAI_API_KEY=...
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
-RESEND_API_KEY=...
-EMAIL_FROM=...
-EMAIL_REPLY_TO=...
+GMAIL_ADDRESS=...
+GMAIL_APP_PASSWORD=...
+GMAIL_FROM_NAME=PeiPal
 ```
 
 Keep browser-safe values in `frontend/.env`:
@@ -44,12 +44,14 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, or `RESEND_API_KEY` in the frontend environment file.
+Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, or `GMAIL_APP_PASSWORD` in the frontend environment file.
 Keep `VITE_API_BASE_URL` empty for normal local development so requests use the Vite proxy. If the browser calls FastAPI directly instead, set it to `http://127.0.0.1:8000` and include the frontend origin in the backend `CORS_ORIGINS` value.
 
 ## Email notifications
 
-The voice agent can send a confirmed invitation email through Resend. Configure `RESEND_API_KEY` and `EMAIL_FROM`; the sender domain must be verified in Resend.
+The voice agent and authenticated API send confirmed invitation emails through Gmail SMTP. Enable 2-Step Verification on the Gmail account, create a Google App Password, and configure `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`. Do not use the account's normal password. `GMAIL_FROM_NAME` is optional and defaults to `PeiPal`.
+
+Trusted contacts can use any valid recipient address; they do not need to match the Gmail sender or the account owner's email. This integration is intended for low-volume hackathon use.
 
 For the local voice agent, copy `contacts.example.json` to `contacts.json` and add trusted contacts. Each selected contact receives a separate email after the agent previews the full message and receives explicit confirmation.
 
@@ -280,7 +282,7 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 4. Confirm that the plan starts as a draft and choose **Ask for family approval**.
 5. Open **Demo family view**, approve and share the waiting plan, then return to its detail page.
 6. Select the trusted contact, review the recipient list, and send the plan email.
-7. Confirm the delivery result is visible. If Resend is not configured, confirm the failed result is honest and retryable.
+7. Confirm the delivery result is visible. If Gmail is not configured, confirm the failed result is honest and retryable.
 8. Return to the family view, offer one kind of practical support, and verify it appears as **You offered**.
 9. Refresh `/plans/{planId}` and confirm the shared status, activity details, notification history, and support state reload.
 
@@ -306,7 +308,7 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 - **No microphone input on macOS**: enable microphone access for the terminal app in System Settings.
 - **No speaker output**: select a working default input and output device, then restart the demo.
 - **API connection error**: confirm the Supabase URL, service key, API keys, network connection, and CORS origin.
-- **Notification failed**: check `RESEND_API_KEY`, `EMAIL_FROM`, sender-domain verification, and the contact email address. Retry the notification request for failed recipients.
+- **Notification failed**: check `GMAIL_ADDRESS`, the Google App Password, 2-Step Verification, and the contact email address. Retry the notification request for failed recipients.
 
 ## Current technical limitations
 
@@ -314,7 +316,7 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 - Browser end-to-end automation is deferred; the complete demo path is verified manually.
 - The API does not yet arrange transport or complete bookings.
 - Plan completion tracking is not yet implemented.
-- Notification delivery requires Resend configuration.
+- Notification delivery requires a Gmail account with 2-Step Verification and an App Password.
 - Browser voice requires microphone permission, WebRTC support, and a configured server-side OpenAI key.
 
 ## OpenAI documentation used

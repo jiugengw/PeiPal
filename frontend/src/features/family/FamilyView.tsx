@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useAuthSession } from "@/features/auth/AuthSessionContext";
 import { secondaryButtonClass } from "@/features/activities/activityStyles";
 import { FamilyPlanRow } from "@/features/family/FamilyPlanRow";
 import { plansQueryOptions } from "@/features/plans/api/planQueries";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function FamilyView() {
-  const { session } = useAuthSession();
   const setup = useSetupProgress();
   const plansQuery = useQuery({
     ...plansQueryOptions(setup.family?.id ?? 0),
@@ -28,22 +26,22 @@ export function FamilyView() {
       id: "approval",
       title: "Waiting for a family decision",
       description: "Everyone has been emailed. The first person to approve or reject decides for the whole family.",
-      plans: plans.filter((plan) => plan.status === "awaiting_approval"),
+      plans: plans.filter((plan) => plan.status === "coordinating"),
       empty: "No plans are waiting for a decision right now.",
     },
     {
       id: "decided",
       title: "Decided",
       description: "What the family decided, and who decided it.",
-      plans: plans.filter((plan) => plan.status === "approved" || plan.status === "rejected"),
+      plans: plans.filter((plan) => plan.status === "ready" || plan.status === "rejected"),
       empty: "No plans have been decided yet.",
     },
     {
-      id: "shared",
-      title: "Shared plans",
-      description: "Offer one practical way to help, or simply leave the plan as it is.",
-      plans: plans.filter((plan) => plan.status === "shared"),
-      empty: "No plans have been shared yet.",
+      id: "done",
+      title: "Finished",
+      description: "Activities that have already happened.",
+      plans: plans.filter((plan) => plan.status === "completed"),
+      empty: "No activities have finished yet.",
     },
     {
       id: "past",
@@ -77,7 +75,7 @@ export function FamilyView() {
             <h2 className="text-3xl font-bold tracking-[-0.03em] text-foreground" id={`${section.id}-heading`}>{section.title}</h2>
             <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">{section.description}</p>
             <div className="mt-6 bg-background px-5 sm:px-7">
-              {section.plans.length === 0 ? <p className="py-7 text-lg text-foreground">{section.empty}</p> : section.plans.map((plan) => <FamilyPlanRow key={plan.id} plan={plan} olderAdultName={olderAdultName} userId={session?.user.id} />)}
+              {section.plans.length === 0 ? <p className="py-7 text-lg text-foreground">{section.empty}</p> : section.plans.map((plan) => <FamilyPlanRow key={plan.id} plan={plan} olderAdultName={olderAdultName} />)}
             </div>
           </section>
         ))}

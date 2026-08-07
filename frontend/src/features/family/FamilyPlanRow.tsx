@@ -8,64 +8,47 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/features/activities/activityStyles";
-import { SupportOfferPanel } from "@/features/family/SupportOfferPanel";
-import { notificationsQueryOptions } from "@/features/notifications/api/notificationQueries";
 import {
   activityDetailQueryOptions,
   planQueryKey,
   plansQueryKey,
   updatePlanStatus,
   type Plan,
-  type PlanStatus,
 } from "@/features/plans/api/planQueries";
 import { planStatusLabels } from "@/features/plans/status";
 
-/** Who decided, when, and anything they added. */
-function decisionSummary(plan: Plan) {
-  const outcome = plan.status === "approved" ? "approved" : "rejected";
-  const when = plan.decided_at
-    ? new Date(plan.decided_at).toLocaleString(undefined, {
-        day: "numeric",
-        month: "long",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "recently";
-  const reason = plan.decision_reason ? ` They added: ${plan.decision_reason}` : "";
-  return `A family member ${outcome} this on ${when}.${reason}`;
+/** Plain language for a settled plan. */
+function planSummary(plan: Plan) {
+  if (plan.status === "rejected") return "Your family decided against this one.";
+  if (plan.status === "completed") return "This activity is done.";
+  return "Everything is arranged.";
 }
 
 export function FamilyPlanRow({
   plan,
   olderAdultName,
-  userId,
 }: {
   plan: Plan;
   olderAdultName: string;
-  userId?: string;
 }) {
   const queryClient = useQueryClient();
-  const [pendingAction, setPendingAction] = useState<"shared" | "cancelled">();
+  const [pendingAction, setPendingAction] = useState<"cancelled">();
   const [notice, setNotice] = useState("");
   const activityQuery = useQuery(activityDetailQueryOptions(plan.activity_id));
-  const notificationsQuery = useQuery({
-    ...notificationsQueryOptions(plan.id),
-    enabled: plan.status === "shared",
-  });
   const updateMutation = useMutation({
-    mutationFn: (status: Exclude<PlanStatus, "draft" | "awaiting_approval">) =>
+    mutationFn: (status: "cancelled") =>
       updatePlanStatus(plan.id, status),
     onSuccess: (updated) => {
       queryClient.setQueryData(planQueryKey(plan.id), updated);
       void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.family_id) });
-      setNotice(updated.status === "shared" ? "The plan is shared with the family." : "The plan was cancelled.");
+      setNotice("The plan was cancelled.");
       setPendingAction(undefined);
     },
     onError: () => void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.family_id) }),
   });
   const staged = useStagedIntent(
     "confirm_plan_status",
-    (intent) => intent.planId === plan.id && intent.status !== "awaiting_approval",
+    (intent) => intent.planId === plan.id,
   );
 
   const [appliedIntentId, setAppliedIntentId] = useState<string>();
@@ -73,9 +56,9 @@ export function FamilyPlanRow({
   // Applied once per staged intent; this row's own buttons keep working.
   if (staged && staged.id !== appliedIntentId) {
     setAppliedIntentId(staged.id);
-    if (plan.status === "awaiting_approval") {
+    if (plan.status === "coordinating") {
       setNotice("");
-      setPendingAction(staged.status as "shared" | "cancelled");
+      setPendingAction("cancelled");
     }
   }
 
@@ -84,7 +67,6 @@ export function FamilyPlanRow({
   });
 
   const activity = activityQuery.data ? toActivity(activityQuery.data) : null;
-  const sentCount = notificationsQuery.data?.notifications.filter((item) => item.status === "sent").length ?? 0;
 
   return (
     <article className="border-t border-border py-7 first:border-t-0">
@@ -97,30 +79,27 @@ export function FamilyPlanRow({
               <p className="mt-2 text-lg leading-relaxed text-foreground">{formatActivityWhen(activity)} · {activity.venue}</p>
             </>
           )}
-          {plan.status === "awaiting_approval" ? <p className="mt-3 text-base leading-relaxed text-foreground">Every family member has been emailed an approve or reject link. The first person to answer decides for everyone.</p> : null}
-          {plan.status === "approved" || plan.status === "rejected" ? <p className="mt-3 text-base leading-relaxed text-foreground">{decisionSummary(plan)}</p> : null}
-          {plan.status === "shared" ? <p className="mt-3 text-base font-bold text-foreground">{notificationsQuery.isPending ? "Checking email history…" : sentCount > 0 ? `${sentCount} family ${sentCount === 1 ? "member has" : "members have"} been emailed.` : "No family members have been emailed yet."}</p> : null}
+          {plan.status === "coordinating" ? <p className="mt-3 text-base leading-relaxed text-foreground">Every family member has been emailed their own link. The first person to answer decides for everyone.</p> : null}
+          {plan.status === "ready" || plan.status === "rejected" || plan.status === "completed" ? <p className="mt-3 text-base leading-relaxed text-foreground">{planSummary(plan)}</p> : null}
         </div>
         <div className="flex flex-col gap-2">
           <Link className={`${secondaryButtonClass} w-full no-underline`} to="/plans/$planId" params={{ planId: String(plan.id) }}>Open plan</Link>
-          {plan.status === "approved" ? <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setPendingAction("shared")} type="button">Share with the family</button> : null}
-          {plan.status === "awaiting_approval" || plan.status === "approved" ? <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setPendingAction("cancelled")} type="button">Cancel plan</button> : null}
+          {plan.status === "coordinating" || plan.status === "ready" ? <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setPendingAction("cancelled")} type="button">Cancel plan</button> : null}
         </div>
       </div>
 
       {pendingAction ? (
         <div className="mt-5 rounded-2xl bg-muted p-5">
-          <h4 className="text-lg font-bold text-foreground">{pendingAction === "shared" ? "Share this approved plan?" : "Cancel this plan?"}</h4>
-          <p className="mt-1 text-base leading-relaxed text-foreground">{pendingAction === "shared" ? "The family already approved it. Sharing lets everyone offer practical help." : "The plan will remain visible as cancelled and cannot be shared later."}</p>
+          <h4 className="text-lg font-bold text-foreground">"Cancel this plan?"</h4>
+          <p className="mt-1 text-base leading-relaxed text-foreground">"The plan will remain visible as cancelled, and your family will see that it was stopped."</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <button className={primaryButtonClass} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(pendingAction)} type="button">{updateMutation.isPending ? "Updating…" : pendingAction === "shared" ? "Confirm sharing" : "Confirm cancellation"}</button>
+            <button className={primaryButtonClass} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(pendingAction)} type="button">{updateMutation.isPending ? "Updating…" : "Confirm cancellation"}</button>
             <button className={secondaryButtonClass} disabled={updateMutation.isPending} onClick={() => setPendingAction(undefined)} type="button">Go back</button>
           </div>
         </div>
       ) : null}
       {notice ? <p className="mt-4 rounded-xl bg-muted p-4 font-bold text-foreground" role="status">{notice}</p> : null}
       {updateMutation.isError ? <p className="mt-4 font-bold text-foreground" role="alert">The plan changed or could not be updated. The list is refreshing.</p> : null}
-      {plan.status === "shared" ? <SupportOfferPanel planId={plan.id} userId={userId} /> : null}
     </article>
   );
 }

@@ -34,36 +34,20 @@ from src.api.models import (
     CoordinationStateResponse,
     FamilyResponse,
     FamilyUpdate,
-    DecisionDeliveryListResponse,
-    NotificationDeliveryListResponse,
     OlderAdultCreate,
     OlderAdultListResponse,
     OlderAdultResponse,
     OlderAdultUpdate,
     PlanCreate,
-    PlanDecisionNotificationListResponse,
-    PlanDecisionRequest,
-    PlanDecisionResponse,
     PlanListResponse,
-    PlanNotificationCreate,
-    PlanNotificationListResponse,
     PlanResponse,
     PlanUpdate,
-    SupportOfferCreate,
-    SupportOfferListResponse,
-    SupportOfferResponse,
     ViewerResponse,
     VoiceSessionResponse,
 )
-from src.services.notifications import send_plan_email
-from src.services.family_email import digest, expires_in, generate_token
+from src.services.family_email import digest, expires_in
 from src.services.coordination import apply_action, ensure_coordination, load_state
 from src.services.coordination_email import send_coordination_emails
-from src.services.plan_decisions import (
-    decision_message,
-    delivery_summary,
-    send_decision_notifications,
-)
 from src.services.realtime import create_realtime_client_secret
 from src.services.recommendations import recommend_activities
 
@@ -71,42 +55,6 @@ from src.services.recommendations import recommend_activities
 router = APIRouter(prefix="/api")
 
 FAMILY_MEMBER_SELECT = "*, family_member_older_adults(older_adult_id, relationship)"
-
-
-def _family_invitation_url(token: str) -> str:
-    import os
-    return f"{os.getenv('APP_BASE_URL', 'http://127.0.0.1:5173')}/family/invite/{token}"
-
-
-def _approval_url(token: str) -> str:
-    import os
-    return f"{os.getenv('APP_BASE_URL', 'http://127.0.0.1:5173')}/family/decision/{token}"
-
-
-def _send_approval_requests(client: Client, plan_id: int, family_id: int, older_adult_id: int, activity_id: int) -> None:
-    members = client.table("family_members").select("id, name, email").eq("family_id", family_id).execute().data or []
-    profile = client.table("older_adult_profiles").select("name, preferred_name").eq("id", older_adult_id).limit(1).execute().data[0]
-    activity = client.table("activities").select("name, location, start_at, info_link").eq("id", activity_id).limit(1).execute().data[0]
-    person = profile.get("preferred_name") or profile["name"]
-    for member in members:
-        token = generate_token()
-        client.table("plan_approval_requests").upsert({
-            "plan_id": plan_id,
-            "family_member_id": member["id"],
-            "token_hash": digest(token),
-            "expires_at": expires_in(7 * 24 * 60),
-            "status": "pending",
-        }, on_conflict="plan_id,family_member_id").execute()
-        try:
-            send_plan_email(
-                recipient_email=member["email"],
-                subject=f"PeiPal needs your decision for {person}",
-                body=(f"{person} wants {activity['name']} at {activity['location']} on {activity['start_at']}.\n\n"
-                      f"Approve or reject this request: {_approval_url(token)}"),
-                idempotency_key=f"plan-approval/{plan_id}/{member['id']}",
-            )
-        except Exception:
-            continue
 
 
 def _shape_family_member(row: dict[str, Any]) -> dict[str, Any]:
@@ -487,24 +435,8 @@ def create_family_member(
             .data[0]
         )
         _replace_relationships(client, created["id"], payload.relationships)
-        invitation_token = generate_token()
-        client.table("family_member_invitations").insert({
-            "family_member_id": created["id"],
-            "token_hash": digest(invitation_token),
-            "expires_at": expires_in(7 * 24 * 60),
-        }).execute()
-        try:
-            send_plan_email(
-                recipient_email=email,
-                subject="You have been added to a PeiPal family",
-                body=(
-                    f"{payload.name} has added you to their PeiPal family. "
-                    f"Open this link to view family requests: {_family_invitation_url(invitation_token)}"
-                ),
-                idempotency_key=f"family-invitation/{created['id']}/{digest(invitation_token)}",
-            )
-        except Exception:
-            pass
+        # No invitation is sent here. A family member only ever hears from
+        # PeiPal when there is an actual request to answer.
         return _load_family_member(client, created["id"])
     except HTTPException:
         raise
@@ -956,11 +888,11 @@ def update_plan(
         current_status = plan["status"]
         next_status = payload.status
         valid_transitions = {
-            "draft": {"awaiting_approval", "cancelled"},
-            "awaiting_approval": {"shared", "approved", "rejected", "cancelled"},
-            "approved": {"shared", "cancelled"},
+            "draft": {"cancelled"},
+            "coordinating": {"cancelled"},
+            "ready": {"cancelled"},
+            "completed": set(),
             "rejected": set(),
-            "shared": {"cancelled"},
             "cancelled": set(),
         }
         if next_status not in valid_transitions[current_status]:
@@ -969,455 +901,16 @@ def update_plan(
                 detail=f"Cannot change a plan from {current_status} to {next_status}.",
             )
 
-        values: dict[str, Any] = {"status": next_status}
-        now = datetime.now(timezone.utc).isoformat()
-        if next_status == "shared":
-            require_family_owner(client, family_id, user)
-            values.update({"approved_by": user_id(user), "approved_at": now, "shared_at": now})
-        elif next_status in {"approved", "rejected"}:
-            raise HTTPException(status_code=403, detail="Use the family approval link to decide this plan.")
-        elif next_status == "cancelled":
-            values["cancelled_at"] = now
+        values: dict[str, Any] = {
+            "status": next_status,
+            "cancelled_at": datetime.now(timezone.utc).isoformat(),
+        }
 
-        result = client.table("plans").update(values).eq("id", plan_id).execute().data
-        if next_status == "awaiting_approval":
-            current = client.table("plans").select("older_adult_id, activity_id").eq("id", plan_id).limit(1).execute().data[0]
-            _send_approval_requests(client, plan_id, family_id, current["older_adult_id"], current["activity_id"])
-        return result[0]
+        return client.table("plans").update(values).eq("id", plan_id).execute().data[0]
     except HTTPException:
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not update plan.") from error
-
-
-@router.get("/family-decisions/{token}", tags=["Plans"], summary="Inspect a family approval link")
-def inspect_family_decision(token: str, client: Client = Depends(get_supabase_client)) -> dict[str, Any]:
-    rows = client.table("plan_approval_requests").select("id, plan_id, family_member_id, status, expires_at").eq("token_hash", digest(token)).limit(1).execute().data or []
-    if not rows:
-        raise HTTPException(status_code=404, detail="This family decision link is not valid.")
-    request = rows[0]
-    plan = client.table("plans").select("id, status, older_adult_id, activity_id").eq("id", request["plan_id"]).limit(1).execute().data[0]
-    member = client.table("family_members").select("name").eq("id", request["family_member_id"]).limit(1).execute().data[0]
-    activity = client.table("activities").select("name, location, start_at, info_link").eq("id", plan["activity_id"]).limit(1).execute().data[0]
-    profile = client.table("older_adult_profiles").select("name, preferred_name").eq("id", plan["older_adult_id"]).limit(1).execute().data[0]
-    return {"plan_id": plan["id"], "plan_status": plan["status"], "family_member": member["name"], "older_adult": profile.get("preferred_name") or profile["name"], "activity": activity, "can_decide": request["status"] == "pending" and plan["status"] == "awaiting_approval"}
-
-
-@router.post("/family-decisions/{token}", response_model=PlanDecisionResponse, tags=["Plans"], summary="Approve or reject a plan from an email link")
-def decide_family_plan(token: str, payload: PlanDecisionRequest, client: Client = Depends(get_supabase_client)) -> dict[str, Any]:
-    rows = client.table("plan_approval_requests").select("id, plan_id, family_member_id, status, expires_at").eq("token_hash", digest(token)).limit(1).execute().data or []
-    if not rows:
-        raise HTTPException(status_code=404, detail="This family decision link is not valid.")
-    request = rows[0]
-    if request["status"] != "pending":
-        raise HTTPException(status_code=409, detail="This family member has already responded.")
-    if datetime.fromisoformat(request["expires_at"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
-        raise HTTPException(status_code=410, detail="This family decision link has expired.")
-    now = datetime.now(timezone.utc).isoformat()
-    update = client.table("plans").update({"status": payload.decision, "decision_by_family_member_id": request["family_member_id"], "decided_at": now, "decision_reason": payload.reason}).eq("id", request["plan_id"]).eq("status", "awaiting_approval").execute().data
-    if not update:
-        raise HTTPException(status_code=409, detail="This plan already has a family decision.")
-    client.table("plan_approval_requests").update({"status": "used", "used_at": now}).eq("id", request["id"]).execute()
-    member = client.table("family_members").select("name, email, family_id").eq("id", request["family_member_id"]).limit(1).execute().data[0]
-    plan = client.table("plans").select("older_adult_id, activity_id").eq("id", request["plan_id"]).limit(1).execute().data[0]
-    profile = client.table("older_adult_profiles").select("name, preferred_name").eq("id", plan["older_adult_id"]).limit(1).execute().data[0]
-    activity = client.table("activities").select("name, location, start_at, info_link").eq("id", plan["activity_id"]).limit(1).execute().data[0]
-
-    subject, body = decision_message(
-        decision=payload.decision,
-        decided_by=member["name"],
-        decided_at=now,
-        person_name=profile.get("preferred_name") or profile["name"],
-        activity=activity,
-        reason=payload.reason,
-    )
-    deliveries = send_decision_notifications(
-        client,
-        plan_id=request["plan_id"],
-        family_id=member["family_id"],
-        older_adult_id=plan["older_adult_id"],
-        subject=subject,
-        body=body,
-    )
-    return {
-        "plan_id": request["plan_id"],
-        "status": payload.decision,
-        "decided_by": member["name"],
-        "decided_at": now,
-        "message": delivery_summary(deliveries),
-        "deliveries": deliveries,
-    }
-
-
-@router.post(
-    "/plans/{plan_id}/decision-notifications",
-    response_model=DecisionDeliveryListResponse,
-    tags=["Notifications"],
-    summary="Retry the plan decision emails",
-    description=(
-        "Re-send the decision email to recipients that could not be reached. "
-        "Anyone already emailed successfully is skipped rather than emailed twice."
-    ),
-)
-def retry_plan_decision_notifications(
-    plan_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    family_id = require_plan_access(client, plan_id, user)
-    try:
-        rows = (
-            client.table("plans")
-            .select("status, older_adult_id, activity_id, decided_at, decision_reason, decision_by_family_member_id")
-            .eq("id", plan_id)
-            .limit(1)
-            .execute()
-            .data
-        )
-        if not rows:
-            raise HTTPException(status_code=404, detail="Plan not found.")
-        plan = rows[0]
-        if plan["status"] not in {"approved", "rejected"}:
-            raise HTTPException(status_code=409, detail="This plan has no family decision yet.")
-
-        decider = (
-            client.table("family_members")
-            .select("name")
-            .eq("id", plan["decision_by_family_member_id"])
-            .limit(1)
-            .execute()
-            .data
-        )
-        profile = (
-            client.table("older_adult_profiles")
-            .select("name, preferred_name")
-            .eq("id", plan["older_adult_id"])
-            .limit(1)
-            .execute()
-            .data[0]
-        )
-        activity = (
-            client.table("activities")
-            .select("name, location, start_at, info_link")
-            .eq("id", plan["activity_id"])
-            .limit(1)
-            .execute()
-            .data[0]
-        )
-        subject, body = decision_message(
-            decision=plan["status"],
-            decided_by=decider[0]["name"] if decider else "A family member",
-            decided_at=plan["decided_at"],
-            person_name=profile.get("preferred_name") or profile["name"],
-            activity=activity,
-            reason=plan.get("decision_reason"),
-        )
-        return {
-            "deliveries": send_decision_notifications(
-                client,
-                plan_id=plan_id,
-                family_id=family_id,
-                older_adult_id=plan["older_adult_id"],
-                subject=subject,
-                body=body,
-            )
-        }
-    except HTTPException:
-        raise
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not send the decision emails.") from error
-
-
-@router.get(
-    "/plans/{plan_id}/decision-notifications",
-    response_model=PlanDecisionNotificationListResponse,
-    tags=["Notifications"],
-    summary="List plan decision emails",
-)
-def list_plan_decision_notifications(
-    plan_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    try:
-        result = (
-            client.table("plan_decision_notifications")
-            .select("*")
-            .eq("plan_id", plan_id)
-            .order("created_at")
-            .execute()
-        )
-        return {"notifications": result.data or []}
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not load the decision emails.") from error
-
-
-@router.post(
-    "/plans/{plan_id}/support-offers",
-    status_code=status.HTTP_201_CREATED,
-    response_model=SupportOfferResponse,
-    tags=["Support offers"],
-    summary="Offer support for a shared plan",
-)
-def create_support_offer(
-    plan_id: int,
-    payload: SupportOfferCreate,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    try:
-        plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
-        if plan["status"] != "shared":
-            raise HTTPException(status_code=409, detail="Support can only be offered on a shared plan.")
-        existing = (
-            client.table("plan_support_offers")
-            .select("id, status")
-            .eq("plan_id", plan_id)
-            .eq("offered_by", user_id(user))
-            .eq("support_type", payload.support_type)
-            .limit(1)
-            .execute()
-            .data
-        )
-        if existing and existing[0]["status"] == "offered":
-            raise HTTPException(status_code=409, detail="You already offered this type of support.")
-        values = payload.model_dump()
-        values.update({"plan_id": plan_id, "offered_by": user_id(user)})
-        if existing:
-            values.update({"status": "offered", "updated_at": datetime.now(timezone.utc).isoformat()})
-            return client.table("plan_support_offers").update(values).eq("id", existing[0]["id"]).execute().data[0]
-        return client.table("plan_support_offers").insert(values).execute().data[0]
-    except HTTPException:
-        raise
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not create support offer.") from error
-
-
-@router.get(
-    "/plans/{plan_id}/support-offers",
-    response_model=SupportOfferListResponse,
-    tags=["Support offers"],
-    summary="List support offers",
-)
-def list_support_offers(
-    plan_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    try:
-        result = (
-            client.table("plan_support_offers")
-            .select("*")
-            .eq("plan_id", plan_id)
-            .eq("status", "offered")
-            .order("created_at")
-            .execute()
-        )
-        return {"support_offers": result.data or []}
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not load support offers.") from error
-
-
-@router.delete("/support-offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Support offers"], summary="Withdraw a support offer")
-def withdraw_support_offer(
-    offer_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> None:
-    try:
-        offer = client.table("plan_support_offers").select("plan_id, offered_by").eq("id", offer_id).limit(1).execute().data
-        if not offer:
-            raise HTTPException(status_code=404, detail="Support offer not found.")
-        require_plan_access(client, offer[0]["plan_id"], user)
-        if offer[0]["offered_by"] != user_id(user):
-            raise HTTPException(status_code=403, detail="You can only withdraw your own support offer.")
-        client.table("plan_support_offers").update({"status": "withdrawn"}).eq("id", offer_id).execute()
-    except HTTPException:
-        raise
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not withdraw support offer.") from error
-
-
-@router.post(
-    "/plans/{plan_id}/notifications",
-    response_model=NotificationDeliveryListResponse,
-    tags=["Notifications"],
-    summary="Send plan notifications",
-    description=(
-        "Send one email to each selected family member for a shared plan. "
-        "Successful recipients are not sent again if this request is retried; "
-        "failed recipients can be retried."
-    ),
-)
-def send_plan_notifications(
-    plan_id: int,
-    payload: PlanNotificationCreate,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    family_id = require_plan_access(client, plan_id, user)
-    selected_member_ids = list(dict.fromkeys(payload.family_member_ids))
-    try:
-        plan_rows = (
-            client.table("plans")
-            .select("status, older_adult_id, activity_id")
-            .eq("id", plan_id)
-            .limit(1)
-            .execute()
-            .data
-        )
-        if not plan_rows:
-            raise HTTPException(status_code=404, detail="Plan not found.")
-        plan = plan_rows[0]
-        if plan["status"] != "shared":
-            raise HTTPException(status_code=409, detail="Only shared plans can send notifications.")
-
-        members = (
-            client.table("family_members")
-            .select("id, name, email")
-            .eq("family_id", family_id)
-            .in_("id", selected_member_ids)
-            .execute()
-            .data
-            or []
-        )
-        members_by_id = {int(member["id"]): member for member in members}
-        missing_ids = [member_id for member_id in selected_member_ids if member_id not in members_by_id]
-        if missing_ids:
-            raise HTTPException(status_code=404, detail=f"Family members not found: {missing_ids}")
-
-        profile = (
-            client.table("older_adult_profiles")
-            .select("name, preferred_name")
-            .eq("id", plan["older_adult_id"])
-            .limit(1)
-            .execute()
-            .data[0]
-        )
-        activity = (
-            client.table("activities")
-            .select("name, location, start_at, info_link")
-            .eq("id", plan["activity_id"])
-            .limit(1)
-            .execute()
-            .data[0]
-        )
-        person_name = profile.get("preferred_name") or profile["name"]
-        subject = f"{person_name} is interested in an activity"
-        body = (
-            f"{person_name} is interested in {activity['name']} at {activity['location']} "
-            f"on {activity['start_at']}.\n\n"
-            "Would you like to join, help with transport, remind them, or offer another kind of support? "
-            "There is no obligation.\n\n"
-            f"More information: {activity['info_link']}"
-        )
-
-        deliveries: list[dict[str, Any]] = []
-        for member_id in selected_member_ids:
-            member = members_by_id[member_id]
-            existing = (
-                client.table("plan_notifications")
-                .select("id, status")
-                .eq("plan_id", plan_id)
-                .eq("family_member_id", member_id)
-                .limit(1)
-                .execute()
-                .data
-                or []
-            )
-            if existing and existing[0]["status"] == "sent":
-                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "already_sent"})
-                continue
-
-            if existing:
-                notification_id = existing[0]["id"]
-                client.table("plan_notifications").update({
-                    "status": "pending",
-                    "recipient_name": member["name"],
-                    "recipient_email": member.get("email"),
-                    "error_message": None,
-                    "attempted_at": datetime.now(timezone.utc).isoformat(),
-                }).eq("id", notification_id).execute()
-            else:
-                notification_id = (
-                    client.table("plan_notifications")
-                    .insert({
-                        "plan_id": plan_id,
-                        "family_member_id": member_id,
-                        "recipient_name": member["name"],
-                        "recipient_email": member.get("email"),
-                        "status": "pending",
-                        "attempted_at": datetime.now(timezone.utc).isoformat(),
-                    })
-                    .execute()
-                    .data[0]["id"]
-                )
-
-            if not member.get("email"):
-                error_message = "This family member has no email address."
-                client.table("plan_notifications").update({
-                    "status": "failed",
-                    "error_message": error_message,
-                }).eq("id", notification_id).execute()
-                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "failed", "error": error_message})
-                continue
-
-            try:
-                provider_id = send_plan_email(
-                    recipient_email=member["email"],
-                    subject=subject,
-                    body=body,
-                    idempotency_key=f"plan-notification/{plan_id}/{member_id}",
-                )
-            except Exception:
-                error_message = "Email delivery failed."
-                client.table("plan_notifications").update({
-                    "status": "failed",
-                    "error_message": error_message,
-                }).eq("id", notification_id).execute()
-                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "failed", "error": error_message})
-            else:
-                client.table("plan_notifications").update({
-                    "status": "sent",
-                    "provider_id": provider_id,
-                    "sent_at": datetime.now(timezone.utc).isoformat(),
-                    "error_message": None,
-                }).eq("id", notification_id).execute()
-                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "sent", "provider_id": provider_id})
-
-        return {"deliveries": deliveries}
-    except HTTPException:
-        raise
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not send plan notifications.") from error
-
-
-@router.get(
-    "/plans/{plan_id}/notifications",
-    response_model=PlanNotificationListResponse,
-    tags=["Notifications"],
-    summary="List plan notifications",
-)
-def list_plan_notifications(
-    plan_id: int,
-    user: Any = Depends(require_user),
-    client: Client = Depends(get_supabase_client),
-) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    try:
-        result = (
-            client.table("plan_notifications")
-            .select("*")
-            .eq("plan_id", plan_id)
-            .order("created_at")
-            .execute()
-        )
-        return {"notifications": result.data or []}
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not load plan notifications.") from error
 
 
 @router.get("/activities", response_model=ActivityListResponse, tags=["Activities"], summary="List active activities")

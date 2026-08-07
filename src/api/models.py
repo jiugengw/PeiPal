@@ -104,13 +104,15 @@ class PlanCreate(BaseModel):
 
 
 class PlanUpdate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [
-        {"status": "awaiting_approval"},
-        {"status": "approved"},
-        {"status": "cancelled"},
-    ]})
+    """Only cancellation is a direct status change.
 
-    status: Literal["awaiting_approval", "approved", "rejected", "shared", "cancelled"]
+    Asking the family, approving, rejecting, and completing all happen through
+    the coordination endpoints, so no single account can shortcut them.
+    """
+
+    model_config = ConfigDict(json_schema_extra={"examples": [{"status": "cancelled"}]})
+
+    status: Literal["cancelled"]
 
 
 class PlanDecisionRequest(BaseModel):
@@ -322,15 +324,14 @@ class PlanResponse(BaseModel):
     family_id: int
     older_adult_id: int
     activity_id: int
-    status: Literal["draft", "awaiting_approval", "approved", "rejected", "shared", "cancelled"]
+    status: Literal["draft", "coordinating", "ready", "completed", "rejected", "cancelled"]
     created_by: str
     approved_by: str | None = None
     approved_at: datetime | None = None
     shared_at: datetime | None = None
     cancelled_at: datetime | None = None
-    decision_by_family_member_id: int | None = None
-    decided_at: datetime | None = None
-    decision_reason: str | None = None
+    ready_at: datetime | None = None
+    completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

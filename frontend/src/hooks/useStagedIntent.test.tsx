@@ -22,13 +22,13 @@ function PlanPanel({
   onCommit: () => void;
 }) {
   const staged = useStagedIntent(
-    "select_notification_recipients",
+    "confirm_plan_status",
     (intent) => intent.planId === planId,
   );
   useStagedCommit(Boolean(staged), onCommit);
   return (
     <p>
-      Panel {planId}: {staged ? staged.contactIds.join(",") : "nothing staged"}
+      Panel {planId}: {staged ? staged.status : "nothing staged"}
     </p>
   );
 }
@@ -44,9 +44,9 @@ function Controls() {
         onClick={() =>
           stage(
             {
-              kind: "select_notification_recipients",
+              kind: "confirm_plan_status",
               planId: 9,
-              contactIds: [3, 4],
+              status: "cancelled" as const,
             },
             "/plans/9",
           )
@@ -111,7 +111,7 @@ describe("staged intents", () => {
 
     await user.click(screen.getByRole("button", { name: "stage" }));
 
-    expect(screen.getByText("Panel 9: 3,4")).toBeVisible();
+    expect(screen.getByText("Panel 9: cancelled")).toBeVisible();
     expect(screen.getByText("Panel 10: nothing staged")).toBeVisible();
   });
 

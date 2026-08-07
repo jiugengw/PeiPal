@@ -16,8 +16,8 @@ import { Route as AuthenticatedSplatRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
+import { Route as CoordinateTokenRouteImport } from './routes/coordinate.$token'
 import { Route as AuthenticatedPlansPlanIdRouteImport } from './routes/_authenticated/plans/$planId'
-import { Route as FamilyDecisionTokenRouteImport } from './routes/family.decision.$token'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -53,17 +53,17 @@ const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const CoordinateTokenRoute = CoordinateTokenRouteImport.update({
+  id: '/coordinate/$token',
+  path: '/coordinate/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPlansPlanIdRoute =
   AuthenticatedPlansPlanIdRouteImport.update({
     id: '/plans/$planId',
     path: '/plans/$planId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const FamilyDecisionTokenRoute = FamilyDecisionTokenRouteImport.update({
-  id: '/family/decision/$token',
-  path: '/family/decision/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -72,8 +72,8 @@ export interface FileRoutesByFullPath {
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/coordinate/$token': typeof CoordinateTokenRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
-  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -81,9 +81,9 @@ export interface FileRoutesByTo {
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/coordinate/$token': typeof CoordinateTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
-  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,9 +93,9 @@ export interface FileRoutesById {
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
+  '/coordinate/$token': typeof CoordinateTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
-  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,8 +106,8 @@ export interface FileRouteTypes {
     | '/discover'
     | '/family'
     | '/setup'
+    | '/coordinate/$token'
     | '/plans/$planId'
-    | '/family/decision/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -115,9 +115,9 @@ export interface FileRouteTypes {
     | '/discover'
     | '/family'
     | '/setup'
+    | '/coordinate/$token'
     | '/'
     | '/plans/$planId'
-    | '/family/decision/$token'
   id:
     | '__root__'
     | '/_authenticated'
@@ -126,15 +126,15 @@ export interface FileRouteTypes {
     | '/_authenticated/discover'
     | '/_authenticated/family'
     | '/_authenticated/setup'
+    | '/coordinate/$token'
     | '/_authenticated/'
     | '/_authenticated/plans/$planId'
-    | '/family/decision/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
-  FamilyDecisionTokenRoute: typeof FamilyDecisionTokenRoute
+  CoordinateTokenRoute: typeof CoordinateTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -188,19 +188,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSetupRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/coordinate/$token': {
+      id: '/coordinate/$token'
+      path: '/coordinate/$token'
+      fullPath: '/coordinate/$token'
+      preLoaderRoute: typeof CoordinateTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/plans/$planId': {
       id: '/_authenticated/plans/$planId'
       path: '/plans/$planId'
       fullPath: '/plans/$planId'
       preLoaderRoute: typeof AuthenticatedPlansPlanIdRouteImport
       parentRoute: typeof AuthenticatedRoute
-    }
-    '/family/decision/$token': {
-      id: '/family/decision/$token'
-      path: '/family/decision/$token'
-      fullPath: '/family/decision/$token'
-      preLoaderRoute: typeof FamilyDecisionTokenRouteImport
-      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -230,7 +230,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
-  FamilyDecisionTokenRoute: FamilyDecisionTokenRoute,
+  CoordinateTokenRoute: CoordinateTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

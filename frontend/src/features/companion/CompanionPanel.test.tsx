@@ -327,43 +327,7 @@ describe("companion tools", () => {
     expect(result.display).toMatch(/discovery page lists 1 activity near Bishan/i);
   });
 
-  it("stages email recipients without sending anything", async () => {
-    const user = userEvent.setup();
-    await openCompanion(user);
-    vi.spyOn(fetchClient, "GET").mockResolvedValue({
-      data: { id: 12, family_id: 1, older_adult_id: 2, activity_id: 27, status: "shared" },
-      response: new Response(null, { status: 200 }),
-    } as never);
-    const post = vi.spyOn(fetchClient, "POST");
 
-    const result = await toolsByName()
-      .get("stage_notification_recipients")!
-      .execute({ planId: 12, contactIds: [3] });
-
-    expect(post).not.toHaveBeenCalled();
-    expect(intentApi.stage).toHaveBeenCalledWith(
-      { kind: "select_notification_recipients", planId: 12, contactIds: [3] },
-      "/plans/12",
-    );
-    expect(result.display).toMatch(/anna is ticked/i);
-    expect(result.display).toMatch(/no email has been sent/i);
-  });
-
-  it("refuses to email a contact with no email address", async () => {
-    const user = userEvent.setup();
-    await openCompanion(user);
-    vi.spyOn(fetchClient, "GET").mockResolvedValue({
-      data: { id: 12, family_id: 1, older_adult_id: 2, activity_id: 27, status: "shared" },
-      response: new Response(null, { status: 200 }),
-    } as never);
-
-    await expect(
-      toolsByName()
-        .get("stage_notification_recipients")!
-        .execute({ planId: 12, contactIds: [4] }),
-    ).rejects.toThrow(/unavailable or have no email address/i);
-    expect(intentApi.stage).not.toHaveBeenCalled();
-  });
 
   it("presses the button the person can see when confirming", async () => {
     const user = userEvent.setup();
@@ -401,9 +365,9 @@ describe("companion tools", () => {
     intentApi.intent = {
       id: "b",
       path: "/plans/12",
-      kind: "select_notification_recipients",
+      kind: "confirm_plan_status",
       planId: 12,
-      contactIds: [3],
+      status: "cancelled",
     };
     await expect(confirm.needsApproval!()).resolves.toBe(true);
   });
@@ -424,9 +388,7 @@ describe("companion tools", () => {
         "list_plans",
         "review_plan",
         "stage_plan_status",
-        "stage_notification_recipients",
-        "stage_support_offer",
-        "confirm_staged_action",
+                        "confirm_staged_action",
         "cancel_staged_action",
       ]),
     );
@@ -461,9 +423,9 @@ it("waits for the person before confirming an email", async () => {
   intentApi.intent = {
     id: "b",
     path: "/plans/12",
-    kind: "select_notification_recipients",
+    kind: "confirm_plan_status",
     planId: 12,
-    contactIds: [3],
+      status: "cancelled",
   };
 
   await user.click(await screen.findByRole("button", { name: /approve action/i }));

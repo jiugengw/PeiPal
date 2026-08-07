@@ -1,17 +1,17 @@
 import { z } from "zod";
-import { supportTypeLabels } from "@/features/family/supportTypes";
 import { planQueryOptions } from "@/features/plans/api/planQueries";
 import { planPath, PLAN_PATH, type CompanionToolContext } from "./toolContext";
 
 /** Which statuses a plan can legally move to, mirroring the API's state machine. */
-// Approving and rejecting are not here on purpose: only a family member acting
-// on their emailed decision link can decide, so the companion cannot stage it.
+// Cancelling is the only status the companion can stage. Approving, rejecting,
+// and helping belong to the family members holding their emailed links, and
+// asking the family is its own deliberate action on the plan page.
 const allowedNextStatuses = {
-  draft: ["awaiting_approval", "cancelled"],
-  awaiting_approval: ["cancelled"],
-  approved: ["shared", "cancelled"],
+  draft: ["cancelled"],
+  coordinating: ["cancelled"],
+  ready: ["cancelled"],
+  completed: [],
   rejected: [],
-  shared: ["cancelled"],
   cancelled: [],
 } as const;
 
@@ -54,7 +54,7 @@ export function createStagingTools({
         "Open the confirmation for changing a plan's status. Changes nothing on its own.",
       parameters: z.object({
         planId: z.number().int().positive(),
-        status: z.enum(["awaiting_approval", "shared", "cancelled"]),
+        status: z.enum(["cancelled"]),
       }),
       execute: async ({ planId, status }) => {
         const plan = await queryClient.fetchQuery(planQueryOptions(planId));
@@ -63,81 +63,14 @@ export function createStagingTools({
           throw new Error(
             `A plan that is "${plan.status}" cannot become "${status}".`,
           );
-        // Approving and sharing belongs to the family view; the plan owner's
-        // own actions live on the plan page.
-        const path = status === "shared" ? "/family" : planPath(planId);
-        if (status === "shared") await navigate({ to: "/family" });
-        else
-          await navigate({ to: PLAN_PATH, params: { planId: String(planId) } });
+        const path = planPath(planId);
+        await navigate({ to: PLAN_PATH, params: { planId: String(planId) } });
         intentRef.current.stage(
           { kind: "confirm_plan_status", planId, status },
           path,
         );
         return {
           display: `A confirmation for this change is on screen at ${path}. Nothing changes until it is confirmed.`,
-        };
-      },
-    }),
-    toolFactory({
-      name: "stage_notification_recipients",
-      description:
-        "Tick the chosen family members on the plan page and open the email review block. Sends nothing.",
-      parameters: z.object({
-        planId: z.number().int().positive(),
-        contactIds: z.array(z.number().int().positive()).min(1).max(20),
-      }),
-      execute: async ({ planId, contactIds }) => {
-        const plan = await queryClient.fetchQuery(planQueryOptions(planId));
-        if (plan.status !== "shared")
-          throw new Error("Only a shared plan can be emailed.");
-        const emailable = new Map(
-          setupRef.current.familyMembers
-            .filter((member) => member.email)
-            .map((member) => [member.id, member.name]),
-        );
-        const unknown = contactIds.filter((id) => !emailable.has(id));
-        if (unknown.length > 0)
-          throw new Error(
-            "One or more of those family members are unavailable or have no email address.",
-          );
-        await navigate({ to: PLAN_PATH, params: { planId: String(planId) } });
-        intentRef.current.stage(
-          { kind: "select_notification_recipients", planId, contactIds },
-          planPath(planId),
-        );
-        const names = contactIds.map((id) => emailable.get(id));
-        return {
-          display: `${names.join(", ")} ${names.length === 1 ? "is" : "are"} ticked on the plan page, with a "Send plan emails" button showing. No email has been sent.`,
-        };
-      },
-    }),
-    toolFactory({
-      name: "stage_support_offer",
-      description:
-        "Fill in a support offer in the demo family view and open its review block. Saves nothing.",
-      parameters: z.object({
-        planId: z.number().int().positive(),
-        supportType: z.enum([
-          "join",
-          "remind",
-          "transport",
-          "alternative",
-          "booking",
-          "encourage",
-        ]),
-        note: z.string().trim().max(2000).nullable().optional(),
-      }),
-      execute: async ({ planId, supportType, note }) => {
-        const plan = await queryClient.fetchQuery(planQueryOptions(planId));
-        if (plan.status !== "shared")
-          throw new Error("Support can only be offered for a shared plan.");
-        await navigate({ to: "/family" });
-        intentRef.current.stage(
-          { kind: "offer_support", planId, supportType, note: note ?? "" },
-          "/family",
-        );
-        return {
-          display: `"${supportTypeLabels[supportType]}" is selected in the family view with an "Offer this help" button showing. Nothing is saved yet.`,
         };
       },
     }),

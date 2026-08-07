@@ -52,10 +52,10 @@ export function CoordinationProgress({
   if (!hasAsked) {
     return (
       <section className="mt-10 rounded-2xl bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
-        <h2 className="text-2xl font-bold text-foreground">Ask your family</h2>
+        <h2 className="text-2xl font-bold text-foreground">Your family has not been asked yet</h2>
         <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">
-          Everyone in your family gets the same message. The first person to
-          answer decides, so nobody is put on the spot.
+          We could not email anyone when this plan was made. Try again, and
+          everyone in your family will be asked at once.
         </p>
         <button
           className={`${primaryButtonClass} mt-5 w-full sm:w-auto`}
@@ -63,7 +63,7 @@ export function CoordinationProgress({
           onClick={() => ask.mutate()}
           type="button"
         >
-          {ask.isPending ? "Asking…" : "Ask my family"}
+          {ask.isPending ? "Asking…" : "Ask my family now"}
         </button>
         {ask.data ? (
           <p

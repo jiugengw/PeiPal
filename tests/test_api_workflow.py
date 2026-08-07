@@ -46,10 +46,13 @@ def test_plan_create_requires_the_three_relationship_ids():
         PlanCreate(family_id=1, older_adult_id=1)
 
 
-def test_older_adult_sharing_mode_defaults_to_family_approval():
+def test_an_older_adult_needs_only_a_family_and_a_name():
+    """Sharing modes are gone: every plan goes to the whole family."""
+
     profile = OlderAdultCreate(family_id=1, name="Mary Lim")
 
-    assert profile.sharing_mode == "family_approval"
+    assert profile.family_id == 1
+    assert not hasattr(profile, "sharing_mode")
 
 
 def test_cancelling_is_the_only_direct_status_change():

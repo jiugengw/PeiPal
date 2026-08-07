@@ -806,23 +806,35 @@ def create_plan(
         )
         if not activity:
             raise HTTPException(status_code=404, detail="Active activity not found.")
-        profile = (
-            client.table("older_adult_profiles")
-            .select("sharing_mode")
-            .eq("id", payload.older_adult_id)
-            .limit(1)
-            .execute()
-            .data
-        )
-        sharing_mode = profile[0]["sharing_mode"] if profile else "family_approval"
         values = payload.model_dump()
         values["created_by"] = user_id(user)
-        if sharing_mode == "direct":
-            values.update({
-                "status": "shared",
-                "shared_at": datetime.now(timezone.utc).isoformat(),
-            })
-        return client.table("plans").insert(values).execute().data[0]
+        plan = client.table("plans").insert(values).execute().data[0]
+
+        # Choosing an activity is the ask. The family is emailed straight away,
+        # so the older adult confirms once rather than twice. If nothing could
+        # be sent the plan stays a draft, and the plan page offers a retry.
+        try:
+            context = _plan_context(client, plan["id"])
+            ensure_coordination(client, plan["id"])
+            deliveries = send_coordination_emails(
+                client,
+                plan_id=plan["id"],
+                family_id=plan["family_id"],
+                person_name=context["person_name"],
+                activity=context["activity"],
+                expires_at=expires_in(7 * 24 * 60),
+            )
+        except Exception:
+            deliveries = []
+        if any(item["status"] != "failed" for item in deliveries):
+            plan = (
+                client.table("plans")
+                .update({"status": "coordinating"})
+                .eq("id", plan["id"])
+                .execute()
+                .data[0]
+            )
+        return plan
     except HTTPException:
         raise
     except Exception as error:

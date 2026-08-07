@@ -16,8 +16,8 @@ An organizer creates an account with an email and password
 → adds the older adults, each with their own email
 → adds family members and how they are related
 → each older adult gets a sign-in link, and never needs a password
-→ the older adult finds an activity and asks their family
-→ every family member is emailed their own link
+→ the older adult finds an activity and confirms it
+→ every family member is emailed their own link straight away
 → the first person to approve or reject decides for everyone
 → anyone can offer to sign them up or get them there
 → the plan is ready once all three are settled, and done afterwards
@@ -105,7 +105,8 @@ Older adults may want to join in without feeling that they are burdening a parti
    as *Son of Mary*.
 4. She presses **Send sign-in link**, and Mary taps it once on her tablet. Mary
    is now signed in, with no password to remember.
-5. Mary finds a quiet nearby activity and presses **Ask my family**.
+5. Mary finds a quiet nearby activity and confirms it. That one action asks
+   her whole family.
 6. Anna and David each receive their own link.
 7. David opens his and approves. Anna's link now shows the plan as approved, and
    offers her the chance to help instead.

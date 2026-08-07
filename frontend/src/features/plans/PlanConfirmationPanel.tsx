@@ -59,15 +59,13 @@ export function PlanConfirmationPanel({
   );
   const olderAdultName = olderAdult.preferred_name || olderAdult.name;
   const sharingDescription =
-    olderAdult.sharing_mode === "direct"
-      ? "The plan will be shared after this confirmation. No separate family approval is required."
-      : "This creates a private draft. You can then ask the family to review it before anything is shared.";
+    "Everyone in your family will be emailed and asked. The first person to answer decides, so nobody is put on the spot.";
 
   return (
     <div className="rounded-2xl bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
       <h2 className="text-2xl font-bold text-foreground">Review this plan</h2>
       <p className="mt-2 text-base leading-relaxed text-foreground">
-        Check the details before creating it. No email is sent at this stage.
+        Check the details. When you confirm, your family will be asked.
       </p>
 
       <dl className="mt-6 divide-y divide-border border-y border-border text-base text-foreground">

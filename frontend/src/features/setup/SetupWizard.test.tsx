@@ -24,7 +24,6 @@ const OLDER_ADULT = {
   family_id: 1,
   name: "Mary Lim",
   preferred_name: "Mary",
-  sharing_mode: "family_approval",
 };
 
 function familyMember(overrides: Record<string, unknown> = {}) {
@@ -184,7 +183,6 @@ describe("SetupWizard", () => {
           id: 2,
           family_id: 1,
           name: "Mary Lim",
-          sharing_mode: "family_approval",
         },
       }) as never,
     );
@@ -193,7 +191,6 @@ describe("SetupWizard", () => {
         id: 2,
         family_id: 1,
         name: "Mary Lim",
-        sharing_mode: "direct",
         created_by: "user-1",
         created_at: "2030-01-01T00:00:00Z",
       },
@@ -201,7 +198,6 @@ describe("SetupWizard", () => {
     });
     renderWizard();
 
-    await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));
     const familyName = screen.getByLabelText(/family name/i);
@@ -220,12 +216,8 @@ describe("SetupWizard", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /continue to sharing/i }),
+      screen.getByRole("button", { name: /save and continue/i }),
     );
-    await user.click(
-      screen.getByLabelText(/share after personal confirmation/i),
-    );
-    await user.click(screen.getByRole("button", { name: /save profile/i }));
 
     expect(patchRequest).toHaveBeenCalledWith(
       "/api/older-adults/{older_adult_id}",
@@ -233,13 +225,12 @@ describe("SetupWizard", () => {
         params: { path: { older_adult_id: 2 } },
         body: expect.objectContaining({
           name: "Mary Lim",
-          sharing_mode: "direct",
         }),
       }),
     );
   });
 
-  it("resumes at profile details and submits the selected sharing mode", async () => {
+  it("resumes at profile details and saves the profile", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({ family: { id: 1, name: "Lim Family" } }) as never,
@@ -249,7 +240,6 @@ describe("SetupWizard", () => {
         id: 2,
         family_id: 1,
         name: "Mary Lim",
-        sharing_mode: "direct",
         created_by: "user-1",
         created_at: "2030-01-01T00:00:00Z",
       },
@@ -259,12 +249,8 @@ describe("SetupWizard", () => {
 
     await user.type(screen.getByLabelText(/full name/i), "Mary Lim");
     await user.click(
-      screen.getByRole("button", { name: /continue to sharing/i }),
+      screen.getByRole("button", { name: /save and continue/i }),
     );
-    await user.click(
-      screen.getByLabelText(/share after personal confirmation/i),
-    );
-    await user.click(screen.getByRole("button", { name: /save profile/i }));
 
     expect(fetchClient.POST).toHaveBeenCalledWith(
       "/api/older-adults",
@@ -272,38 +258,34 @@ describe("SetupWizard", () => {
         body: expect.objectContaining({
           family_id: 1,
           name: "Mary Lim",
-          sharing_mode: "direct",
         }),
       }),
     );
   });
 
-  it("preserves profile fields and sharing choice while navigating back", async () => {
+  it("preserves profile fields while navigating back", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({ family: { id: 1, name: "Lim Family" } }) as never,
     );
+    vi.spyOn(fetchClient, "PATCH").mockResolvedValue({
+      data: { id: 1, name: "Lim Family", created_by: "user-1", created_at: "2030-01-01T00:00:00Z" },
+      response: new Response(null, { status: 200 }),
+    } as never);
     renderWizard();
 
     await user.type(screen.getByLabelText(/full name/i), "Mary Lim");
     await user.type(screen.getByLabelText(/preferred language/i), "English");
-    await user.click(
-      screen.getByRole("button", { name: /continue to sharing/i }),
-    );
-    await user.click(
-      screen.getByLabelText(/share after personal confirmation/i),
-    );
     await user.click(screen.getByRole("button", { name: /back/i }));
 
-    expect(screen.getByLabelText(/full name/i)).toHaveValue("Mary Lim");
-    expect(screen.getByLabelText(/preferred language/i)).toHaveValue("English");
+    expect(screen.getByLabelText(/family name/i)).toBeVisible();
 
     await user.click(
-      screen.getByRole("button", { name: /continue to sharing/i }),
+      screen.getByRole("button", { name: /save and continue/i }),
     );
-    expect(
-      screen.getByLabelText(/share after personal confirmation/i),
-    ).toBeChecked();
+
+    expect(await screen.findByLabelText(/full name/i)).toHaveValue("Mary Lim");
+    expect(screen.getByLabelText(/preferred language/i)).toHaveValue("English");
   });
 
   it("requires at least one relationship before saving a family member", async () => {

@@ -52,7 +52,6 @@ const sdk = vi.hoisted(() => {
         id: 2,
         name: "Mary Lim",
         preferred_name: "Mary",
-        sharing_mode: "family_approval",
       },
       familyMembers: [
         {

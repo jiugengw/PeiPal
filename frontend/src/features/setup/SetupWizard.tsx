@@ -65,7 +65,7 @@ function SetupWizardForm({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(
-    progress.olderAdult ? 3 : progress.family ? 1 : 0,
+    progress.olderAdult ? 2 : progress.family ? 1 : 0,
   );
   const [familyName, setFamilyName] = useState(progress.family?.name ?? "");
   const [ownerEmail, setOwnerEmail] = useState(progress.family?.owner_email ?? "");
@@ -78,7 +78,6 @@ function SetupWizardForm({
     email: progress.olderAdult?.email ?? "",
     mobility_notes: progress.olderAdult?.mobility_notes ?? "",
     transport_notes: progress.olderAdult?.transport_notes ?? "",
-    sharing_mode: progress.olderAdult?.sharing_mode ?? "family_approval",
   });
   const [saveError, setSaveError] = useState("");
 
@@ -115,7 +114,6 @@ function SetupWizardForm({
           email: draft.email,
           mobility_notes: draft.mobility_notes,
           transport_notes: draft.transport_notes,
-          sharing_mode: draft.sharing_mode,
         };
         const { data, error } = await fetchClient.PATCH(
           "/api/older-adults/{older_adult_id}",
@@ -169,13 +167,7 @@ function SetupWizardForm({
     }
   }
 
-  function submitProfileDetails(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaveError("");
-    setCurrentStep(2);
-  }
-
-  async function submitSharing(event: FormEvent<HTMLFormElement>) {
+  async function submitProfileDetails(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveError("");
     try {
@@ -193,7 +185,7 @@ function SetupWizardForm({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
         });
       }
-      setCurrentStep(3);
+      setCurrentStep(2);
     } catch (error) {
       setSaveError(errorMessage(error));
     }
@@ -209,7 +201,7 @@ function SetupWizardForm({
       <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-14">
         <aside className="lg:pt-2">
           <p className="mb-5 max-w-[24ch] text-lg leading-relaxed text-foreground">
-            Four calm steps. You can come back and continue at any time.
+            Three calm steps. You can come back and continue at any time.
           </p>
           <SetupProgress currentStep={currentStep} />
         </aside>
@@ -372,45 +364,15 @@ function SetupWizardForm({
               </div>
               <FormActions
                 back={() => setCurrentStep(0)}
-                primaryLabel="Continue to sharing"
-              />
-            </form>
-          ) : null}
-
-          {currentStep === 2 ? (
-            <form onSubmit={submitSharing}>
-              <StepHeading
-                title="Who confirms before a plan is shared?"
-                description="This choice can be changed later. Nothing is sent while you are setting up."
-              />
-              <div className="space-y-3">
-                <SharingChoice
-                  checked={profile.sharing_mode === "family_approval"}
-                  title="Family reviews first"
-                  description="A family member reviews the plan before it is shared. Recommended for a supported start."
-                  onChange={() =>
-                    setProfile({ ...profile, sharing_mode: "family_approval" })
-                  }
-                />
-                <SharingChoice
-                  checked={profile.sharing_mode === "direct"}
-                  title="Share after personal confirmation"
-                  description="Plans are shared immediately after the older adult confirms them."
-                  onChange={() =>
-                    setProfile({ ...profile, sharing_mode: "direct" })
-                  }
-                />
-              </div>
-              <FormActions
-                back={() => setCurrentStep(1)}
                 error={saveError}
                 isSaving={isSaving}
-                primaryLabel="Save profile"
+                primaryLabel="Save and continue"
               />
             </form>
           ) : null}
 
-          {currentStep === 3 && progress.family ? (
+
+          {currentStep === 2 && progress.family ? (
             <>
               <OlderAdultAccessPanel olderAdults={progress.olderAdults} />
               <FamilyMembersStep
@@ -418,7 +380,7 @@ function SetupWizardForm({
               familyId={progress.family.id}
               olderAdults={progress.olderAdults}
               queryClient={queryClient}
-              onBack={() => setCurrentStep(2)}
+              onBack={() => setCurrentStep(1)}
               onFinish={() => void navigate({ to: "/discover" })}
               />
             </>
@@ -505,38 +467,6 @@ function FormActions({
         </p>
       ) : null}
     </div>
-  );
-}
-
-function SharingChoice({
-  checked,
-  title,
-  description,
-  onChange,
-}: {
-  checked: boolean;
-  title: string;
-  description: string;
-  onChange: () => void;
-}) {
-  return (
-    <label
-      className={`flex min-h-24 cursor-pointer gap-4 rounded-2xl border p-5 ${checked ? "border-primary bg-accent" : "border-input bg-background"}`}
-    >
-      <input
-        className="mt-1 size-5 flex-none accent-primary"
-        type="radio"
-        name="sharing-mode"
-        checked={checked}
-        onChange={onChange}
-      />
-      <span>
-        <strong className="block text-lg text-foreground">{title}</strong>
-        <span className="mt-1 block text-base leading-relaxed text-foreground">
-          {description}
-        </span>
-      </span>
-    </label>
   );
 }
 

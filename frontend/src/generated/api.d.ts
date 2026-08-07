@@ -707,7 +707,6 @@ export interface components {
          *       "mobility_notes": "Prefers seated activities",
          *       "name": "Mary Lim",
          *       "preferred_name": "Mary",
-         *       "sharing_mode": "family_approval",
          *       "transport_notes": "Family can help arrange transport"
          *     }
          */
@@ -731,12 +730,6 @@ export interface components {
             mobility_notes?: string | null;
             /** Transport Notes */
             transport_notes?: string | null;
-            /**
-             * Sharing Mode
-             * @default family_approval
-             * @enum {string}
-             */
-            sharing_mode: "direct" | "family_approval";
         };
         /** OlderAdultListResponse */
         OlderAdultListResponse: {
@@ -753,7 +746,6 @@ export interface components {
          *       "mobility_notes": "Prefers seated activities",
          *       "name": "Mary Lim",
          *       "preferred_name": "Mary",
-         *       "sharing_mode": "family_approval",
          *       "transport_notes": "Family can help arrange transport"
          *     }
          */
@@ -777,12 +769,6 @@ export interface components {
             mobility_notes?: string | null;
             /** Transport Notes */
             transport_notes?: string | null;
-            /**
-             * Sharing Mode
-             * @default family_approval
-             * @enum {string}
-             */
-            sharing_mode: "direct" | "family_approval";
             /** Id */
             id: number;
             /** Created By */
@@ -809,8 +795,6 @@ export interface components {
             mobility_notes?: string | null;
             /** Transport Notes */
             transport_notes?: string | null;
-            /** Sharing Mode */
-            sharing_mode?: ("direct" | "family_approval") | null;
         };
         /**
          * PlanCreate

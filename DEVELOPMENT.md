@@ -168,8 +168,9 @@ Organizer signs up with email and password
 → adds older adults, each with their own email
 → adds family members with a relationship per older adult
 → sends each older adult a sign-in link
-→ the older adult picks an activity and creates a plan
-→ POST /api/plans/{id}/coordination asks the whole family
+→ the older adult picks an activity and confirms it
+→ creating the plan emails the whole family at once
+→ POST /api/plans/{id}/coordination retries anyone who could not be reached
 → the first approve or reject decides for everyone
 → anyone claims signing up or transport
 → the plan turns ready, then is marked done
@@ -200,7 +201,7 @@ the same REST endpoints above.
 Plan states:
 
 ```text
-draft         nothing has been sent
+draft         nobody could be emailed; the plan page offers a retry
 coordinating  the whole family has been emailed
 ready         approved, and signing up and transport both resolved
 completed     the activity happened

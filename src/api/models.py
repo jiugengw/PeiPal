@@ -29,7 +29,6 @@ class OlderAdultCreate(BaseModel):
         "email": "mary@example.com",
         "mobility_notes": "Prefers seated activities",
         "transport_notes": "Family can help arrange transport",
-        "sharing_mode": "family_approval",
     }]})
 
     family_id: int
@@ -43,7 +42,6 @@ class OlderAdultCreate(BaseModel):
     )
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
-    sharing_mode: Literal["direct", "family_approval"] = "family_approval"
 
 
 class OlderAdultUpdate(BaseModel):
@@ -54,7 +52,6 @@ class OlderAdultUpdate(BaseModel):
     email: EmailStr | None = None
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
-    sharing_mode: Literal["direct", "family_approval"] | None = None
 
 
 class FamilyMemberRelationship(BaseModel):

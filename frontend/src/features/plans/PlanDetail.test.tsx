@@ -78,7 +78,6 @@ describe("PlanDetail", () => {
         family_id: 1,
         name: "Mary Lim",
         preferred_name: "Mary",
-        sharing_mode: "family_approval",
       },
     } as never);
   });

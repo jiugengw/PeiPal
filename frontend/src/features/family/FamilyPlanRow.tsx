@@ -30,6 +30,7 @@ export function FamilyPlanRow({
 }) {
   const queryClient = useQueryClient();
   const [pendingAction, setPendingAction] = useState<"shared" | "cancelled">();
+  const [note, setNote] = useState("");
   const [notice, setNotice] = useState("");
   const activityQuery = useQuery(activityDetailQueryOptions(plan.activity_id));
   const notificationsQuery = useQuery({
@@ -37,13 +38,19 @@ export function FamilyPlanRow({
     enabled: plan.status === "shared",
   });
   const updateMutation = useMutation({
-    mutationFn: (status: Exclude<PlanStatus, "draft" | "awaiting_approval">) =>
-      updatePlanStatus(plan.id, status),
+    mutationFn: ({
+      status,
+      note: statusNote,
+    }: {
+      status: Exclude<PlanStatus, "draft" | "awaiting_approval">;
+      note?: string;
+    }) => updatePlanStatus(plan.id, status, statusNote),
     onSuccess: (updated) => {
       queryClient.setQueryData(planQueryKey(plan.id), updated);
       void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.household_id) });
       setNotice(updated.status === "shared" ? "The plan is approved and shared." : "The plan was cancelled.");
       setPendingAction(undefined);
+      setNote("");
     },
     onError: () => void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.household_id) }),
   });
@@ -62,6 +69,7 @@ export function FamilyPlanRow({
             </>
           )}
           {plan.status === "shared" ? <p className="mt-3 text-base font-bold text-foreground">{notificationsQuery.isPending ? "Checking email history…" : sentCount > 0 ? `${sentCount} trusted ${sentCount === 1 ? "contact has" : "contacts have"} been emailed.` : "No trusted contacts have been emailed yet."}</p> : null}
+          {plan.note ? <p className="mt-3 text-base leading-relaxed text-foreground"><strong>Note:</strong> {plan.note}</p> : null}
         </div>
         <div className="flex flex-col gap-2">
           <Link className={`${secondaryButtonClass} w-full no-underline`} to="/plans/$planId" params={{ planId: String(plan.id) }}>Open plan</Link>
@@ -74,9 +82,11 @@ export function FamilyPlanRow({
         <div className="mt-5 rounded-2xl bg-muted p-5">
           <h4 className="text-lg font-bold text-foreground">{pendingAction === "shared" ? "Approve and share this plan?" : "Cancel this plan?"}</h4>
           <p className="mt-1 text-base leading-relaxed text-foreground">{pendingAction === "shared" ? "The plan will become shared. Email recipients are still chosen separately." : "The plan will remain visible as cancelled and cannot be shared later."}</p>
+          <label className="mt-4 block font-bold text-foreground" htmlFor={`plan-note-${plan.id}`}>Optional note</label>
+          <textarea className="mt-2 min-h-24 w-full rounded-xl border border-input bg-background px-4 py-3 text-base text-foreground" id={`plan-note-${plan.id}`} maxLength={2000} onChange={(event) => setNote(event.target.value)} placeholder="Add a short note for the family, if useful." value={note} />
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <button className={primaryButtonClass} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate(pendingAction)} type="button">{updateMutation.isPending ? "Updating…" : pendingAction === "shared" ? "Confirm approval" : "Confirm cancellation"}</button>
-            <button className={secondaryButtonClass} disabled={updateMutation.isPending} onClick={() => setPendingAction(undefined)} type="button">Go back</button>
+            <button className={primaryButtonClass} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ status: pendingAction, note })} type="button">{updateMutation.isPending ? "Updating…" : pendingAction === "shared" ? "Confirm approval" : "Confirm cancellation"}</button>
+            <button className={secondaryButtonClass} disabled={updateMutation.isPending} onClick={() => { setPendingAction(undefined); setNote(""); }} type="button">Go back</button>
           </div>
         </div>
       ) : null}

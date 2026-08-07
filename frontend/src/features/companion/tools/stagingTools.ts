@@ -1,0 +1,141 @@
+import { z } from "zod";
+import { supportTypeLabels } from "@/features/family/supportTypes";
+import { planQueryOptions } from "@/features/plans/api/planQueries";
+import { planPath, PLAN_PATH, type CompanionToolContext } from "./toolContext";
+
+/** Which statuses a plan can legally move to, mirroring the API's state machine. */
+const allowedNextStatuses = {
+  draft: ["awaiting_approval", "cancelled"],
+  awaiting_approval: ["shared", "cancelled"],
+  shared: ["cancelled"],
+  cancelled: [],
+} as const;
+
+/**
+ * Staging tools never mutate. They put the person on the right page with the
+ * page's own review block filled in, exactly as clicking would have done.
+ */
+export function createStagingTools({
+  toolFactory,
+  queryClient,
+  navigate,
+  workflowRef,
+  setupRef,
+  intentRef,
+}: CompanionToolContext) {
+  return [
+    toolFactory({
+      name: "review_plan",
+      description:
+        "Show the review panel for making a plan from the selected activity. Creates nothing.",
+      parameters: z.object({}),
+      execute: async () => {
+        const { household, olderAdult } = setupRef.current;
+        const activity = workflowRef.current.selectedActivity;
+        if (!household || !olderAdult)
+          throw new Error("Finish setup before making a plan.");
+        if (!activity)
+          throw new Error("Select a visible activity before making a plan.");
+        await navigate({ to: "/discover" });
+        workflowRef.current.setIsReviewingPlan(true);
+        intentRef.current.stage({ kind: "review_plan" }, "/discover");
+        return {
+          display: `The review panel for ${activity.title} is on screen with a "Confirm and create plan" button. Nothing is created until it is pressed.`,
+        };
+      },
+    }),
+    toolFactory({
+      name: "stage_plan_status",
+      description:
+        "Open the confirmation for changing a plan's status. Changes nothing on its own.",
+      parameters: z.object({
+        planId: z.number().int().positive(),
+        status: z.enum(["awaiting_approval", "shared", "cancelled"]),
+      }),
+      execute: async ({ planId, status }) => {
+        const plan = await queryClient.fetchQuery(planQueryOptions(planId));
+        const allowed: readonly string[] = allowedNextStatuses[plan.status];
+        if (!allowed.includes(status))
+          throw new Error(
+            `A plan that is "${plan.status}" cannot become "${status}".`,
+          );
+        // Approving and sharing belongs to the family view; the plan owner's
+        // own actions live on the plan page.
+        const path = status === "shared" ? "/family" : planPath(planId);
+        if (status === "shared") await navigate({ to: "/family" });
+        else
+          await navigate({ to: PLAN_PATH, params: { planId: String(planId) } });
+        intentRef.current.stage(
+          { kind: "confirm_plan_status", planId, status },
+          path,
+        );
+        return {
+          display: `A confirmation for this change is on screen at ${path}. Nothing changes until it is confirmed.`,
+        };
+      },
+    }),
+    toolFactory({
+      name: "stage_notification_recipients",
+      description:
+        "Tick the chosen trusted contacts on the plan page and open the email review block. Sends nothing.",
+      parameters: z.object({
+        planId: z.number().int().positive(),
+        contactIds: z.array(z.number().int().positive()).min(1).max(20),
+      }),
+      execute: async ({ planId, contactIds }) => {
+        const plan = await queryClient.fetchQuery(planQueryOptions(planId));
+        if (plan.status !== "shared")
+          throw new Error("Only a shared plan can be emailed.");
+        const emailable = new Map(
+          setupRef.current.contacts
+            .filter((contact) => contact.email)
+            .map((contact) => [contact.id, contact.name]),
+        );
+        const unknown = contactIds.filter((id) => !emailable.has(id));
+        if (unknown.length > 0)
+          throw new Error(
+            "One or more of those contacts are unavailable or have no email address.",
+          );
+        await navigate({ to: PLAN_PATH, params: { planId: String(planId) } });
+        intentRef.current.stage(
+          { kind: "select_notification_recipients", planId, contactIds },
+          planPath(planId),
+        );
+        const names = contactIds.map((id) => emailable.get(id));
+        return {
+          display: `${names.join(", ")} ${names.length === 1 ? "is" : "are"} ticked on the plan page, with a "Send plan emails" button showing. No email has been sent.`,
+        };
+      },
+    }),
+    toolFactory({
+      name: "stage_support_offer",
+      description:
+        "Fill in a support offer in the demo family view and open its review block. Saves nothing.",
+      parameters: z.object({
+        planId: z.number().int().positive(),
+        supportType: z.enum([
+          "join",
+          "remind",
+          "transport",
+          "alternative",
+          "booking",
+          "encourage",
+        ]),
+        note: z.string().trim().max(2000).nullable().optional(),
+      }),
+      execute: async ({ planId, supportType, note }) => {
+        const plan = await queryClient.fetchQuery(planQueryOptions(planId));
+        if (plan.status !== "shared")
+          throw new Error("Support can only be offered for a shared plan.");
+        await navigate({ to: "/family" });
+        intentRef.current.stage(
+          { kind: "offer_support", planId, supportType, note: note ?? "" },
+          "/family",
+        );
+        return {
+          display: `"${supportTypeLabels[supportType]}" is selected in the family view with an "Offer this help" button showing. Nothing is saved yet.`,
+        };
+      },
+    }),
+  ];
+}

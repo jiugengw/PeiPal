@@ -12,6 +12,7 @@ import {
   PlanRequestError,
   planQueryKey,
 } from "@/features/plans/api/planQueries";
+import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 
 interface PlanConfirmationPanelProps {
   activity: Activity;
@@ -49,6 +50,13 @@ export function PlanConfirmationPanel({
   const error = createMutation.error;
   const unavailable =
     error instanceof PlanRequestError && error.status === 404;
+
+  // The review block is already on screen whenever this panel renders, so the
+  // companion only needs the button's handler.
+  const staged = useStagedIntent("review_plan");
+  useStagedCommit(Boolean(staged) && !unavailable, () =>
+    createMutation.mutate(),
+  );
   const olderAdultName = olderAdult.preferred_name || olderAdult.name;
   const sharingDescription =
     olderAdult.sharing_mode === "direct"

@@ -412,7 +412,7 @@ describe("SetupWizard", () => {
     ).toBeVisible();
   });
 
-  it("allows a completed setup to continue to discovery", async () => {
+  it("hands over to the older adult instead of sending the organizer onward", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
@@ -426,7 +426,13 @@ describe("SetupWizard", () => {
     renderWizard();
 
     await user.click(screen.getByRole("button", { name: /finish setup/i }));
-    expect(navigate).toHaveBeenCalledWith({ to: "/discover" });
+
+    expect(
+      await screen.findByRole("heading", { name: /your family is ready/i }),
+    ).toBeVisible();
+    expect(screen.getByText(/Mary can sign in from the link you sent/i)).toBeVisible();
+    // The organizer has no other page, so nothing navigates away.
+    expect(navigate).not.toHaveBeenCalled();
   });
 
 

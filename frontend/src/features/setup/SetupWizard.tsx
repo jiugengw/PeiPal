@@ -1,6 +1,5 @@
 import type { components } from "@/generated/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { SetupProgress } from "@/features/setup/SetupProgress";
 import {
@@ -63,7 +62,6 @@ function SetupWizardForm({
   progress: ReturnType<typeof useSetupProgress>;
 }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(
     progress.olderAdult ? 2 : progress.family ? 1 : 0,
   );
@@ -199,7 +197,7 @@ function SetupWizardForm({
           <p className="mb-5 max-w-[24ch] text-lg leading-relaxed text-foreground">
             Three calm steps. You can come back and continue at any time.
           </p>
-          <SetupProgress currentStep={currentStep} />
+          <SetupProgress currentStep={Math.min(currentStep, 2)} />
         </aside>
 
         <div className="max-w-[760px]">
@@ -347,6 +345,13 @@ function SetupWizardForm({
           ) : null}
 
 
+          {currentStep === 3 ? (
+            <SetupComplete
+              olderAdults={progress.olderAdults}
+              onReview={() => setCurrentStep(2)}
+            />
+          ) : null}
+
           {currentStep === 2 && progress.family ? (
             <>
               <OlderAdultAccessPanel olderAdults={progress.olderAdults} />
@@ -356,7 +361,7 @@ function SetupWizardForm({
               olderAdults={progress.olderAdults}
               queryClient={queryClient}
               onBack={() => setCurrentStep(1)}
-              onFinish={() => void navigate({ to: "/discover" })}
+              onFinish={() => setCurrentStep(3)}
               />
             </>
           ) : null}
@@ -530,6 +535,52 @@ function OlderAdultAccessPanel({ olderAdults }: { olderAdults: OlderAdult[] }) {
         </p>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * The organizer's account exists to set the family up, so there is nowhere for
+ * them to go afterwards. Say so plainly, and point at the handover instead.
+ */
+function SetupComplete({
+  olderAdults,
+  onReview,
+}: {
+  olderAdults: OlderAdult[];
+  onReview: () => void;
+}) {
+  const names = olderAdults.map(
+    (person) => person.preferred_name || person.name,
+  );
+  const who = names.length ? names.join(" and ") : "your older adult";
+
+  return (
+    <div>
+      <StepHeading
+        title="Your family is ready."
+        description={`${who} can sign in from the link you sent, and start looking for activities. Everyone you added will be asked whenever they need support.`}
+      />
+      <div className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7">
+        <h2 className="text-xl font-bold text-foreground">What happens next</h2>
+        <ol className="mt-4 list-decimal space-y-3 pl-6 text-lg leading-relaxed text-foreground">
+          <li>{who} opens the sign-in link on their own device.</li>
+          <li>They find an activity and ask the family about it.</li>
+          <li>
+            Everyone you added is emailed at once. The first person to answer
+            decides, and anyone can offer to help.
+          </li>
+        </ol>
+        <p className="mt-5 text-base leading-relaxed text-foreground">
+          You can come back to this page at any time to change who is in the
+          family.
+        </p>
+      </div>
+      <div className="mt-8">
+        <button className={secondaryButtonClass} type="button" onClick={onReview}>
+          Change the family
+        </button>
+      </div>
+    </div>
   );
 }
 

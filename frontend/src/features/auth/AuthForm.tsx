@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { signIn } from "@/features/auth/signIn";
 import { signUp } from "@/features/auth/signUp";
 import { sendSignInLink } from "@/features/auth/sendSignInLink";
+import { signInWithCode } from "@/features/auth/signInWithCode";
 import { SupabaseConfigurationError } from "@/lib/supabase";
 
 type AuthMode = "login" | "signup";
@@ -327,12 +328,14 @@ export function AuthForm() {
 
 /**
  * The way in for an older adult. Their email is their login, so they receive a
- * link rather than typing a password they would have to remember.
+ * link and a code rather than typing a password they would have to remember.
  */
 function MagicLinkPanel() {
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+
   const sendLink = useMutation({
     mutationFn: () => sendSignInLink(email),
     throwOnError: false,
@@ -341,7 +344,14 @@ function MagicLinkPanel() {
       setError("");
     },
     onError: () =>
-      setError("We could not send that link. Check the address and try again."),
+      setError("We could not send that email. Check the address and try again."),
+  });
+
+  const enterCode = useMutation({
+    mutationFn: () => signInWithCode(email, code),
+    throwOnError: false,
+    onError: () =>
+      setError("That code did not work. It may have expired, so ask for a new one."),
   });
 
   return (
@@ -350,21 +360,16 @@ function MagicLinkPanel() {
         Signing in without a password
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground">
-        If your family set this up for you, enter your email and we will send you
-        a link that signs you in.
+        If your family set this up for you, enter your email. We will send you a
+        link you can tap, and a code you can type in here instead.
       </p>
-      {sent ? (
-        <p
-          className="mt-4 rounded-xl bg-muted p-[18px] leading-normal font-bold text-foreground"
-          role="status"
-        >
-          Check your email for a link from PeiPal. Opening it signs you in.
-        </p>
-      ) : (
+
+      {!sent ? (
         <form
           className="mt-4 flex flex-col gap-3 sm:flex-row"
           onSubmit={(event) => {
             event.preventDefault();
+            setError("");
             sendLink.mutate();
           }}
         >
@@ -385,10 +390,65 @@ function MagicLinkPanel() {
             disabled={sendLink.isPending}
             type="submit"
           >
-            {sendLink.isPending ? "Sending\u2026" : "Email me a link"}
+            {sendLink.isPending ? "Sending\u2026" : "Email me a code"}
+          </button>
+        </form>
+      ) : (
+        <form
+          className="mt-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError("");
+            enterCode.mutate();
+          }}
+        >
+          <p
+            className="rounded-xl bg-muted p-[18px] leading-normal font-bold text-foreground"
+            role="status"
+          >
+            We sent an email to {email}. Tap the link inside it, or type the
+            six-digit code below.
+          </p>
+          <label
+            className="mt-5 block text-base font-extrabold text-foreground"
+            htmlFor="sign-in-code"
+          >
+            Six-digit code
+          </label>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+            <input
+              className="min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-2xl tracking-[0.3em] text-foreground"
+              id="sign-in-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={8}
+              required
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="123456"
+            />
+            <button
+              className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-xl bg-primary px-6 font-extrabold text-primary-foreground hover:bg-foreground disabled:opacity-50"
+              disabled={enterCode.isPending}
+              type="submit"
+            >
+              {enterCode.isPending ? "Checking\u2026" : "Sign me in"}
+            </button>
+          </div>
+          <button
+            className="mt-4 min-h-11 text-base font-bold text-foreground underline"
+            onClick={() => {
+              setSent(false);
+              setCode("");
+              setError("");
+            }}
+            type="button"
+          >
+            Use a different email address
           </button>
         </form>
       )}
+
       {error ? (
         <p className="mt-4 font-bold text-foreground" role="alert">
           {error}

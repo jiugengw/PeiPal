@@ -72,10 +72,14 @@ export async function createPlan(body: components['schemas']['PlanCreate']) {
   return data
 }
 
-export async function updatePlanStatus(planId: number, status: components['schemas']['PlanUpdate']['status']) {
+export async function updatePlanStatus(
+  planId: number,
+  status: components['schemas']['PlanUpdate']['status'],
+  note?: string,
+) {
   const { data, error, response } = await fetchClient.PATCH('/api/plans/{plan_id}', {
     params: { path: { plan_id: planId } },
-    body: { status },
+    body: note?.trim() ? { status, note: note.trim() } : { status },
   })
   if (error || !data) throw new PlanRequestError(detailMessage(error, 'We could not update the plan yet.'), response.status)
   return data

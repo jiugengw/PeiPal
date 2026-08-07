@@ -106,6 +106,8 @@ describe("PlanDetail", () => {
     renderPlan();
 
     await user.click(await screen.findByRole("button", { name: /ask for family approval/i }));
+    expect(patch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /send for family review/i }));
 
     await waitFor(() => expect(patch).toHaveBeenCalledWith("/api/plans/{plan_id}", {
       params: { path: { plan_id: 9 } },
@@ -158,6 +160,7 @@ describe("PlanDetail", () => {
     renderPlan();
 
     await user.click(await screen.findByRole("button", { name: /ask for family approval/i }));
+    await user.click(screen.getByRole("button", { name: /send for family review/i }));
 
     expect(await screen.findByRole("status")).toHaveTextContent(/changed elsewhere/i);
     await waitFor(() => expect(screen.getByRole("heading", { name: /waiting for family approval/i })).toBeVisible());

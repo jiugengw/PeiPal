@@ -1,7 +1,8 @@
 import { Outlet } from "@tanstack/react-router";
 import { Navbar } from "@/components/Navbar";
 import { ActivityWorkflowProvider } from "@/features/activities/ActivityWorkflowProvider";
-import { VoiceCompanion } from "@/features/voice/VoiceCompanion";
+import { StagedIntentProvider } from "@/app/providers/StagedIntentProvider";
+import { CompanionPanel } from "@/features/companion/CompanionPanel";
 import styles from "./AppShell.module.css";
 
 export function App() {
@@ -11,11 +12,13 @@ export function App() {
         Skip to main content
       </a>
       <ActivityWorkflowProvider>
-        <Navbar />
-        <main className={styles.clnMain} id="main-content">
-          <Outlet />
-        </main>
-        <VoiceCompanion />
+        <StagedIntentProvider>
+          <Navbar />
+          <main className={styles.clnMain} id="main-content">
+            <Outlet />
+          </main>
+          <CompanionPanel />
+        </StagedIntentProvider>
       </ActivityWorkflowProvider>
     </div>
   );

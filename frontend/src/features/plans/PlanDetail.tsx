@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 import { toActivity } from "@/features/activities/api/toActivity";
 import {
   formatActivityCost,
@@ -36,7 +37,9 @@ export function PlanDetail({ planId }: { planId: number }) {
     ...activityDetailQueryOptions(plan?.activity_id ?? 0),
     enabled: Boolean(plan),
   });
-  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  /** Which status change is currently showing its confirm block, if any. */
+  const [confirmingStatus, setConfirmingStatus] =
+    useState<PlanStatusChange>();
   const [updateNotice, setUpdateNotice] = useState("");
 
   const updateMutation = useMutation({
@@ -47,7 +50,7 @@ export function PlanDetail({ planId }: { planId: number }) {
       void queryClient.invalidateQueries({
         queryKey: plansQueryKey(updatedPlan.household_id),
       });
-      setIsConfirmingCancel(false);
+      setConfirmingStatus(undefined);
       setUpdateNotice(
         updatedPlan.status === "awaiting_approval"
           ? "The plan is ready for family review."
@@ -62,6 +65,25 @@ export function PlanDetail({ planId }: { planId: number }) {
         setUpdateNotice("The plan changed elsewhere. We refreshed it so you can review the latest status.");
       }
     },
+  });
+
+  const staged = useStagedIntent(
+    "confirm_plan_status",
+    (intent) => intent.planId === planId && intent.status !== "shared",
+  );
+
+  const [appliedIntentId, setAppliedIntentId] = useState<string>();
+
+  // Applied once per staged intent, so the person still decides by pressing the
+  // same button they would have pressed themselves.
+  if (staged && staged.id !== appliedIntentId) {
+    setAppliedIntentId(staged.id);
+    setUpdateNotice("");
+    setConfirmingStatus(staged.status as PlanStatusChange);
+  }
+
+  useStagedCommit(Boolean(staged) && Boolean(confirmingStatus), () => {
+    if (confirmingStatus) updateMutation.mutate(confirmingStatus);
   });
 
   if (!hasValidPlanId) {
@@ -134,27 +156,36 @@ export function PlanDetail({ planId }: { planId: number }) {
               <p className="mt-4 font-bold text-foreground" role="alert">{updateMutation.error.message}</p>
             ) : null}
 
-            {plan.status === "draft" ? (
-              <button className={`${primaryButtonClass} mt-6 w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate("awaiting_approval")} type="button">
-                {updateMutation.isPending ? "Updating…" : "Ask for family approval"}
-              </button>
+            {plan.status === "draft" && confirmingStatus !== "awaiting_approval" ? (
+              <button className={`${primaryButtonClass} mt-6 w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus("awaiting_approval")} type="button">Ask for family approval</button>
+            ) : null}
+
+            {confirmingStatus === "awaiting_approval" ? (
+              <div className="mt-5 rounded-xl bg-muted p-4">
+                <h3 className="font-bold text-foreground">Ask the family to review this plan?</h3>
+                <p className="mt-1 text-base leading-relaxed text-foreground">They will see it in the demo family view. Nobody is emailed at this step.</p>
+                <div className="mt-4 space-y-2">
+                  <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate("awaiting_approval")} type="button">{updateMutation.isPending ? "Updating…" : "Send for family review"}</button>
+                  <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus(undefined)} type="button">Not yet</button>
+                </div>
+              </div>
             ) : null}
 
             {plan.status === "awaiting_approval" ? (
               <Link className={`${secondaryButtonClass} mt-6 w-full no-underline`} to="/family">Open demo family view</Link>
             ) : null}
 
-            {isActive && !isConfirmingCancel ? (
-              <button className={`${secondaryButtonClass} mt-3 w-full`} disabled={updateMutation.isPending} onClick={() => setIsConfirmingCancel(true)} type="button">Cancel plan</button>
+            {isActive && !confirmingStatus ? (
+              <button className={`${secondaryButtonClass} mt-3 w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus("cancelled")} type="button">Cancel plan</button>
             ) : null}
 
-            {isConfirmingCancel ? (
+            {confirmingStatus === "cancelled" ? (
               <div className="mt-5 rounded-xl bg-muted p-4">
                 <h3 className="font-bold text-foreground">Cancel this plan?</h3>
                 <p className="mt-1 text-base leading-relaxed text-foreground">The plan will remain visible as cancelled, and no further sharing should happen.</p>
                 <div className="mt-4 space-y-2">
                   <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate("cancelled")} type="button">{updateMutation.isPending ? "Cancelling…" : "Confirm cancellation"}</button>
-                  <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setIsConfirmingCancel(false)} type="button">Keep plan</button>
+                  <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus(undefined)} type="button">Keep plan</button>
                 </div>
               </div>
             ) : null}
@@ -166,6 +197,9 @@ export function PlanDetail({ planId }: { planId: number }) {
     </section>
   );
 }
+
+/** Status changes the plan owner can start from this page. */
+type PlanStatusChange = "awaiting_approval" | "cancelled";
 
 function PlanRow({ label, value }: { label: string; value: string }) {
   return <div className="flex justify-between gap-4 py-4"><dt className="font-bold">{label}</dt><dd className="text-right">{value}</dd></div>;

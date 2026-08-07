@@ -39,6 +39,8 @@ from src.api.models import (
     OlderAdultResponse,
     OlderAdultUpdate,
     PlanCreate,
+    PlanDecisionRequest,
+    PlanDecisionResponse,
     PlanListResponse,
     PlanNotificationCreate,
     PlanNotificationListResponse,
@@ -63,6 +65,37 @@ FAMILY_MEMBER_SELECT = "*, family_member_older_adults(older_adult_id, relationsh
 def _family_invitation_url(token: str) -> str:
     import os
     return f"{os.getenv('APP_BASE_URL', 'http://127.0.0.1:5173')}/family/invite/{token}"
+
+
+def _approval_url(token: str) -> str:
+    import os
+    return f"{os.getenv('APP_BASE_URL', 'http://127.0.0.1:5173')}/family/decision/{token}"
+
+
+def _send_approval_requests(client: Client, plan_id: int, family_id: int, older_adult_id: int, activity_id: int) -> None:
+    members = client.table("family_members").select("id, name, email").eq("family_id", family_id).execute().data or []
+    profile = client.table("older_adult_profiles").select("name, preferred_name").eq("id", older_adult_id).limit(1).execute().data[0]
+    activity = client.table("activities").select("name, location, start_at, info_link").eq("id", activity_id).limit(1).execute().data[0]
+    person = profile.get("preferred_name") or profile["name"]
+    for member in members:
+        token = generate_token()
+        client.table("plan_approval_requests").upsert({
+            "plan_id": plan_id,
+            "family_member_id": member["id"],
+            "token_hash": digest(token),
+            "expires_at": expires_in(7 * 24 * 60),
+            "status": "pending",
+        }, on_conflict="plan_id,family_member_id").execute()
+        try:
+            send_plan_email(
+                recipient_email=member["email"],
+                subject=f"PeiPal needs your decision for {person}",
+                body=(f"{person} wants {activity['name']} at {activity['location']} on {activity['start_at']}.\n\n"
+                      f"Approve or reject this request: {_approval_url(token)}"),
+                idempotency_key=f"plan-approval/{plan_id}/{member['id']}",
+            )
+        except Exception:
+            continue
 
 
 def _shape_family_member(row: dict[str, Any]) -> dict[str, Any]:
@@ -624,7 +657,9 @@ def update_plan(
         next_status = payload.status
         valid_transitions = {
             "draft": {"awaiting_approval", "cancelled"},
-            "awaiting_approval": {"shared", "cancelled"},
+            "awaiting_approval": {"shared", "approved", "rejected", "cancelled"},
+            "approved": {"shared", "cancelled"},
+            "rejected": set(),
             "shared": {"cancelled"},
             "cancelled": set(),
         }
@@ -639,15 +674,65 @@ def update_plan(
         if next_status == "shared":
             require_family_owner(client, family_id, user)
             values.update({"approved_by": user_id(user), "approved_at": now, "shared_at": now})
+        elif next_status in {"approved", "rejected"}:
+            raise HTTPException(status_code=403, detail="Use the family approval link to decide this plan.")
         elif next_status == "cancelled":
             values["cancelled_at"] = now
 
         result = client.table("plans").update(values).eq("id", plan_id).execute().data
+        if next_status == "awaiting_approval":
+            current = client.table("plans").select("older_adult_id, activity_id").eq("id", plan_id).limit(1).execute().data[0]
+            _send_approval_requests(client, plan_id, family_id, current["older_adult_id"], current["activity_id"])
         return result[0]
     except HTTPException:
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not update plan.") from error
+
+
+@router.get("/family-decisions/{token}", tags=["Plans"], summary="Inspect a family approval link")
+def inspect_family_decision(token: str, client: Client = Depends(get_supabase_client)) -> dict[str, Any]:
+    rows = client.table("plan_approval_requests").select("id, plan_id, family_member_id, status, expires_at").eq("token_hash", digest(token)).limit(1).execute().data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="This family decision link is not valid.")
+    request = rows[0]
+    plan = client.table("plans").select("id, status, older_adult_id, activity_id").eq("id", request["plan_id"]).limit(1).execute().data[0]
+    member = client.table("family_members").select("name").eq("id", request["family_member_id"]).limit(1).execute().data[0]
+    activity = client.table("activities").select("name, location, start_at, info_link").eq("id", plan["activity_id"]).limit(1).execute().data[0]
+    profile = client.table("older_adult_profiles").select("name, preferred_name").eq("id", plan["older_adult_id"]).limit(1).execute().data[0]
+    return {"plan_id": plan["id"], "plan_status": plan["status"], "family_member": member["name"], "older_adult": profile.get("preferred_name") or profile["name"], "activity": activity, "can_decide": request["status"] == "pending" and plan["status"] == "awaiting_approval"}
+
+
+@router.post("/family-decisions/{token}", response_model=PlanDecisionResponse, tags=["Plans"], summary="Approve or reject a plan from an email link")
+def decide_family_plan(token: str, payload: PlanDecisionRequest, client: Client = Depends(get_supabase_client)) -> dict[str, Any]:
+    rows = client.table("plan_approval_requests").select("id, plan_id, family_member_id, status, expires_at").eq("token_hash", digest(token)).limit(1).execute().data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="This family decision link is not valid.")
+    request = rows[0]
+    if request["status"] != "pending":
+        raise HTTPException(status_code=409, detail="This family member has already responded.")
+    if datetime.fromisoformat(request["expires_at"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="This family decision link has expired.")
+    now = datetime.now(timezone.utc).isoformat()
+    update = client.table("plans").update({"status": payload.decision, "decision_by_family_member_id": request["family_member_id"], "decided_at": now, "decision_reason": payload.reason}).eq("id", request["plan_id"]).eq("status", "awaiting_approval").execute().data
+    if not update:
+        raise HTTPException(status_code=409, detail="This plan already has a family decision.")
+    client.table("plan_approval_requests").update({"status": "used", "used_at": now}).eq("id", request["id"]).execute()
+    member = client.table("family_members").select("name, email, family_id").eq("id", request["family_member_id"]).limit(1).execute().data[0]
+    plan = client.table("plans").select("older_adult_id, activity_id").eq("id", request["plan_id"]).limit(1).execute().data[0]
+    profile = client.table("older_adult_profiles").select("name, preferred_name, email").eq("id", plan["older_adult_id"]).limit(1).execute().data[0]
+    activity = client.table("activities").select("name, location, start_at, info_link").eq("id", plan["activity_id"]).limit(1).execute().data[0]
+    subject = f"PeiPal family decision: {payload.decision}"
+    body = f"{member['name']} {payload.decision} the request for {profile.get('preferred_name') or profile['name']}: {activity['name']} at {activity['location']} on {activity['start_at']}."
+    recipients = client.table("family_members").select("id, email").eq("family_id", member["family_id"]).execute().data or []
+    if profile.get("email"):
+        recipients.append({"id": f"older-adult-{plan['older_adult_id']}", "email": profile["email"]})
+    for recipient in recipients:
+        try:
+            send_plan_email(recipient_email=recipient["email"], subject=subject, body=body, idempotency_key=f"plan-decision/{request['plan_id']}/{recipient['id']}")
+        except Exception:
+            continue
+    return {"plan_id": request["plan_id"], "status": payload.decision, "decided_by": member["name"], "decided_at": now, "message": "Your decision was recorded and the family was notified."}
 
 
 @router.post(

@@ -110,11 +110,24 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [
         {"status": "awaiting_approval"},
-        {"status": "shared"},
+        {"status": "approved"},
         {"status": "cancelled"},
     ]})
 
-    status: Literal["awaiting_approval", "shared", "cancelled"]
+    status: Literal["awaiting_approval", "approved", "rejected", "shared", "cancelled"]
+
+
+class PlanDecisionRequest(BaseModel):
+    decision: Literal["approved", "rejected"]
+    reason: str | None = Field(default=None, max_length=2_000)
+
+
+class PlanDecisionResponse(BaseModel):
+    plan_id: int
+    status: Literal["approved", "rejected"]
+    decided_by: str
+    decided_at: datetime
+    message: str
 
 
 class SupportOfferCreate(BaseModel):
@@ -227,12 +240,15 @@ class PlanResponse(BaseModel):
     family_id: int
     older_adult_id: int
     activity_id: int
-    status: Literal["draft", "awaiting_approval", "shared", "cancelled"]
+    status: Literal["draft", "awaiting_approval", "approved", "rejected", "shared", "cancelled"]
     created_by: str
     approved_by: str | None = None
     approved_at: datetime | None = None
     shared_at: datetime | None = None
     cancelled_at: datetime | None = None
+    decision_by_family_member_id: int | None = None
+    decided_at: datetime | None = None
+    decision_reason: str | None = None
     created_at: datetime
     updated_at: datetime
 

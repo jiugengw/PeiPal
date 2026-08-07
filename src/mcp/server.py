@@ -12,6 +12,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount
 
 from src.mcp.config import load_config, mcp_access_token
+from src.mcp.context import register_context
 from src.mcp.tools import register_tools
 
 
@@ -28,6 +29,7 @@ mcp = FastMCP(
     streamable_http_path="/",
 )
 register_tools(mcp)
+register_context(mcp)
 
 
 class MCPBearerMiddleware(BaseHTTPMiddleware):

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SupportOfferPanel } from "@/features/family/SupportOfferPanel";
 import { fetchClient } from "@/lib/fetchClient";
+import { StagedIntentHarness } from "@/test/StagedIntentHarness";
 
 function offer(overrides = {}) {
   return {
@@ -77,5 +78,52 @@ describe("SupportOfferPanel", () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith("/api/support-offers/{offer_id}", { params: { path: { offer_id: 4 } } }));
     expect(await screen.findByRole("status")).toHaveTextContent(/offer was withdrawn/i);
     expect(screen.getByRole("radio", { name: /^help with transport$/i })).toBeEnabled();
+  });
+
+  describe("when the companion has staged an offer", () => {
+    function renderStaged(note = "") {
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      return render(
+        <QueryClientProvider client={queryClient}>
+          <StagedIntentHarness
+            intent={{ id: "intent-1", path: "/family", kind: "offer_support", planId: 9, supportType: "transport", note }}
+          >
+            <SupportOfferPanel planId={9} userId="user-1" />
+          </StagedIntentHarness>
+        </QueryClientProvider>,
+      );
+    }
+
+    it("fills in the offer and opens its review block", async () => {
+      mockOffers();
+      renderStaged("I can drive.");
+
+      expect(await screen.findByRole("radio", { name: /help with transport/i })).toBeChecked();
+      expect(screen.getByLabelText(/optional note/i)).toHaveValue("I can drive.");
+      expect(screen.getByRole("heading", { name: /offer to help with transport\?/i })).toBeVisible();
+    });
+
+    it("saves the same offer when confirmed by voice as by button", async () => {
+      const user = userEvent.setup();
+      mockOffers();
+      const post = vi.spyOn(fetchClient, "POST").mockResolvedValue({ data: offer(), response: new Response(null, { status: 201 }) } as never);
+      renderStaged("I can drive.");
+
+      await screen.findByRole("heading", { name: /offer to help with transport\?/i });
+      await user.click(screen.getByRole("button", { name: /harness confirm/i }));
+
+      await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans/{plan_id}/support-offers", {
+        params: { path: { plan_id: 9 } },
+        body: { support_type: "transport", note: "I can drive." },
+      }));
+    });
+
+    it("does not re-offer a kind of help already given", async () => {
+      mockOffers([offer()]);
+      renderStaged();
+
+      expect(await screen.findByRole("radio", { name: /help with transport/i })).toBeDisabled();
+      expect(screen.queryByRole("heading", { name: /offer to help with transport\?/i })).not.toBeInTheDocument();
+    });
   });
 });

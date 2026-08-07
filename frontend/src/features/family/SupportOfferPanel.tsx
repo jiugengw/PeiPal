@@ -4,6 +4,7 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/features/activities/activityStyles";
+import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 import {
   createSupportOffer,
   supportOffersQueryKey,
@@ -54,6 +55,35 @@ export function SupportOfferPanel({ planId, userId }: { planId: number; userId?:
       setWithdrawingOffer(undefined);
     },
   });
+
+  const staged = useStagedIntent(
+    "offer_support",
+    (intent) => intent.planId === planId,
+  );
+
+  const [appliedIntentId, setAppliedIntentId] = useState<string>();
+
+  // Applied once per staged intent, and only once the existing offers are known
+  // so an already-offered kind of help is never pre-selected. The radio group
+  // and note stay editable afterwards.
+  if (staged && staged.id !== appliedIntentId && !offersQuery.isPending) {
+    setAppliedIntentId(staged.id);
+    const alreadyOffered = (offersQuery.data?.support_offers ?? []).some(
+      (offer) =>
+        offer.offered_by === userId && offer.support_type === staged.supportType,
+    );
+    if (!alreadyOffered) {
+      setNotice("");
+      setSelectedType(staged.supportType);
+      setNote(staged.note);
+      setIsConfirming(true);
+    }
+  }
+
+  useStagedCommit(
+    Boolean(staged) && isConfirming && Boolean(selectedType),
+    () => offerMutation.mutate(),
+  );
 
   if (offersQuery.isPending) return <p className="mt-5 font-bold text-foreground" role="status">Loading ways to help…</p>;
   if (offersQuery.isError) return <div className="mt-5" role="alert"><p className="font-bold text-foreground">We could not load the support offers.</p><button className={`${secondaryButtonClass} mt-3`} onClick={() => void offersQuery.refetch()} type="button">Try again</button></div>;

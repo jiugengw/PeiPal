@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 import { toActivity } from "@/features/activities/api/toActivity";
 import { formatActivityWhen } from "@/features/activities/format";
 import {
@@ -47,6 +48,26 @@ export function FamilyPlanRow({
     },
     onError: () => void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.household_id) }),
   });
+  const staged = useStagedIntent(
+    "confirm_plan_status",
+    (intent) => intent.planId === plan.id && intent.status !== "awaiting_approval",
+  );
+
+  const [appliedIntentId, setAppliedIntentId] = useState<string>();
+
+  // Applied once per staged intent; this row's own buttons keep working.
+  if (staged && staged.id !== appliedIntentId) {
+    setAppliedIntentId(staged.id);
+    if (plan.status === "awaiting_approval") {
+      setNotice("");
+      setPendingAction(staged.status as "shared" | "cancelled");
+    }
+  }
+
+  useStagedCommit(Boolean(staged) && Boolean(pendingAction), () => {
+    if (pendingAction) updateMutation.mutate(pendingAction);
+  });
+
   const activity = activityQuery.data ? toActivity(activityQuery.data) : null;
   const sentCount = notificationsQuery.data?.notifications.filter((item) => item.status === "sent").length ?? 0;
 

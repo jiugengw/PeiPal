@@ -5,6 +5,7 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/features/activities/activityStyles";
+import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 import {
   notificationsQueryKey,
   notificationsQueryOptions,
@@ -33,6 +34,29 @@ export function NotificationPanel({
       .map((item) => item.trusted_contact_id),
   );
 
+  const staged = useStagedIntent(
+    "select_notification_recipients",
+    (intent) => intent.planId === planId,
+  );
+  const [appliedIntentId, setAppliedIntentId] = useState<string>();
+
+  // Adjusting state during render is React's pattern for reacting to a changed
+  // input. Applied once per intent, and only once the email history is known so
+  // an already-emailed contact is never re-ticked. Ticking and unticking
+  // afterwards behaves exactly as it does without the companion.
+  if (staged && staged.id !== appliedIntentId && !historyQuery.isPending) {
+    setAppliedIntentId(staged.id);
+    setDeliveries([]);
+    const requested = staged.contactIds.filter((id) =>
+      contacts.some(
+        (contact) =>
+          contact.id === id && contact.email && !sentContactIds.has(contact.id),
+      ),
+    );
+    setSelectedIds(requested);
+    setIsConfirming(requested.length > 0);
+  }
+
   const sendMutation = useMutation({
     mutationFn: () => sendPlanNotifications(planId, selectedIds),
     onSuccess: (result) => {
@@ -44,6 +68,8 @@ export function NotificationPanel({
       });
     },
   });
+
+  useStagedCommit(Boolean(staged) && isConfirming, () => sendMutation.mutate());
 
   function toggleContact(contactId: number) {
     setDeliveries([]);

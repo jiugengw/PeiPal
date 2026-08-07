@@ -36,6 +36,7 @@ def test_tool_discovery_exposes_expected_tools():
 
     assert {tool.name for tool in mcp._tool_manager.list_tools()} == {
         "search_activities",
+        "recommend_activities",
         "list_households",
         "list_older_adults",
         "create_plan",
@@ -69,6 +70,23 @@ def test_household_lookup_and_plan_creation_forward_to_api():
     assert call_tool(fake, "list_older_adults", {"household_id": 3})["older_adults"] == [{"id": 8}]
     result = call_tool(fake, "create_plan", {"household_id": 3, "older_adult_id": 8, "activity_id": 1})
     assert result == {"ok": True, "plan": {"id": 22, "status": "draft"}}
+
+
+def test_recommendation_tool_forwards_person_specific_request():
+    fake = FakeApi({
+        ("GET", "/api/older-adults/8/recommendations"): {
+            "recommendations": [{"activity": {"id": 1}, "recommendation_score": 92, "match_factors": {"interest_match": 100}}]
+        }
+    })
+    result = call_tool(fake, "recommend_activities", {
+        "older_adult_id": 8,
+        "interest": "music",
+        "max_cost": 10,
+        "limit": 3,
+    })
+    assert result["ok"] is True
+    assert result["recommendations"][0]["recommendation_score"] == 92
+    assert fake.calls[0][2]["params"] == {"limit": 3, "interest": "music", "max_cost": 10}
 
 
 def test_backend_errors_are_returned_without_claiming_success():

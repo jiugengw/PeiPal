@@ -11,6 +11,14 @@ const navigation = [
 const navLinkClass =
   "inline-flex min-h-11 w-full items-center justify-center rounded-xl px-3 text-center font-bold text-foreground no-underline transition-colors hover:bg-background focus-visible:z-10 md:w-auto md:min-w-24";
 
+// Tailwind needs the full class name written out somewhere to generate it,
+// so the grid-column count can't be built from a template string.
+const gridColsClassByCount: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+};
+
 export function Navbar() {
   const { session, isLoading } = useAuthSession();
 
@@ -35,7 +43,9 @@ export function Navbar() {
           className="col-span-2 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1"
           aria-label="Primary navigation"
         >
-          <ul className="m-0 grid list-none grid-flow-col auto-cols-fr gap-1 rounded-2xl bg-muted p-1 md:mx-auto md:flex md:w-fit">
+          <ul
+            className={`m-0 grid list-none ${gridColsClassByCount[navigation.length] ?? "grid-cols-1"} gap-1 rounded-2xl bg-muted p-1 md:mx-auto md:flex md:w-fit`}
+          >
             {navigation.map((item) => (
               <li key={item.to}>
                 <Link

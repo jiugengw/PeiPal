@@ -51,7 +51,9 @@ function renderRoute(path: string, authenticated = false) {
 }
 
 describe("application routes", () => {
-  beforeEach(() => useSetupProgress.mockReturnValue(setupProgress()));
+  beforeEach(() => {
+    useSetupProgress.mockReturnValue(setupProgress());
+  });
 
   it("redirects an incomplete account to setup", async () => {
     const { router } = renderRoute("/", true);
@@ -64,7 +66,8 @@ describe("application routes", () => {
   });
 
   it("redirects a complete account to discovery", async () => {
-    useSetupProgress.mockReturnValue(setupProgress(true));
+    const complete = setupProgress(true);
+    useSetupProgress.mockReturnValue(complete);
     const { router } = renderRoute("/", true);
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/discover"),

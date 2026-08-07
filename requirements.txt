@@ -1,6 +1,5 @@
 openai-agents>=0.19,<1
 fastapi>=0.115,<1
-pydantic[email]>=2,<3
 mcp>=1.26,<2
 supabase>=2,<3
 uvicorn[standard]>=0.34,<1
@@ -8,4 +7,3 @@ python-dotenv>=1,<2
 sounddevice>=0.5,<1
 numpy>=2,<3
 pytest>=9,<10
-resend>=2,<3

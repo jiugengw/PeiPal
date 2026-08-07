@@ -31,9 +31,9 @@ Keep server secrets in the root `.env`:
 OPENAI_API_KEY=...
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
-RESEND_API_KEY=...
-EMAIL_FROM=...
-EMAIL_REPLY_TO=...
+GMAIL_ADDRESS=...
+GMAIL_APP_PASSWORD=...
+GMAIL_FROM_NAME=PeiPal
 APP_BASE_URL=http://127.0.0.1:5173
 ```
 
@@ -52,16 +52,16 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, or `RESEND_API_KEY` in the frontend environment file.
+Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, or `GMAIL_APP_PASSWORD` in the frontend environment file.
 Keep `VITE_API_BASE_URL` empty for normal local development so requests use the Vite proxy. If the browser calls FastAPI directly instead, set it to `http://127.0.0.1:8000` and include the frontend origin in the backend `CORS_ORIGINS` value.
 
 ## Email notifications
 
-The voice agent can send a confirmed invitation email through Resend. Configure `RESEND_API_KEY` and `EMAIL_FROM`; the sender domain must be verified in Resend.
+The voice agent can send a confirmed invitation email through Gmail SMTP. Configure `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`, using a Google App Password rather than the account's normal password. Two-factor authentication must be enabled on the account before an App Password can be created.
 
 For the local voice agent, copy `contacts.example.json` to `contacts.json` and add family members. Each selected person receives a separate email after the agent previews the full message and receives explicit confirmation.
 
-PeiPal sends four kinds of email, all through Resend:
+PeiPal sends four kinds of email, all through Gmail SMTP:
 
 ```text
 verification   six-digit code confirming the family creator's address
@@ -387,7 +387,7 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 ### Family-approval path (first decision wins)
 
 1. Log in and create a family, entering your own email address.
-2. Check that email for the six-digit code and confirm the address. With Resend
+2. Check that email for the six-digit code and confirm the address. With Gmail SMTP
    unconfigured, confirm the interface says the code could not be sent rather
    than implying it arrived.
 3. Add an older adult, optionally with their own email so they hear the outcome.
@@ -432,8 +432,8 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 - **No microphone input on macOS**: enable microphone access for the terminal app in System Settings.
 - **No speaker output**: select a working default input and output device, then restart the demo.
 - **API connection error**: confirm the Supabase URL, service key, API keys, network connection, and CORS origin.
-- **Notification failed**: check `RESEND_API_KEY`, `EMAIL_FROM`, sender-domain verification, and the recipient's email address. Retry the notification request for failed recipients.
-- **No verification code arrived**: check the same Resend settings. Family creation still succeeds, and the setup page says the code could not be sent.
+- **Notification failed**: check `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD`, and the recipient's email address. Gmail rejects a normal account password; an App Password is required. Retry the notification request for failed recipients.
+- **No verification code arrived**: check the same Gmail settings. Family creation still succeeds, and the setup page says the code could not be sent.
 - **Approval link does not open**: confirm `APP_BASE_URL` points at an origin the recipient can reach. Links expire after seven days and are single use.
 - **"Already decided" on a fresh link**: expected when another family member answered first. The first decision wins for the whole family.
 
@@ -443,7 +443,7 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 - Browser end-to-end automation is deferred; the complete demo path is verified manually.
 - The API does not yet arrange transport or complete bookings.
 - Plan completion tracking is not yet implemented.
-- Notification delivery requires Resend configuration.
+- Notification delivery requires Gmail SMTP configuration.
 - Browser voice requires microphone permission, WebRTC support, and a configured server-side OpenAI key.
 
 ## OpenAI documentation used

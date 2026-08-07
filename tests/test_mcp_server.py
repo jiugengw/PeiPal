@@ -7,7 +7,7 @@ os.environ.setdefault("PEIPAL_API_TOKEN", "api-test-token")
 from mcp.server.fastmcp import FastMCP
 from starlette.testclient import TestClient
 
-from src.mcp.backend import CountMeInApiError, filter_activities
+from src.mcp.backend import PeiPalApiError, filter_activities
 from src.mcp.server import app
 from src.mcp.tools import register_tools
 
@@ -73,7 +73,7 @@ def test_household_lookup_and_plan_creation_forward_to_api():
 
 def test_backend_errors_are_returned_without_claiming_success():
     result = call_tool(
-        FakeApi(error=CountMeInApiError(404, "Active activity not found.")),
+        FakeApi(error=PeiPalApiError(404, "Active activity not found.")),
         "create_plan",
         {"household_id": 3, "older_adult_id": 8, "activity_id": 999},
     )

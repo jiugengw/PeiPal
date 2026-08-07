@@ -7,11 +7,11 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from src.mcp.backend import CountMeInApi, CountMeInApiError
+from src.mcp.backend import PeiPalApi, PeiPalApiError
 
 
-def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
-    backend = api or CountMeInApi()
+def register_context(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
+    backend = api or PeiPalApi()
 
     @mcp.prompt()
     def plan_activity_for_older_adult(
@@ -44,7 +44,7 @@ def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
         try:
             result = await backend.request("GET", "/api/activities", params={"limit": 20})
             return json.dumps({"activities": result.get("activities", [])})
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})
 
     @mcp.resource("peipal://households")
@@ -52,7 +52,7 @@ def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
         """Read households available to the authenticated demo user."""
         try:
             return json.dumps(await backend.request("GET", "/api/households"))
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})
 
     @mcp.resource("peipal://households/{household_id}/older-adults")
@@ -63,5 +63,5 @@ def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
                 "GET", f"/api/households/{household_id}/older-adults"
             )
             return json.dumps(result)
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})

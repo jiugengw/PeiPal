@@ -1,4 +1,4 @@
-"""Run the same Count Me In agent through a typed terminal chat."""
+"""Run the same PeiPal agent through a typed terminal chat."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import asyncio
 import sys
 from typing import Any
 
-from src.agents.count_me_in_voice import build_text_runner
+from src.agents.peipal_voice import build_text_runner
 from src.demo.voice_cli import get_api_key, transcript_line
 
 
@@ -60,7 +60,7 @@ async def run_chat_demo() -> int:
     try:
         session = await runner.run()
         async with session:
-            print("Count Me In chat. Type /exit to stop.", flush=True)
+            print("PeiPal chat. Type /exit to stop.", flush=True)
             while True:
                 try:
                     message = await asyncio.to_thread(input, "You: ")

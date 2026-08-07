@@ -1,4 +1,4 @@
-"""Compact trusted-contact email tools for the Count Me In agent."""
+"""Compact trusted-contact email tools for the PeiPal agent."""
 
 from __future__ import annotations
 

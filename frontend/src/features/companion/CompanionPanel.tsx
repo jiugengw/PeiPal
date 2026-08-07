@@ -44,7 +44,7 @@ export function CompanionPanel() {
   return (
     <aside
       className="fixed right-4 bottom-4 z-40 w-[calc(100%-2rem)] max-w-[390px]"
-      aria-label="Count Me In companion"
+      aria-label="PeiPal companion"
     >
       {!isOpen ? (
         <button

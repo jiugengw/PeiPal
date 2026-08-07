@@ -27,7 +27,7 @@ describe("speech mode storage", () => {
   });
 
   it("ignores a stored value that is no longer a valid mode", () => {
-    localStorage.setItem("count-me-in.speech-mode", "shout" as SpeechMode);
+    localStorage.setItem("peipal.speech-mode", "shout" as SpeechMode);
     expect(readSpeechMode()).toBe("auto");
   });
 });

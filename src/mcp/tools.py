@@ -6,15 +6,15 @@ from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
-from src.mcp.backend import CountMeInApi, CountMeInApiError, filter_activities
+from src.mcp.backend import PeiPalApi, PeiPalApiError, filter_activities
 
 
-def _error(error: CountMeInApiError) -> dict[str, Any]:
+def _error(error: PeiPalApiError) -> dict[str, Any]:
     return {"ok": False, "error": error.detail, "status_code": error.status_code}
 
 
-def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
-    backend = api or CountMeInApi()
+def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
+    backend = api or PeiPalApi()
 
     @mcp.tool()
     async def search_activities(
@@ -38,7 +38,7 @@ def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
                 payload.get("activities", []), interest=interest, max_cost=max_cost
             )
             return {"ok": True, "activities": activities[:safe_limit], "count": len(activities[:safe_limit])}
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
@@ -46,7 +46,7 @@ def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
         """List households available to the authenticated demo user."""
         try:
             return {"ok": True, **(await backend.request("GET", "/api/households"))}
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
@@ -57,7 +57,7 @@ def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
                 "ok": True,
                 **(await backend.request("GET", f"/api/households/{household_id}/older-adults")),
             }
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
@@ -78,7 +78,7 @@ def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
                 },
             )
             return {"ok": True, "plan": plan}
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
@@ -86,7 +86,7 @@ def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
         """Retrieve one plan and its current approval status."""
         try:
             return {"ok": True, "plan": await backend.request("GET", f"/api/plans/{plan_id}")}
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return _error(error)
 
     @mcp.tool()
@@ -102,5 +102,5 @@ def register_tools(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
                     "PATCH", f"/api/plans/{plan_id}", json={"status": status}
                 ),
             }
-        except CountMeInApiError as error:
+        except PeiPalApiError as error:
             return _error(error)

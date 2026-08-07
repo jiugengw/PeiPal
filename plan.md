@@ -1,8 +1,8 @@
-# Count Me In Product Plan
+# PeiPal Product Plan
 
 ## Summary
 
-Count Me In is a voice-first companion agent that helps older adults discover nearby activities and turn interest into small, practical support from trusted family and friends.
+PeiPal is a voice-first companion agent that helps older adults discover nearby activities and turn interest into small, practical support from trusted family and friends.
 
 The main product idea is not just activity search. The differentiator is helping older adults say "I would like to go" without making them feel like they are burdening one specific person. Their trusted circle can support the plan by joining, reminding, arranging transport, suggesting alternatives, encouraging them, or helping with booking.
 

@@ -20,7 +20,7 @@ export function Navbar() {
         <Link
           className="inline-flex min-h-11 min-w-0 items-center gap-3 font-extrabold text-foreground no-underline"
           to="/"
-          aria-label="Count Me In home"
+          aria-label="PeiPal home"
         >
           <span
             className="grid size-11 flex-none place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground"
@@ -28,7 +28,7 @@ export function Navbar() {
           >
             CM
           </span>
-          <span className="truncate text-base sm:text-lg">Count Me In</span>
+          <span className="truncate text-base sm:text-lg">PeiPal</span>
         </Link>
 
         <nav

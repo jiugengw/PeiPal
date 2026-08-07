@@ -6,17 +6,17 @@ from typing import Any
 
 import httpx
 
-from src.mcp.config import count_me_in_api_token, count_me_in_api_url
+from src.mcp.config import peipal_api_token, peipal_api_url
 
 
-class CountMeInApiError(RuntimeError):
+class PeiPalApiError(RuntimeError):
     def __init__(self, status_code: int, detail: str) -> None:
         super().__init__(detail)
         self.status_code = status_code
         self.detail = detail
 
 
-class CountMeInApi:
+class PeiPalApi:
     def __init__(self, client: httpx.AsyncClient | None = None) -> None:
         self._client = client
 
@@ -30,8 +30,8 @@ class CountMeInApi:
     ) -> Any:
         owns_client = self._client is None
         client = self._client or httpx.AsyncClient(
-            base_url=count_me_in_api_url(),
-            headers={"Authorization": f"Bearer {count_me_in_api_token()}"},
+            base_url=peipal_api_url(),
+            headers={"Authorization": f"Bearer {peipal_api_token()}"},
             timeout=15,
         )
         try:
@@ -42,12 +42,12 @@ class CountMeInApi:
                     detail = body.get("detail", body) if isinstance(body, dict) else body
                 except ValueError:
                     detail = response.text
-                raise CountMeInApiError(response.status_code, str(detail))
+                raise PeiPalApiError(response.status_code, str(detail))
             if response.status_code == 204:
                 return None
             return response.json()
         except httpx.HTTPError as error:
-            raise CountMeInApiError(503, f"PeiPal API is unavailable: {error}") from error
+            raise PeiPalApiError(503, f"PeiPal API is unavailable: {error}") from error
         finally:
             if owns_client:
                 await client.aclose()

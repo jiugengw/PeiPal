@@ -1,1 +1,1 @@
-"""Realtime agent definitions for Count Me In."""
+"""Realtime agent definitions for PeiPal."""

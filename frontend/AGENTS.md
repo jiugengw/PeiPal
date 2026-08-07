@@ -4,7 +4,7 @@ This file applies to all work inside `frontend/`.
 
 ## Purpose
 
-The frontend is the browser interface for Count Me In, a service that helps older adults discover activities and involve trusted family or friends. Build for clarity, confidence, and ease of use. Preserve the user's existing work and keep changes focused on the requested task.
+The frontend is the browser interface for PeiPal, a service that helps older adults discover activities and involve trusted family or friends. Build for clarity, confidence, and ease of use. Preserve the user's existing work and keep changes focused on the requested task.
 
 ## Technology
 

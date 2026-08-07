@@ -1,1 +1,1 @@
-"""Count Me In prototype modules."""
+"""PeiPal prototype modules."""

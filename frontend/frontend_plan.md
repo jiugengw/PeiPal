@@ -1,4 +1,4 @@
-# Frontend Implementation Plan — Count Me In
+# Frontend Implementation Plan — PeiPal
 
 ## Summary
 

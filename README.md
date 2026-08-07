@@ -1,12 +1,12 @@
-# Count Me In
+# PeiPal
 
-Count Me In is a family-assisted companion that helps older adults find nearby activities and ask their trusted circle for small, practical support.
+PeiPal is a family-assisted companion that helps older adults find nearby activities and ask their trusted circle for small, practical support.
 
 The product is designed around a simple, low-pressure idea:
 
 > “I would like to go” should not feel like “someone must take responsibility.”
 
-Instead of sending a direct invitation to one person, Count Me In turns an older adult’s interest into a shared plan. Family and friends can choose a small way to help, such as joining, arranging transport, setting a reminder, suggesting an easier alternative, or helping with booking.
+Instead of sending a direct invitation to one person, PeiPal turns an older adult’s interest into a shared plan. Family and friends can choose a small way to help, such as joining, arranging transport, setting a reminder, suggesting an easier alternative, or helping with booking.
 
 ## The experience
 
@@ -30,7 +30,7 @@ Instead of sending a direct invitation to one person, Count Me In turns an older
 
 ## Why it matters
 
-Older adults may want to participate in activities without feeling that they are burdening a particular family member. Count Me In makes support visible, optional, and distributed across a trusted circle while keeping the older adult’s choice at the centre.
+Older adults may want to participate in activities without feeling that they are burdening a particular family member. PeiPal makes support visible, optional, and distributed across a trusted circle while keeping the older adult’s choice at the centre.
 
 ## Hackathon demo story
 

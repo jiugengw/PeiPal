@@ -26,7 +26,7 @@ export function shouldSpeakReply(
   return channel === "voice";
 }
 
-const STORAGE_KEY = "count-me-in.speech-mode";
+const STORAGE_KEY = "peipal.speech-mode";
 
 export function readSpeechMode(): SpeechMode {
   try {

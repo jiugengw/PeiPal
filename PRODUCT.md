@@ -12,11 +12,11 @@ static HTML/CSS/JS prototype
 
 ## Users
 
-Count Me In serves both older adults and the family members who help them. The older adult is the primary focus: they should be able to express interest in an activity without feeling that they are burdening someone. A family member or trusted friend helps with setup, practical decisions, and support.
+PeiPal serves both older adults and the family members who help them. The older adult is the primary focus: they should be able to express interest in an activity without feeling that they are burdening someone. A family member or trusted friend helps with setup, practical decisions, and support.
 
 ## Product Purpose
 
-Count Me In is a voice-first companion that helps older adults find nearby activities and turn interest into small, practical support from trusted family and friends. It also makes it easier for family members to help by keeping relevant context and support choices clear. Success means an older adult can move from “I would like to go” to a comfortable, supported plan with low pressure and clear approval.
+PeiPal is a voice-first companion that helps older adults find nearby activities and turn interest into small, practical support from trusted family and friends. It also makes it easier for family members to help by keeping relevant context and support choices clear. Success means an older adult can move from “I would like to go” to a comfortable, supported plan with low pressure and clear approval.
 
 ## Positioning
 
@@ -38,7 +38,7 @@ The current prototype is a family-assisted setup flow followed by a voice- or ch
 
 ## Brand Commitments
 
-- Product name: Count Me In.
+- Product name: PeiPal.
 - The voice should be warm, respectful, practical, and low-pressure.
 - The product should preserve the older adult's agency while making family support visible and manageable.
 

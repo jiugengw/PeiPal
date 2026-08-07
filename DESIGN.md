@@ -1,5 +1,5 @@
 ---
-name: Count Me In
+name: PeiPal
 description: A calm metallic care companion for older adults and the people who support them.
 colors:
   royal-blue: "#3D52A0"
@@ -68,13 +68,13 @@ components:
     padding: "30px"
 ---
 
-# Design System: Count Me In
+# Design System: PeiPal
 
 ## Overview
 
 **Creative North Star: "The Calm Metallic Companion"**
 
-Count Me In uses a cool, metallic-inspired visual system that feels calm, credible, and contemporary without becoming clinical. White space and dark navy typography keep tasks readable, while a controlled family of softened blues communicates action, interaction, and support.
+PeiPal uses a cool, metallic-inspired visual system that feels calm, credible, and contemporary without becoming clinical. White space and dark navy typography keep tasks readable, while a controlled family of softened blues communicates action, interaction, and support.
 
 The experience remains designed first for older adults: large type, generous touch targets, plain language, obvious state changes, and one clear decision at a time. Family coordination should feel visible and practical without taking agency away from the older adult.
 

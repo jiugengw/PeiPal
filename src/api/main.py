@@ -1,4 +1,4 @@
-"""FastAPI entrypoint for the Count Me In backend."""
+"""FastAPI entrypoint for the PeiPal backend."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,11 +45,11 @@ OPENAPI_TAGS = [
 ]
 
 app = FastAPI(
-    title="Count Me In API",
+    title="PeiPal API",
     version="0.1.0",
     description=(
         """
-Count Me In helps a household create a supported activity plan for an older adult.
+PeiPal helps a household create a supported activity plan for an older adult.
 
 ## Quick-start workflow
 

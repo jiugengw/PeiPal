@@ -9,9 +9,14 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class FamilyCreate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family"}]})
+    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family", "owner_email": "anna@example.com"}]})
 
     name: str = Field(min_length=1, max_length=120)
+    owner_email: EmailStr | None = None
+
+
+class FamilyEmailVerification(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class FamilyUpdate(BaseModel):
@@ -147,6 +152,12 @@ class FamilyResponse(FamilyCreate):
     id: int
     created_by: str
     created_at: datetime
+    owner_email_verified_at: datetime | None = None
+
+
+class FamilyVerificationResponse(BaseModel):
+    verified: bool
+    message: str
 
 
 class OlderAdultResponse(OlderAdultCreate):

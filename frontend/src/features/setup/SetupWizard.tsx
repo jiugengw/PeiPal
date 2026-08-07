@@ -63,12 +63,19 @@ function SetupWizardForm({
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(
-    progress.olderAdult ? 3 : progress.family ? 1 : 0,
-  );
-  const [familyName, setFamilyName] = useState(
-    progress.family?.name ?? "",
-  );
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (progress.olderAdult) return 4;
+    if (!progress.family) return 0;
+    return progress.family.owner_email && !progress.family.owner_email_verified_at
+      ? 1
+      : 2;
+  });
+  const [familyName, setFamilyName] = useState(progress.family?.name ?? "");
+  const [ownerEmail, setOwnerEmail] = useState(progress.family?.owner_email ?? "");
+  const [familyId, setFamilyId] = useState(progress.family?.id ?? 0);
+  const [verificationCode, setVerificationCode] = useState("");
+  /** Set when the family was created but the code email could not be sent. */
+  const [verificationUndelivered, setVerificationUndelivered] = useState(false);
   const [profile, setProfile] = useState<OlderAdultDraft>({
     family_id: progress.family?.id ?? 0,
     name: progress.olderAdult?.name ?? "",
@@ -82,10 +89,20 @@ function SetupWizardForm({
   const [saveError, setSaveError] = useState("");
 
   const createFamily = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, email }: { name: string; email: string }) => {
       const { data, error } = await fetchClient.POST("/api/families", {
-        body: { name },
+        body: { name, owner_email: email },
       });
+      if (error) throw error;
+      return data;
+    },
+  });
+  const verifyEmail = useMutation({
+    mutationFn: async (code: string) => {
+      const { data, error } = await fetchClient.POST(
+        "/api/families/{family_id}/verify-email",
+        { params: { path: { family_id: familyId } }, body: { code } },
+      );
       if (error) throw error;
       return data;
     },
@@ -137,17 +154,50 @@ function SetupWizardForm({
     event.preventDefault();
     setSaveError("");
     try {
-      const saved = progress.family
-        ? await updateFamily.mutateAsync({
-            id: progress.family.id,
-            name: familyName.trim(),
-          })
-        : await createFamily.mutateAsync(familyName.trim());
+      // Renaming a family that already exists never re-runs verification; only
+      // a newly created family still has an unconfirmed email address.
+      if (progress.family) {
+        await updateFamily.mutateAsync({
+          id: progress.family.id,
+          name: familyName.trim(),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: familiesQueryOptions().queryKey,
+        });
+        setCurrentStep(progress.family.owner_email_verified_at ? 2 : 1);
+        return;
+      }
+
+      const saved = await createFamily.mutateAsync({
+        name: familyName.trim(),
+        email: ownerEmail.trim().toLowerCase(),
+      });
       await queryClient.invalidateQueries({
         queryKey: familiesQueryOptions().queryKey,
       });
-      if (saved) setProfile((value) => ({ ...value, family_id: saved.id }));
+      if (saved) {
+        setFamilyId(saved.id);
+        setProfile((value) => ({ ...value, family_id: saved.id }));
+        setVerificationUndelivered(
+          "verification_delivery_failed" in saved &&
+            Boolean(saved.verification_delivery_failed),
+        );
+      }
       setCurrentStep(1);
+    } catch (error) {
+      setSaveError(errorMessage(error));
+    }
+  }
+
+  async function submitVerification(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaveError("");
+    try {
+      await verifyEmail.mutateAsync(verificationCode.trim());
+      await queryClient.invalidateQueries({
+        queryKey: familiesQueryOptions().queryKey,
+      });
+      setCurrentStep(2);
     } catch (error) {
       setSaveError(errorMessage(error));
     }
@@ -156,7 +206,7 @@ function SetupWizardForm({
   function submitProfileDetails(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveError("");
-    setCurrentStep(2);
+    setCurrentStep(3);
   }
 
   async function submitSharing(event: FormEvent<HTMLFormElement>) {
@@ -176,7 +226,7 @@ function SetupWizardForm({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
         });
       }
-      setCurrentStep(3);
+      setCurrentStep(4);
     } catch (error) {
       setSaveError(errorMessage(error));
     }
@@ -185,6 +235,7 @@ function SetupWizardForm({
   const isSaving =
     createFamily.isPending ||
     updateFamily.isPending ||
+    verifyEmail.isPending ||
     saveProfile.isPending;
 
   return (
@@ -192,7 +243,7 @@ function SetupWizardForm({
       <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-14">
         <aside className="lg:pt-2">
           <p className="mb-5 max-w-[24ch] text-lg leading-relaxed text-foreground">
-            Four calm steps. You can come back and continue at any time.
+            Five calm steps. You can come back and continue at any time.
           </p>
           <SetupProgress currentStep={currentStep} />
         </aside>
@@ -216,6 +267,27 @@ function SetupWizardForm({
                 onChange={(event) => setFamilyName(event.target.value)}
                 placeholder="For example, Lim Family"
               />
+              {!progress.family ? (
+                <>
+                  <label className={`${labelClass} mt-6`} htmlFor="owner-email">
+                    Your email address
+                  </label>
+                  <p className="mt-1 text-base leading-relaxed text-foreground">
+                    We send a short code here to confirm the address before your
+                    family is set up.
+                  </p>
+                  <input
+                    className={fieldClass}
+                    id="owner-email"
+                    type="email"
+                    maxLength={320}
+                    required
+                    value={ownerEmail}
+                    onChange={(event) => setOwnerEmail(event.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </>
+              ) : null}
               <FormActions
                 error={saveError}
                 isSaving={isSaving}
@@ -227,6 +299,46 @@ function SetupWizardForm({
           ) : null}
 
           {currentStep === 1 ? (
+            <form onSubmit={submitVerification}>
+              <StepHeading
+                title="Confirm your email address."
+                description={`We sent a six-digit code to ${ownerEmail || "your email address"}. Enter it below to finish creating your family.`}
+              />
+              {verificationUndelivered ? (
+                <p
+                  className="mb-6 rounded-2xl bg-muted p-5 text-base leading-relaxed font-bold text-foreground"
+                  role="alert"
+                >
+                  We could not send that email just now, so you may not receive a
+                  code. Your family was still created and you can continue, but
+                  invitations will not be delivered until email is working again.
+                </p>
+              ) : null}
+              <label className={labelClass} htmlFor="verification-code">
+                Six-digit code
+              </label>
+              <input
+                className={fieldClass}
+                id="verification-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="\d{6}"
+                maxLength={6}
+                required
+                value={verificationCode}
+                onChange={(event) => setVerificationCode(event.target.value)}
+                placeholder="123456"
+              />
+              <FormActions
+                back={() => setCurrentStep(0)}
+                error={saveError}
+                isSaving={isSaving}
+                primaryLabel="Verify and continue"
+              />
+            </form>
+          ) : null}
+
+          {currentStep === 2 ? (
             <form onSubmit={submitProfileDetails}>
               <StepHeading
                 title="Tell us what makes support comfortable."
@@ -316,13 +428,13 @@ function SetupWizardForm({
                 </Field>
               </div>
               <FormActions
-                back={() => setCurrentStep(0)}
+                back={() => setCurrentStep(1)}
                 primaryLabel="Continue to sharing"
               />
             </form>
           ) : null}
 
-          {currentStep === 2 ? (
+          {currentStep === 3 ? (
             <form onSubmit={submitSharing}>
               <StepHeading
                 title="Who confirms before a plan is shared?"
@@ -347,7 +459,7 @@ function SetupWizardForm({
                 />
               </div>
               <FormActions
-                back={() => setCurrentStep(1)}
+                back={() => setCurrentStep(2)}
                 error={saveError}
                 isSaving={isSaving}
                 primaryLabel="Save profile"
@@ -355,13 +467,13 @@ function SetupWizardForm({
             </form>
           ) : null}
 
-          {currentStep === 3 && progress.family ? (
+          {currentStep === 4 && progress.family ? (
             <FamilyMembersStep
               familyMembers={progress.familyMembers}
               familyId={progress.family.id}
               olderAdults={progress.olderAdults}
               queryClient={queryClient}
-              onBack={() => setCurrentStep(2)}
+              onBack={() => setCurrentStep(3)}
               onFinish={() => void navigate({ to: "/discover" })}
             />
           ) : null}

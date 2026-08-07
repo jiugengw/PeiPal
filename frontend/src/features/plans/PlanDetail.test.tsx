@@ -113,7 +113,7 @@ describe("PlanDetail", () => {
       params: { path: { plan_id: 9 } },
       body: { status: "awaiting_approval" },
     }));
-    expect(await screen.findByRole("heading", { name: /waiting for family approval/i })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: /waiting for a family decision/i })).toBeVisible();
   });
 
   it("explains when direct sharing skips family approval", async () => {
@@ -163,6 +163,6 @@ describe("PlanDetail", () => {
     await user.click(screen.getByRole("button", { name: /send for family review/i }));
 
     expect(await screen.findByRole("status")).toHaveTextContent(/changed elsewhere/i);
-    await waitFor(() => expect(screen.getByRole("heading", { name: /waiting for family approval/i })).toBeVisible());
+    await waitFor(() => expect(screen.getByRole("heading", { name: /waiting for a family decision/i })).toBeVisible());
   });
 });

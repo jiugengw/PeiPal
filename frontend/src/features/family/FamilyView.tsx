@@ -26,10 +26,17 @@ export function FamilyView() {
   const sections = [
     {
       id: "approval",
-      title: "Needs your review",
-      description: "These plans are waiting for a clear family decision.",
+      title: "Waiting for a family decision",
+      description: "Everyone has been emailed. The first person to approve or reject decides for the whole family.",
       plans: plans.filter((plan) => plan.status === "awaiting_approval"),
-      empty: "No plans need approval right now.",
+      empty: "No plans are waiting for a decision right now.",
+    },
+    {
+      id: "decided",
+      title: "Decided",
+      description: "What the family decided, and who decided it.",
+      plans: plans.filter((plan) => plan.status === "approved" || plan.status === "rejected"),
+      empty: "No plans have been decided yet.",
     },
     {
       id: "shared",
@@ -53,11 +60,11 @@ export function FamilyView() {
         <header className="grid gap-6 border-b border-border pb-8 lg:grid-cols-[minmax(0,1fr)_310px] lg:items-end">
           <div>
             <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">A clear view of where help fits.</h1>
-            <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">Review plans for {olderAdultName}, approve only what feels right, and offer one small kind of support.</p>
+            <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">See what {olderAdultName} has asked for, what the family decided, and where a small kind of support would help.</p>
           </div>
           <div className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
             <p className="text-lg font-bold text-foreground">Demo family view</p>
-            <p className="mt-2 text-base leading-relaxed text-foreground">Preview how family can respond. You are still using the same signed-in demo account; no trusted contact has logged in.</p>
+            <p className="mt-2 text-base leading-relaxed text-foreground">Family members decide from the link in their email and do not need an account. This page shows the same plans from the family side.</p>
           </div>
         </header>
 

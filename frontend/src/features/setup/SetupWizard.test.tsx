@@ -123,15 +123,14 @@ describe("SetupWizard", () => {
     renderWizard();
 
     await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
     await user.click(screen.getByRole("button", { name: /create family/i }));
 
     expect(fetchClient.POST).toHaveBeenCalledWith("/api/families", {
-      body: { name: "Lim Family" },
+      body: { name: "Lim Family", owner_email: "anna@example.com" },
     });
     expect(
-      await screen.findByRole("heading", {
-        name: /what makes support comfortable/i,
-      }),
+      await screen.findByRole("heading", { name: /confirm your email address/i }),
     ).toBeVisible();
   });
 
@@ -156,6 +155,7 @@ describe("SetupWizard", () => {
 
     const familyName = screen.getByLabelText(/family name/i);
     await user.type(familyName, "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
     await user.click(screen.getByRole("button", { name: /create family/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -165,9 +165,7 @@ describe("SetupWizard", () => {
 
     await user.click(screen.getByRole("button", { name: /create family/i }));
     expect(
-      await screen.findByRole("heading", {
-        name: /what makes support comfortable/i,
-      }),
+      await screen.findByRole("heading", { name: /confirm your email address/i }),
     ).toBeVisible();
     expect(post).toHaveBeenCalledTimes(2);
   });
@@ -176,7 +174,12 @@ describe("SetupWizard", () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
-        family: { id: 1, name: "Lim Family" },
+        family: {
+          id: 1,
+          name: "Lim Family",
+          owner_email: "anna@example.com",
+          owner_email_verified_at: "2030-01-01T00:00:00Z",
+        },
         olderAdult: {
           id: 2,
           family_id: 1,
@@ -198,6 +201,7 @@ describe("SetupWizard", () => {
     });
     renderWizard();
 
+    await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));
     await user.click(screen.getByRole("button", { name: /back/i }));

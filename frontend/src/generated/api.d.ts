@@ -42,6 +42,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/families/{family_id}/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the family creator email */
+        post: operations["verify_family_email_api_families__family_id__verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families/{family_id}": {
         parameters: {
             query?: never;
@@ -204,6 +221,45 @@ export interface paths {
          * @description Use this resource update for the plan lifecycle. Valid transitions are draft → awaiting_approval → shared for family approval, or cancellation from any active state. Direct-sharing profiles create plans as shared. Sharing requires the family owner.
          */
         patch: operations["update_plan_api_plans__plan_id__patch"];
+        trace?: never;
+    };
+    "/api/family-decisions/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inspect a family approval link */
+        get: operations["inspect_family_decision_api_family_decisions__token__get"];
+        put?: never;
+        /** Approve or reject a plan from an email link */
+        post: operations["decide_family_plan_api_family_decisions__token__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/plans/{plan_id}/decision-notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List plan decision emails */
+        get: operations["list_plan_decision_notifications_api_plans__plan_id__decision_notifications_get"];
+        put?: never;
+        /**
+         * Retry the plan decision emails
+         * @description Re-send the decision email to recipients that could not be reached. Anyone already emailed successfully is skipped rather than emailed twice.
+         */
+        post: operations["retry_plan_decision_notifications_api_plans__plan_id__decision_notifications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/plans/{plan_id}/support-offers": {
@@ -414,15 +470,47 @@ export interface components {
              */
             updated_at: string;
         };
+        /** DecisionDeliveryListResponse */
+        DecisionDeliveryListResponse: {
+            /** Deliveries */
+            deliveries: components["schemas"]["DecisionDeliveryResponse"][];
+        };
+        /** DecisionDeliveryResponse */
+        DecisionDeliveryResponse: {
+            /**
+             * Recipient Role
+             * @enum {string}
+             */
+            recipient_role: "family_member" | "older_adult";
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "sent" | "already_sent" | "failed";
+            /** Provider Id */
+            provider_id?: string | null;
+            /** Error */
+            error?: string | null;
+        };
         /**
          * FamilyCreate
          * @example {
-         *       "name": "Lim Family"
+         *       "name": "Lim Family",
+         *       "owner_email": "anna@example.com"
          *     }
          */
         FamilyCreate: {
             /** Name */
             name: string;
+            /** Owner Email */
+            owner_email?: string | null;
+        };
+        /** FamilyEmailVerification */
+        FamilyEmailVerification: {
+            /** Code */
+            code: string;
         };
         /** FamilyListResponse */
         FamilyListResponse: {
@@ -508,12 +596,15 @@ export interface components {
         /**
          * FamilyResponse
          * @example {
-         *       "name": "Lim Family"
+         *       "name": "Lim Family",
+         *       "owner_email": "anna@example.com"
          *     }
          */
         FamilyResponse: {
             /** Name */
             name: string;
+            /** Owner Email */
+            owner_email?: string | null;
             /** Id */
             id: number;
             /** Created By */
@@ -523,11 +614,20 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Owner Email Verified At */
+            owner_email_verified_at?: string | null;
         };
         /** FamilyUpdate */
         FamilyUpdate: {
             /** Name */
             name: string;
+        };
+        /** FamilyVerificationResponse */
+        FamilyVerificationResponse: {
+            /** Verified */
+            verified: boolean;
+            /** Message */
+            message: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -686,6 +786,88 @@ export interface components {
             /** Activity Id */
             activity_id: number;
         };
+        /** PlanDecisionNotificationListResponse */
+        PlanDecisionNotificationListResponse: {
+            /** Notifications */
+            notifications: components["schemas"]["PlanDecisionNotificationResponse"][];
+        };
+        /** PlanDecisionNotificationResponse */
+        PlanDecisionNotificationResponse: {
+            /** Id */
+            id: number;
+            /** Plan Id */
+            plan_id: number;
+            /**
+             * Recipient Role
+             * @enum {string}
+             */
+            recipient_role: "family_member" | "older_adult";
+            /** Family Member Id */
+            family_member_id?: number | null;
+            /** Older Adult Id */
+            older_adult_id?: number | null;
+            /** Recipient Name */
+            recipient_name: string;
+            /** Recipient Email */
+            recipient_email?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "sent" | "failed";
+            /** Provider Id */
+            provider_id?: string | null;
+            /** Error Message */
+            error_message?: string | null;
+            /** Attempted At */
+            attempted_at?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PlanDecisionRequest */
+        PlanDecisionRequest: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Reason */
+            reason?: string | null;
+        };
+        /** PlanDecisionResponse */
+        PlanDecisionResponse: {
+            /** Plan Id */
+            plan_id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "approved" | "rejected";
+            /** Decided By */
+            decided_by: string;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /** Message */
+            message: string;
+            /**
+             * Deliveries
+             * @default []
+             */
+            deliveries: components["schemas"]["DecisionDeliveryResponse"][];
+        };
         /** PlanListResponse */
         PlanListResponse: {
             /** Plans */
@@ -759,7 +941,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "draft" | "awaiting_approval" | "shared" | "cancelled";
+            status: "draft" | "awaiting_approval" | "approved" | "rejected" | "shared" | "cancelled";
             /** Created By */
             created_by: string;
             /** Approved By */
@@ -770,6 +952,12 @@ export interface components {
             shared_at?: string | null;
             /** Cancelled At */
             cancelled_at?: string | null;
+            /** Decision By Family Member Id */
+            decision_by_family_member_id?: number | null;
+            /** Decided At */
+            decided_at?: string | null;
+            /** Decision Reason */
+            decision_reason?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -787,7 +975,7 @@ export interface components {
          *       "status": "awaiting_approval"
          *     }
          * @example {
-         *       "status": "shared"
+         *       "status": "approved"
          *     }
          * @example {
          *       "status": "cancelled"
@@ -798,7 +986,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "awaiting_approval" | "shared" | "cancelled";
+            status: "awaiting_approval" | "approved" | "rejected" | "shared" | "cancelled";
         };
         /**
          * SupportOfferCreate
@@ -969,6 +1157,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_family_email_api_families__family_id__verify_email_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                family_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FamilyEmailVerification"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyVerificationResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1452,6 +1677,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inspect_family_decision_api_family_decisions__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_family_plan_api_family_decisions__token__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanDecisionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_plan_decision_notifications_api_plans__plan_id__decision_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanDecisionNotificationListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_plan_decision_notifications_api_plans__plan_id__decision_notifications_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionDeliveryListResponse"];
                 };
             };
             /** @description Validation Error */

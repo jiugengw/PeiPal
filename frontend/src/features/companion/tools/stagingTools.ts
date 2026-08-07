@@ -4,9 +4,13 @@ import { planQueryOptions } from "@/features/plans/api/planQueries";
 import { planPath, PLAN_PATH, type CompanionToolContext } from "./toolContext";
 
 /** Which statuses a plan can legally move to, mirroring the API's state machine. */
+// Approving and rejecting are not here on purpose: only a family member acting
+// on their emailed decision link can decide, so the companion cannot stage it.
 const allowedNextStatuses = {
   draft: ["awaiting_approval", "cancelled"],
-  awaiting_approval: ["shared", "cancelled"],
+  awaiting_approval: ["cancelled"],
+  approved: ["shared", "cancelled"],
+  rejected: [],
   shared: ["cancelled"],
   cancelled: [],
 } as const;

@@ -21,16 +21,18 @@ describe("FamilyView", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it("groups approval, shared, and cancelled plans and labels the demo identity", async () => {
-    vi.spyOn(fetchClient, "GET").mockResolvedValue({ data: { plans: [plan(1, "awaiting_approval"), plan(2, "shared"), plan(3, "cancelled")] }, response: new Response(null, { status: 200 }) } as never);
+  it("groups waiting, decided, shared, and cancelled plans", async () => {
+    vi.spyOn(fetchClient, "GET").mockResolvedValue({ data: { plans: [plan(1, "awaiting_approval"), plan(2, "shared"), plan(3, "cancelled"), plan(4, "approved")] }, response: new Response(null, { status: 200 }) } as never);
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={queryClient}><FamilyView /></QueryClientProvider>);
 
     expect(await screen.findByText("Plan 1: awaiting_approval")).toBeVisible();
     expect(screen.getByText("Plan 2: shared")).toBeVisible();
     expect(screen.getByText("Plan 3: cancelled")).toBeVisible();
-    expect(screen.getByText(/same signed-in demo account/i)).toBeVisible();
-    expect(screen.getByRole("heading", { name: /needs your review/i })).toBeVisible();
+    expect(screen.getByText("Plan 4: approved")).toBeVisible();
+    expect(screen.getByText(/decide from the link in their email/i)).toBeVisible();
+    expect(screen.getByRole("heading", { name: /waiting for a family decision/i })).toBeVisible();
+    expect(screen.getByRole("heading", { name: /^decided$/i })).toBeVisible();
     expect(screen.getByRole("heading", { name: /shared plans/i })).toBeVisible();
     expect(screen.getByRole("heading", { name: /past plans/i })).toBeVisible();
   });

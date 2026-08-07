@@ -17,6 +17,7 @@ import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedPlansPlanIdRouteImport } from './routes/_authenticated/plans/$planId'
+import { Route as FamilyDecisionTokenRouteImport } from './routes/family.decision.$token'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -58,6 +59,11 @@ const AuthenticatedPlansPlanIdRoute =
     path: '/plans/$planId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const FamilyDecisionTokenRoute = FamilyDecisionTokenRouteImport.update({
+  id: '/family/decision/$token',
+  path: '/family/decision/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/setup': typeof AuthenticatedSetupRoute
   '/': typeof AuthenticatedIndexRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,14 +95,29 @@ export interface FileRoutesById {
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/family/decision/$token': typeof FamilyDecisionTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/$' | '/discover' | '/family' | '/setup' | '/plans/$planId'
+    | '/'
+    | '/auth'
+    | '/$'
+    | '/discover'
+    | '/family'
+    | '/setup'
+    | '/plans/$planId'
+    | '/family/decision/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/auth' | '/$' | '/discover' | '/family' | '/setup' | '/' | '/plans/$planId'
+    | '/auth'
+    | '/$'
+    | '/discover'
+    | '/family'
+    | '/setup'
+    | '/'
+    | '/plans/$planId'
+    | '/family/decision/$token'
   id:
     | '__root__'
     | '/_authenticated'
@@ -105,11 +128,13 @@ export interface FileRouteTypes {
     | '/_authenticated/setup'
     | '/_authenticated/'
     | '/_authenticated/plans/$planId'
+    | '/family/decision/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  FamilyDecisionTokenRoute: typeof FamilyDecisionTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlansPlanIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/family/decision/$token': {
+      id: '/family/decision/$token'
+      path: '/family/decision/$token'
+      fullPath: '/family/decision/$token'
+      preLoaderRoute: typeof FamilyDecisionTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -198,6 +230,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  FamilyDecisionTokenRoute: FamilyDecisionTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

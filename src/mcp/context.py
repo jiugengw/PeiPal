@@ -31,7 +31,7 @@ def register_context(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
         }
         return (
             "Help plan an activity for an older adult. First ask for any missing details. "
-            "Then call search_activities and present up to three suitable options with reasons. "
+            "Then call recommend_activities and present up to three suitable options with reasons. "
             "Confirm the selected activity, household, and older-adult profile before calling "
             "create_plan. Offer family approval by using awaiting_approval. Never invent IDs "
             "or claim a write succeeded without a successful tool response.\n\n"

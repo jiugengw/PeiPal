@@ -42,6 +42,31 @@ def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
             return _error(error)
 
     @mcp.tool()
+    async def recommend_activities(
+        older_adult_id: int,
+        location: str | None = None,
+        interest: str | None = None,
+        max_cost: float | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """Get PeiPal-computed personalized recommendations for one older adult."""
+        try:
+            safe_limit = max(1, min(limit, 20))
+            result = await backend.request(
+                "GET",
+                f"/api/older-adults/{older_adult_id}/recommendations",
+                params={
+                    "limit": safe_limit,
+                    **({"location": location.strip()} if location and location.strip() else {}),
+                    **({"interest": interest.strip()} if interest and interest.strip() else {}),
+                    **({"max_cost": max_cost} if max_cost is not None else {}),
+                },
+            )
+            return {"ok": True, **result}
+        except PeiPalApiError as error:
+            return _error(error)
+
+    @mcp.tool()
     async def list_households() -> dict[str, Any]:
         """List households available to the authenticated demo user."""
         try:

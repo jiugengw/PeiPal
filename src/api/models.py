@@ -122,12 +122,46 @@ class PlanDecisionRequest(BaseModel):
     reason: str | None = Field(default=None, max_length=2_000)
 
 
+class DecisionDeliveryResponse(BaseModel):
+    recipient_role: Literal["family_member", "older_adult"]
+    name: str
+    status: Literal["sent", "already_sent", "failed"]
+    provider_id: str | None = None
+    error: str | None = None
+
+
 class PlanDecisionResponse(BaseModel):
     plan_id: int
     status: Literal["approved", "rejected"]
     decided_by: str
     decided_at: datetime
     message: str
+    deliveries: list[DecisionDeliveryResponse] = []
+
+
+class DecisionDeliveryListResponse(BaseModel):
+    deliveries: list[DecisionDeliveryResponse]
+
+
+class PlanDecisionNotificationResponse(BaseModel):
+    id: int
+    plan_id: int
+    recipient_role: Literal["family_member", "older_adult"]
+    family_member_id: int | None = None
+    older_adult_id: int | None = None
+    recipient_name: str
+    recipient_email: str | None = None
+    status: Literal["pending", "sent", "failed"]
+    provider_id: str | None = None
+    error_message: str | None = None
+    attempted_at: datetime | None = None
+    sent_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PlanDecisionNotificationListResponse(BaseModel):
+    notifications: list[PlanDecisionNotificationResponse]
 
 
 class SupportOfferCreate(BaseModel):

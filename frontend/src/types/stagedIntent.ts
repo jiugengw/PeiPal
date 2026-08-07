@@ -8,23 +8,9 @@ import type { components } from "@/generated/api";
  * so the spoken path and the clicked path run identical code.
  */
 export type PlanStatusIntent = components["schemas"]["PlanUpdate"]["status"];
-export type SupportTypeIntent =
-  components["schemas"]["SupportOfferCreate"]["support_type"];
-
 export type StagedIntentPayload =
   | { kind: "review_plan" }
-  | { kind: "confirm_plan_status"; planId: number; status: PlanStatusIntent }
-  | {
-      kind: "select_notification_recipients";
-      planId: number;
-      contactIds: number[];
-    }
-  | {
-      kind: "offer_support";
-      planId: number;
-      supportType: SupportTypeIntent;
-      note: string;
-    };
+  | { kind: "confirm_plan_status"; planId: number; status: PlanStatusIntent };
 
 export type StagedIntentKind = StagedIntentPayload["kind"];
 

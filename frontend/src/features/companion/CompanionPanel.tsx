@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { Mic, MicOff, MessageSquare, Pause, Send, Square, X } from "lucide-react";
-import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { useStagedIntentContext } from "@/hooks/useStagedIntent";
 import { ApprovalPanel } from "@/features/companion/ApprovalPanel";
 import { SpeechToggle } from "@/features/companion/SpeechToggle";
@@ -12,8 +11,7 @@ import {
 
 export function CompanionPanel() {
   const companion = useCompanionSession();
-  const { intent } = useStagedIntentContext();
-  const { familyMembers } = useSetupProgress();
+  useStagedIntentContext();
   const [isOpen, setIsOpen] = useState(false);
   const [typedMessage, setTypedMessage] = useState("");
 
@@ -34,12 +32,7 @@ export function CompanionPanel() {
     setTypedMessage("");
   }
 
-  const recipientNames =
-    intent?.kind === "select_notification_recipients"
-      ? familyMembers
-          .filter((member) => intent.contactIds.includes(member.id))
-          .map((member) => member.name)
-      : [];
+  const recipientNames: string[] = [];
 
   return (
     <aside

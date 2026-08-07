@@ -5,9 +5,9 @@ from pydantic import ValidationError
 from types import SimpleNamespace
 
 from src.api.main import app
-from src.api.models import OlderAdultCreate, PlanCreate, PlanNotificationCreate, PlanUpdate, SupportOfferCreate
+from src.api.models import OlderAdultCreate, PlanCreate, PlanUpdate
 from src.api import routes
-from src.api.routes import create_support_offer, get_activity, send_plan_notifications, update_plan, withdraw_support_offer
+from src.api.routes import get_activity, update_plan
 
 
 client = TestClient(app)
@@ -16,22 +16,26 @@ client = TestClient(app)
 @pytest.mark.parametrize(
     "method,path",
     [
+        ("get", "/api/me"),
         ("get", "/api/families"),
         ("get", "/api/families/1"),
+        ("get", "/api/families/1/family-members"),
+        ("post", "/api/family-members"),
+        ("patch", "/api/family-members/1"),
+        ("delete", "/api/family-members/1"),
         ("get", "/api/older-adults/1"),
         ("patch", "/api/older-adults/1"),
         ("post", "/api/plans"),
         ("get", "/api/plans?family_id=1"),
         ("get", "/api/plans/1"),
         ("patch", "/api/plans/1"),
-        ("post", "/api/plans/1/support-offers"),
-        ("get", "/api/plans/1/support-offers"),
-        ("post", "/api/plans/1/notifications"),
-        ("get", "/api/plans/1/notifications"),
+        ("post", "/api/plans/1/coordination"),
+        ("get", "/api/plans/1/coordination"),
+        ("post", "/api/plans/1/complete"),
         ("post", "/api/voice/session"),
     ],
 )
-def test_core_workflow_requires_authentication(method, path):
+def test_protected_routes_require_authentication(method, path):
     response = getattr(client, method)(path)
 
     assert response.status_code == 401
@@ -42,47 +46,62 @@ def test_plan_create_requires_the_three_relationship_ids():
         PlanCreate(family_id=1, older_adult_id=1)
 
 
-def test_support_offer_rejects_unknown_support_type():
-    with pytest.raises(ValidationError):
-        SupportOfferCreate(support_type="send_money")
+def test_an_older_adult_needs_only_a_family_and_a_name():
+    """Sharing modes are gone: every plan goes to the whole family."""
 
-
-def test_older_adult_sharing_mode_defaults_to_family_approval():
     profile = OlderAdultCreate(family_id=1, name="Mary Lim")
 
-    assert profile.sharing_mode == "family_approval"
+    assert profile.family_id == 1
+    assert not hasattr(profile, "sharing_mode")
 
 
-def test_plan_notification_requires_at_least_one_contact():
-    with pytest.raises(ValidationError):
-        PlanNotificationCreate(family_member_ids=[])
+def test_cancelling_is_the_only_direct_status_change():
+    """Approving, rejecting, and completing all belong to coordination."""
+
+    PlanUpdate(status="cancelled")
+    for blocked in ["coordinating", "ready", "completed", "rejected", "draft"]:
+        with pytest.raises(ValidationError):
+            PlanUpdate(status=blocked)
 
 
 @pytest.mark.parametrize(
     "path,method,status_code,schema_name",
     [
+        ("/api/me", "get", "200", "ViewerResponse"),
         ("/api/families", "get", "200", "FamilyListResponse"),
         ("/api/families/{family_id}", "get", "200", "FamilyResponse"),
         ("/api/families/{family_id}/older-adults", "get", "200", "OlderAdultListResponse"),
-        ("/api/older-adults/{older_adult_id}", "patch", "200", "OlderAdultResponse"),
         ("/api/families/{family_id}/family-members", "get", "200", "FamilyMemberListResponse"),
         ("/api/family-members/{family_member_id}", "patch", "200", "FamilyMemberResponse"),
         ("/api/plans", "post", "201", "PlanResponse"),
-        ("/api/plans", "get", "200", "PlanListResponse"),
-        ("/api/plans/{plan_id}", "get", "200", "PlanResponse"),
         ("/api/plans/{plan_id}", "patch", "200", "PlanResponse"),
-        ("/api/plans/{plan_id}/support-offers", "post", "201", "SupportOfferResponse"),
-        ("/api/plans/{plan_id}/support-offers", "get", "200", "SupportOfferListResponse"),
-        ("/api/plans/{plan_id}/notifications", "post", "200", "NotificationDeliveryListResponse"),
-        ("/api/plans/{plan_id}/notifications", "get", "200", "PlanNotificationListResponse"),
+        ("/api/plans/{plan_id}/coordination", "post", "200", "CoordinationLaunchResponse"),
+        ("/api/plans/{plan_id}/coordination", "get", "200", "CoordinationStateResponse"),
+        ("/api/coordination/{token}", "get", "200", "CoordinationStateResponse"),
+        ("/api/coordination/{token}/tasks/{task_type}", "post", "200", "CoordinationStateResponse"),
         ("/api/activities/{activity_id}", "get", "200", "ActivityResponse"),
-        ("/api/voice/session", "post", "200", "VoiceSessionResponse"),
     ],
 )
-def test_setup_routes_publish_typed_openapi_responses(path, method, status_code, schema_name):
-    response_schema = app.openapi()["paths"][path][method]["responses"][status_code]["content"]["application/json"]["schema"]
+def test_routes_publish_typed_openapi_responses(path, method, status_code, schema_name):
+    schema = app.openapi()["paths"][path][method]["responses"][status_code]["content"]["application/json"]["schema"]
 
-    assert response_schema["$ref"] == f"#/components/schemas/{schema_name}"
+    assert schema["$ref"] == f"#/components/schemas/{schema_name}"
+
+
+def test_no_trusted_contact_routes_remain():
+    paths = app.openapi()["paths"]
+
+    assert not [path for path in paths if "trusted" in path]
+    assert not [name for name in app.openapi()["components"]["schemas"] if "Trusted" in name]
+
+
+def test_coordination_links_are_reachable_without_a_session():
+    """Family members hold no account, so their link carries the identity."""
+
+    paths = app.openapi()["paths"]
+    for path in ["/api/coordination/{token}", "/api/coordination/{token}/tasks/{task_type}"]:
+        for operation in paths[path].values():
+            assert "security" not in operation
 
 
 def test_activity_detail_returns_an_expired_activity_for_existing_plans():
@@ -106,49 +125,6 @@ def test_activity_detail_returns_an_expired_activity_for_existing_plans():
     assert get_activity(7, Client()) == activity
 
 
-def test_withdrawn_support_offer_is_reactivated(monkeypatch):
-    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-    updated_values = {}
-
-    class Query:
-        def __init__(self, table):
-            self.table = table
-            self.operation = "select"
-
-        def select(self, *_args): return self
-        def eq(self, *_args): return self
-        def limit(self, *_args): return self
-        def update(self, values):
-            self.operation = "update"
-            updated_values.update(values)
-            return self
-        def execute(self):
-            if self.table == "plans":
-                return SimpleNamespace(data=[{"status": "shared"}])
-            if self.operation == "select":
-                return SimpleNamespace(data=[{"id": 4, "status": "withdrawn"}])
-            return SimpleNamespace(data=[{
-                "id": 4,
-                "plan_id": 9,
-                "offered_by": "user-1",
-                **updated_values,
-            }])
-
-    class Client:
-        def table(self, name): return Query(name)
-
-    result = create_support_offer(
-        9,
-        SupportOfferCreate(support_type="transport", note="I can drive."),
-        SimpleNamespace(id="user-1"),
-        Client(),
-    )
-
-    assert result["id"] == 4
-    assert updated_values["status"] == "offered"
-    assert updated_values["note"] == "I can drive."
-
-
 class QueueQuery:
     def __init__(self, responses):
         self.responses = responses
@@ -168,146 +144,30 @@ class QueueClient:
     def table(self, _name): return QueueQuery(self.responses)
 
 
-def test_plan_can_move_from_awaiting_approval_to_shared(monkeypatch):
+def test_an_active_plan_can_be_cancelled(monkeypatch):
     monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-    monkeypatch.setattr(routes, "require_family_owner", lambda *_args: None)
-    shared = {"id": 9, "family_id": 1, "status": "shared"}
+    cancelled = {"id": 9, "family_id": 1, "status": "cancelled"}
 
     result = update_plan(
         9,
-        PlanUpdate(status="shared"),
+        PlanUpdate(status="cancelled"),
         SimpleNamespace(id="user-1"),
-        QueueClient([[{"status": "awaiting_approval"}], [shared]]),
+        QueueClient([[{"status": "coordinating"}], [cancelled]]),
     )
 
-    assert result == shared
+    assert result == cancelled
 
 
-def test_plan_rejects_an_invalid_status_transition(monkeypatch):
+def test_a_settled_plan_cannot_be_cancelled_again(monkeypatch):
     monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
 
-    with pytest.raises(HTTPException) as error:
-        update_plan(
-            9,
-            PlanUpdate(status="awaiting_approval"),
-            SimpleNamespace(id="user-1"),
-            QueueClient([[{"status": "shared"}]]),
-        )
+    for settled in ["completed", "rejected", "cancelled"]:
+        with pytest.raises(HTTPException) as error:
+            update_plan(
+                9,
+                PlanUpdate(status="cancelled"),
+                SimpleNamespace(id="user-1"),
+                QueueClient([[{"status": settled}]]),
+            )
 
-    assert error.value.status_code == 409
-
-
-def test_notifications_reject_a_plan_that_is_not_shared(monkeypatch):
-    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-
-    with pytest.raises(HTTPException) as error:
-        send_plan_notifications(
-            9,
-            PlanNotificationCreate(family_member_ids=[1]),
-            SimpleNamespace(id="user-1"),
-            QueueClient([[{"status": "draft", "older_adult_id": 2, "activity_id": 3}]]),
-        )
-
-    assert error.value.status_code == 409
-
-
-def test_notifications_preserve_sent_contacts_and_report_partial_failure(monkeypatch):
-    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-    monkeypatch.setattr(routes, "send_plan_email", lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("provider failed")))
-    client = QueueClient([
-        [{"status": "shared", "older_adult_id": 2, "activity_id": 3}],
-        [{"id": 1, "name": "Anna", "email": "anna@example.com"}, {"id": 2, "name": "David", "email": "david@example.com"}],
-        [{"name": "Mary", "preferred_name": "Mary"}],
-        [{"name": "Yoga", "location": "Bishan", "start_at": "2030-01-01", "info_link": "https://example.com"}],
-        [{"id": 10, "status": "sent"}],
-        [{"id": 11, "status": "failed"}],
-        [{}],
-        [{}],
-    ])
-
-    result = send_plan_notifications(
-        9,
-        PlanNotificationCreate(family_member_ids=[1, 2]),
-        SimpleNamespace(id="user-1"),
-        client,
-    )
-
-    assert result["deliveries"] == [
-        {"family_member_id": 1, "name": "Anna", "status": "already_sent"},
-        {"family_member_id": 2, "name": "David", "status": "failed", "error": "Email delivery failed."},
-    ]
-
-
-def test_support_rejects_non_shared_plan(monkeypatch):
-    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-
-    with pytest.raises(HTTPException) as error:
-        create_support_offer(
-            9,
-            SupportOfferCreate(support_type="join"),
-            SimpleNamespace(id="user-1"),
-            QueueClient([[{"status": "draft"}]]),
-        )
-
-    assert error.value.status_code == 409
-
-
-def test_support_rejects_duplicate_active_offer(monkeypatch):
-    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-
-    with pytest.raises(HTTPException) as error:
-        create_support_offer(
-            9,
-            SupportOfferCreate(support_type="join"),
-            SimpleNamespace(id="user-1"),
-            QueueClient([[{"status": "shared"}], [{"id": 4, "status": "offered"}]]),
-        )
-
-    assert error.value.status_code == 409
-
-
-def test_user_cannot_withdraw_another_accounts_support(monkeypatch):
-    monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-
-    with pytest.raises(HTTPException) as error:
-        withdraw_support_offer(
-            4,
-            SimpleNamespace(id="user-1"),
-            QueueClient([[{"plan_id": 9, "offered_by": "user-2"}]]),
-        )
-
-    assert error.value.status_code == 403
-
-
-def test_no_trusted_contact_routes_remain():
-    paths = app.openapi()["paths"]
-
-    assert not [path for path in paths if "trusted" in path]
-    assert not [name for name in app.openapi()["components"]["schemas"] if "Trusted" in name]
-
-
-def test_family_decision_links_are_reachable_without_a_session():
-    """Family members are reached by email and may hold no account."""
-
-    for method, path in [("get", "/api/family-decisions/some-token"), ("post", "/api/family-decisions/some-token")]:
-        operation = app.openapi()["paths"]["/api/family-decisions/{token}"][method]
-
-        assert "security" not in operation
-
-
-@pytest.mark.parametrize(
-    "method,path",
-    [
-        ("get", "/api/families/1/family-members"),
-        ("post", "/api/family-members"),
-        ("patch", "/api/family-members/1"),
-        ("delete", "/api/family-members/1"),
-        ("post", "/api/families/1/verify-email"),
-        ("post", "/api/plans/1/decision-notifications"),
-        ("get", "/api/plans/1/decision-notifications"),
-    ],
-)
-def test_family_routes_require_authentication(method, path):
-    response = getattr(client, method)(path)
-
-    assert response.status_code == 401
+        assert error.value.status_code == 409

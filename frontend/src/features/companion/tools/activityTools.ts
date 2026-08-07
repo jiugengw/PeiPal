@@ -92,7 +92,7 @@ export function createActivityTools({
         "List the family's plans, with the ids needed for any plan action.",
       parameters: z.object({
         status: z
-          .enum(["draft", "awaiting_approval", "shared", "cancelled"])
+          .enum(["draft", "coordinating", "ready", "completed", "rejected", "cancelled"])
           .nullable()
           .optional(),
       }),

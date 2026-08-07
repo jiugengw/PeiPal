@@ -9,14 +9,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class FamilyCreate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family", "owner_email": "anna@example.com"}]})
+    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family"}]})
 
     name: str = Field(min_length=1, max_length=120)
-    owner_email: EmailStr | None = None
-
-
-class FamilyEmailVerification(BaseModel):
-    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class FamilyUpdate(BaseModel):
@@ -33,7 +28,6 @@ class OlderAdultCreate(BaseModel):
         "email": "mary@example.com",
         "mobility_notes": "Prefers seated activities",
         "transport_notes": "Family can help arrange transport",
-        "sharing_mode": "family_approval",
     }]})
 
     family_id: int
@@ -47,7 +41,6 @@ class OlderAdultCreate(BaseModel):
     )
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
-    sharing_mode: Literal["direct", "family_approval"] = "family_approval"
 
 
 class OlderAdultUpdate(BaseModel):
@@ -58,7 +51,6 @@ class OlderAdultUpdate(BaseModel):
     email: EmailStr | None = None
     mobility_notes: str | None = Field(default=None, max_length=2_000)
     transport_notes: str | None = Field(default=None, max_length=2_000)
-    sharing_mode: Literal["direct", "family_approval"] | None = None
 
 
 class FamilyMemberRelationship(BaseModel):
@@ -108,13 +100,15 @@ class PlanCreate(BaseModel):
 
 
 class PlanUpdate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [
-        {"status": "awaiting_approval"},
-        {"status": "approved"},
-        {"status": "cancelled"},
-    ]})
+    """Only cancellation is a direct status change.
 
-    status: Literal["awaiting_approval", "approved", "rejected", "shared", "cancelled"]
+    Asking the family, approving, rejecting, and completing all happen through
+    the coordination endpoints, so no single account can shortcut them.
+    """
+
+    model_config = ConfigDict(json_schema_extra={"examples": [{"status": "cancelled"}]})
+
+    status: Literal["cancelled"]
 
 
 class PlanDecisionRequest(BaseModel):
@@ -189,6 +183,75 @@ class PlanNotificationCreate(BaseModel):
     family_member_ids: list[int] = Field(min_length=1, max_length=20)
 
 
+class CoordinationTaskResponse(BaseModel):
+    task_type: Literal["approval", "registration", "transport"]
+    status: Literal["open", "claimed", "done", "not_needed", "approved", "rejected"]
+    owner_name: str | None = None
+    decided_by_name: str | None = None
+    reason: str | None = None
+    version: int
+
+
+class CoordinationEventResponse(BaseModel):
+    task_type: Literal["approval", "registration", "transport"] | None = None
+    action: str
+    actor_name: str
+    detail: str | None = None
+    created_at: datetime
+
+
+class CoordinationActivityResponse(BaseModel):
+    name: str
+    location: str
+    start_at: datetime
+    info_link: str
+
+
+class CoordinationStateResponse(BaseModel):
+    """The shared view of a plan. Never carries private contact details."""
+
+    plan_id: int
+    plan_status: Literal["draft", "coordinating", "ready", "completed", "rejected", "cancelled"]
+    older_adult: str
+    activity: CoordinationActivityResponse
+    tasks: list[CoordinationTaskResponse]
+    events: list[CoordinationEventResponse]
+    responding_as: str | None = None
+
+
+class CoordinationActionRequest(BaseModel):
+    action: Literal["approve", "reject", "claim", "take_over", "release", "complete", "not_needed"]
+    expected_version: int
+    reason: str | None = Field(default=None, max_length=2_000)
+
+
+class CoordinationLaunchResponse(BaseModel):
+    plan_id: int
+    plan_status: str
+    deliveries: list["DecisionDeliveryResponse"]
+    message: str
+
+
+class SignInCodeRequest(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"email": "mary@example.com"}]})
+
+    email: EmailStr
+
+
+class SignInCodeResponse(BaseModel):
+    sent: bool
+    message: str
+
+
+class ViewerResponse(BaseModel):
+    """Which kind of person is signed in, and what they may act on."""
+
+    role: Literal["organizer", "older_adult", "unknown"]
+    family_id: int | None = None
+    older_adult_id: int | None = None
+    display_name: str | None = None
+
+
 class VoiceSessionResponse(BaseModel):
     client_secret: str
     expires_at: int | None = None
@@ -199,12 +262,6 @@ class FamilyResponse(FamilyCreate):
     id: int
     created_by: str
     created_at: datetime
-    owner_email_verified_at: datetime | None = None
-
-
-class FamilyVerificationResponse(BaseModel):
-    verified: bool
-    message: str
 
 
 class OlderAdultResponse(OlderAdultCreate):
@@ -274,15 +331,14 @@ class PlanResponse(BaseModel):
     family_id: int
     older_adult_id: int
     activity_id: int
-    status: Literal["draft", "awaiting_approval", "approved", "rejected", "shared", "cancelled"]
+    status: Literal["draft", "coordinating", "ready", "completed", "rejected", "cancelled"]
     created_by: str
     approved_by: str | None = None
     approved_at: datetime | None = None
     shared_at: datetime | None = None
     cancelled_at: datetime | None = None
-    decision_by_family_member_id: int | None = None
-    decided_at: datetime | None = None
-    decision_reason: str | None = None
+    ready_at: datetime | None = None
+    completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

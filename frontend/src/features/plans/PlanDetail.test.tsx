@@ -17,7 +17,7 @@ vi.mock("@/features/setup/useSetupProgress", () => ({
 
 const mockedProgress = vi.mocked(useSetupProgress);
 
-function planResponse(status: "draft" | "awaiting_approval" | "shared" | "cancelled") {
+function planResponse(status: "draft" | "coordinating" | "ready" | "cancelled") {
   return {
     id: 9,
     family_id: 1,
@@ -58,7 +58,7 @@ function renderPlan() {
   );
 }
 
-function mockPlanLoad(status: "draft" | "awaiting_approval" | "shared" | "cancelled") {
+function mockPlanLoad(status: "draft" | "coordinating" | "ready" | "cancelled") {
   return vi.spyOn(fetchClient, "GET")
     .mockResolvedValueOnce({
       data: planResponse(status),
@@ -78,7 +78,6 @@ describe("PlanDetail", () => {
         family_id: 1,
         name: "Mary Lim",
         preferred_name: "Mary",
-        sharing_mode: "family_approval",
       },
     } as never);
   });
@@ -96,40 +95,60 @@ describe("PlanDetail", () => {
     });
   });
 
-  it("moves a family-approval draft to awaiting approval", async () => {
+  it("asks the whole family in one action", async () => {
     const user = userEvent.setup();
     mockPlanLoad("draft");
-    const patch = vi.spyOn(fetchClient, "PATCH").mockResolvedValueOnce({
-      data: planResponse("awaiting_approval"),
+    const post = vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
+      data: {
+        plan_id: 9,
+        plan_status: "coordinating",
+        deliveries: [
+          { recipient_role: "family_member", name: "Anna Lim", status: "sent" },
+        ],
+        message: "Your whole family has been asked.",
+      },
       response: new Response(null, { status: 200 }),
     } as never);
     renderPlan();
 
-    await user.click(await screen.findByRole("button", { name: /ask for family approval/i }));
-    expect(patch).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: /send for family review/i }));
+    await user.click(await screen.findByRole("button", { name: /ask my family/i }));
 
-    await waitFor(() => expect(patch).toHaveBeenCalledWith("/api/plans/{plan_id}", {
-      params: { path: { plan_id: 9 } },
-      body: { status: "awaiting_approval" },
-    }));
-    expect(await screen.findByRole("heading", { name: /waiting for a family decision/i })).toBeVisible();
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/plans/{plan_id}/coordination", {
+        params: { path: { plan_id: 9 } },
+      }),
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /whole family has been asked/i,
+    );
   });
 
-  it("explains when direct sharing skips family approval", async () => {
-    mockedProgress.mockReturnValue({
-      olderAdult: { name: "Mary Lim", sharing_mode: "direct" },
+  it("says plainly when nobody could be emailed", async () => {
+    const user = userEvent.setup();
+    mockPlanLoad("draft");
+    vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
+      data: {
+        plan_id: 9,
+        plan_status: "coordinating",
+        deliveries: [
+          { recipient_role: "family_member", name: "Anna Lim", status: "failed" },
+        ],
+        message: "Nobody could be emailed. You can try again once email is working.",
+      },
+      response: new Response(null, { status: 200 }),
     } as never);
-    mockPlanLoad("shared");
     renderPlan();
 
-    expect(await screen.findByText(/family approval was skipped/i)).toBeVisible();
-    expect(screen.queryByRole("button", { name: /ask for family approval/i })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /ask my family/i }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /nobody could be emailed/i,
+    );
   });
 
   it("requires confirmation before cancelling an active plan", async () => {
     const user = userEvent.setup();
-    mockPlanLoad("shared");
+    mockPlanLoad("ready");
     const patch = vi.spyOn(fetchClient, "PATCH").mockResolvedValueOnce({
       data: planResponse("cancelled"),
       response: new Response(null, { status: 200 }),
@@ -149,20 +168,21 @@ describe("PlanDetail", () => {
 
   it("refetches and explains a stale lifecycle conflict", async () => {
     const user = userEvent.setup();
-    mockPlanLoad("draft").mockResolvedValueOnce({
-      data: planResponse("awaiting_approval"),
+    mockPlanLoad("ready").mockResolvedValueOnce({
+      data: planResponse("cancelled"),
       response: new Response(null, { status: 200 }),
     } as never);
     vi.spyOn(fetchClient, "PATCH").mockResolvedValueOnce({
-      error: { detail: "Cannot change a plan from awaiting_approval to awaiting_approval." },
+      error: { detail: "Cannot change a plan from cancelled to cancelled." },
       response: new Response(null, { status: 409 }),
     } as never);
     renderPlan();
 
-    await user.click(await screen.findByRole("button", { name: /ask for family approval/i }));
-    await user.click(screen.getByRole("button", { name: /send for family review/i }));
+    await user.click(await screen.findByRole("button", { name: /^cancel plan$/i }));
+    await user.click(screen.getByRole("button", { name: /confirm cancellation/i }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent(/changed elsewhere/i);
-    await waitFor(() => expect(screen.getByRole("heading", { name: /waiting for a family decision/i })).toBeVisible());
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /changed elsewhere/i,
+    );
   });
 });

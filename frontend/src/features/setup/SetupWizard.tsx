@@ -1,6 +1,5 @@
 import type { components } from "@/generated/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { SetupProgress } from "@/features/setup/SetupProgress";
 import {
@@ -10,6 +9,7 @@ import {
 } from "@/features/setup/api/setupQueries";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { fetchClient } from "@/lib/fetchClient";
+import { sendSignInLink } from "@/features/auth/sendSignInLink";
 
 type OlderAdultDraft = components["schemas"]["OlderAdultCreate"];
 type OlderAdultUpdate = components["schemas"]["OlderAdultUpdate"];
@@ -62,47 +62,27 @@ function SetupWizardForm({
   progress: ReturnType<typeof useSetupProgress>;
 }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(() => {
-    if (progress.olderAdult) return 4;
-    if (!progress.family) return 0;
-    return progress.family.owner_email && !progress.family.owner_email_verified_at
-      ? 1
-      : 2;
-  });
+  const [currentStep, setCurrentStep] = useState(
+    progress.olderAdult ? 2 : progress.family ? 1 : 0,
+  );
   const [familyName, setFamilyName] = useState(progress.family?.name ?? "");
-  const [ownerEmail, setOwnerEmail] = useState(progress.family?.owner_email ?? "");
-  const [familyId, setFamilyId] = useState(progress.family?.id ?? 0);
-  const [verificationCode, setVerificationCode] = useState("");
-  /** Set when the family was created but the code email could not be sent. */
-  const [verificationUndelivered, setVerificationUndelivered] = useState(false);
   const [profile, setProfile] = useState<OlderAdultDraft>({
     family_id: progress.family?.id ?? 0,
     name: progress.olderAdult?.name ?? "",
     preferred_name: progress.olderAdult?.preferred_name ?? "",
     age: progress.olderAdult?.age ?? null,
     language: progress.olderAdult?.language ?? "",
+    email: progress.olderAdult?.email ?? "",
     mobility_notes: progress.olderAdult?.mobility_notes ?? "",
     transport_notes: progress.olderAdult?.transport_notes ?? "",
-    sharing_mode: progress.olderAdult?.sharing_mode ?? "family_approval",
   });
   const [saveError, setSaveError] = useState("");
 
   const createFamily = useMutation({
-    mutationFn: async ({ name, email }: { name: string; email: string }) => {
+    mutationFn: async (name: string) => {
       const { data, error } = await fetchClient.POST("/api/families", {
-        body: { name, owner_email: email },
+        body: { name },
       });
-      if (error) throw error;
-      return data;
-    },
-  });
-  const verifyEmail = useMutation({
-    mutationFn: async (code: string) => {
-      const { data, error } = await fetchClient.POST(
-        "/api/families/{family_id}/verify-email",
-        { params: { path: { family_id: familyId } }, body: { code } },
-      );
       if (error) throw error;
       return data;
     },
@@ -128,9 +108,9 @@ function SetupWizardForm({
           preferred_name: draft.preferred_name,
           age: draft.age,
           language: draft.language,
+          email: draft.email,
           mobility_notes: draft.mobility_notes,
           transport_notes: draft.transport_notes,
-          sharing_mode: draft.sharing_mode,
         };
         const { data, error } = await fetchClient.PATCH(
           "/api/older-adults/{older_adult_id}",
@@ -164,24 +144,16 @@ function SetupWizardForm({
         await queryClient.invalidateQueries({
           queryKey: familiesQueryOptions().queryKey,
         });
-        setCurrentStep(progress.family.owner_email_verified_at ? 2 : 1);
+        setCurrentStep(1);
         return;
       }
 
-      const saved = await createFamily.mutateAsync({
-        name: familyName.trim(),
-        email: ownerEmail.trim().toLowerCase(),
-      });
+      const saved = await createFamily.mutateAsync(familyName.trim());
       await queryClient.invalidateQueries({
         queryKey: familiesQueryOptions().queryKey,
       });
       if (saved) {
-        setFamilyId(saved.id);
         setProfile((value) => ({ ...value, family_id: saved.id }));
-        setVerificationUndelivered(
-          "verification_delivery_failed" in saved &&
-            Boolean(saved.verification_delivery_failed),
-        );
       }
       setCurrentStep(1);
     } catch (error) {
@@ -189,27 +161,7 @@ function SetupWizardForm({
     }
   }
 
-  async function submitVerification(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaveError("");
-    try {
-      await verifyEmail.mutateAsync(verificationCode.trim());
-      await queryClient.invalidateQueries({
-        queryKey: familiesQueryOptions().queryKey,
-      });
-      setCurrentStep(2);
-    } catch (error) {
-      setSaveError(errorMessage(error));
-    }
-  }
-
-  function submitProfileDetails(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaveError("");
-    setCurrentStep(3);
-  }
-
-  async function submitSharing(event: FormEvent<HTMLFormElement>) {
+  async function submitProfileDetails(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveError("");
     try {
@@ -217,6 +169,7 @@ function SetupWizardForm({
         ...profile,
         family_id: progress.family?.id ?? profile.family_id,
         preferred_name: profile.preferred_name || null,
+        email: profile.email || null,
         language: profile.language || null,
         mobility_notes: profile.mobility_notes || null,
         transport_notes: profile.transport_notes || null,
@@ -226,7 +179,7 @@ function SetupWizardForm({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
         });
       }
-      setCurrentStep(4);
+      setCurrentStep(2);
     } catch (error) {
       setSaveError(errorMessage(error));
     }
@@ -235,7 +188,6 @@ function SetupWizardForm({
   const isSaving =
     createFamily.isPending ||
     updateFamily.isPending ||
-    verifyEmail.isPending ||
     saveProfile.isPending;
 
   return (
@@ -243,9 +195,9 @@ function SetupWizardForm({
       <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-14">
         <aside className="lg:pt-2">
           <p className="mb-5 max-w-[24ch] text-lg leading-relaxed text-foreground">
-            Five calm steps. You can come back and continue at any time.
+            Three calm steps. You can come back and continue at any time.
           </p>
-          <SetupProgress currentStep={currentStep} />
+          <SetupProgress currentStep={Math.min(currentStep, 2)} />
         </aside>
 
         <div className="max-w-[760px]">
@@ -267,27 +219,6 @@ function SetupWizardForm({
                 onChange={(event) => setFamilyName(event.target.value)}
                 placeholder="For example, Lim Family"
               />
-              {!progress.family ? (
-                <>
-                  <label className={`${labelClass} mt-6`} htmlFor="owner-email">
-                    Your email address
-                  </label>
-                  <p className="mt-1 text-base leading-relaxed text-foreground">
-                    We send a short code here to confirm the address before your
-                    family is set up.
-                  </p>
-                  <input
-                    className={fieldClass}
-                    id="owner-email"
-                    type="email"
-                    maxLength={320}
-                    required
-                    value={ownerEmail}
-                    onChange={(event) => setOwnerEmail(event.target.value)}
-                    placeholder="you@example.com"
-                  />
-                </>
-              ) : null}
               <FormActions
                 error={saveError}
                 isSaving={isSaving}
@@ -298,47 +229,8 @@ function SetupWizardForm({
             </form>
           ) : null}
 
-          {currentStep === 1 ? (
-            <form onSubmit={submitVerification}>
-              <StepHeading
-                title="Confirm your email address."
-                description={`We sent a six-digit code to ${ownerEmail || "your email address"}. Enter it below to finish creating your family.`}
-              />
-              {verificationUndelivered ? (
-                <p
-                  className="mb-6 rounded-2xl bg-muted p-5 text-base leading-relaxed font-bold text-foreground"
-                  role="alert"
-                >
-                  We could not send that email just now, so you may not receive a
-                  code. Your family was still created and you can continue, but
-                  invitations will not be delivered until email is working again.
-                </p>
-              ) : null}
-              <label className={labelClass} htmlFor="verification-code">
-                Six-digit code
-              </label>
-              <input
-                className={fieldClass}
-                id="verification-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="\d{6}"
-                maxLength={6}
-                required
-                value={verificationCode}
-                onChange={(event) => setVerificationCode(event.target.value)}
-                placeholder="123456"
-              />
-              <FormActions
-                back={() => setCurrentStep(0)}
-                error={saveError}
-                isSaving={isSaving}
-                primaryLabel="Verify and continue"
-              />
-            </form>
-          ) : null}
 
-          {currentStep === 2 ? (
+          {currentStep === 1 ? (
             <form onSubmit={submitProfileDetails}>
               <StepHeading
                 title="Tell us what makes support comfortable."
@@ -396,6 +288,22 @@ function SetupWizardForm({
                     }
                   />
                 </Field>
+                <Field label="Their email address" wide>
+                  <input
+                    className={fieldClass}
+                    type="email"
+                    maxLength={320}
+                    value={profile.email ?? ""}
+                    onChange={(event) =>
+                      setProfile({ ...profile, email: event.target.value })
+                    }
+                    placeholder="mary@example.com"
+                  />
+                  <span className="mt-1 block text-base font-normal leading-relaxed text-foreground">
+                    This becomes their sign-in. They receive a link by email each
+                    time and never need a password.
+                  </span>
+                </Field>
                 <Field label="Mobility notes" wide>
                   <textarea
                     className={fieldClass}
@@ -428,54 +336,34 @@ function SetupWizardForm({
                 </Field>
               </div>
               <FormActions
-                back={() => setCurrentStep(1)}
-                primaryLabel="Continue to sharing"
-              />
-            </form>
-          ) : null}
-
-          {currentStep === 3 ? (
-            <form onSubmit={submitSharing}>
-              <StepHeading
-                title="Who confirms before a plan is shared?"
-                description="This choice can be changed later. Nothing is sent while you are setting up."
-              />
-              <div className="space-y-3">
-                <SharingChoice
-                  checked={profile.sharing_mode === "family_approval"}
-                  title="Family reviews first"
-                  description="A family member reviews the plan before it is shared. Recommended for a supported start."
-                  onChange={() =>
-                    setProfile({ ...profile, sharing_mode: "family_approval" })
-                  }
-                />
-                <SharingChoice
-                  checked={profile.sharing_mode === "direct"}
-                  title="Share after personal confirmation"
-                  description="Plans are shared immediately after the older adult confirms them."
-                  onChange={() =>
-                    setProfile({ ...profile, sharing_mode: "direct" })
-                  }
-                />
-              </div>
-              <FormActions
-                back={() => setCurrentStep(2)}
+                back={() => setCurrentStep(0)}
                 error={saveError}
                 isSaving={isSaving}
-                primaryLabel="Save profile"
+                primaryLabel="Save and continue"
               />
             </form>
           ) : null}
 
-          {currentStep === 4 && progress.family ? (
-            <FamilyMembersStep
+
+          {currentStep === 3 ? (
+            <SetupComplete
+              olderAdults={progress.olderAdults}
+              onReview={() => setCurrentStep(2)}
+            />
+          ) : null}
+
+          {currentStep === 2 && progress.family ? (
+            <>
+              <OlderAdultAccessPanel olderAdults={progress.olderAdults} />
+              <FamilyMembersStep
               familyMembers={progress.familyMembers}
               familyId={progress.family.id}
               olderAdults={progress.olderAdults}
               queryClient={queryClient}
-              onBack={() => setCurrentStep(3)}
-              onFinish={() => void navigate({ to: "/discover" })}
-            />
+              onBack={() => setCurrentStep(1)}
+              onFinish={() => setCurrentStep(3)}
+              />
+            </>
           ) : null}
         </div>
       </div>
@@ -562,38 +450,6 @@ function FormActions({
   );
 }
 
-function SharingChoice({
-  checked,
-  title,
-  description,
-  onChange,
-}: {
-  checked: boolean;
-  title: string;
-  description: string;
-  onChange: () => void;
-}) {
-  return (
-    <label
-      className={`flex min-h-24 cursor-pointer gap-4 rounded-2xl border p-5 ${checked ? "border-primary bg-accent" : "border-input bg-background"}`}
-    >
-      <input
-        className="mt-1 size-5 flex-none accent-primary"
-        type="radio"
-        name="sharing-mode"
-        checked={checked}
-        onChange={onChange}
-      />
-      <span>
-        <strong className="block text-lg text-foreground">{title}</strong>
-        <span className="mt-1 block text-base leading-relaxed text-foreground">
-          {description}
-        </span>
-      </span>
-    </label>
-  );
-}
-
 function SetupStatus({
   message,
   action,
@@ -610,6 +466,121 @@ function SetupStatus({
         {action ? <div className="mt-5">{action}</div> : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * Hands each older adult their own way in. They sign in with a link to their
+ * email rather than a password, so no credential is ever shared with them.
+ */
+function OlderAdultAccessPanel({ olderAdults }: { olderAdults: OlderAdult[] }) {
+  const [sentTo, setSentTo] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const sendLink = useMutation({
+    mutationFn: (email: string) => sendSignInLink(email),
+  });
+
+  const withEmail = olderAdults.filter((person) => person.email);
+  if (withEmail.length === 0) return null;
+
+  async function send(email: string) {
+    setError("");
+    try {
+      await sendLink.mutateAsync(email);
+      setSentTo((current) => [...current, email]);
+    } catch (caught) {
+      setError(errorMessage(caught));
+    }
+  }
+
+  return (
+    <section className="mb-8 rounded-2xl bg-muted p-5 sm:p-7">
+      <h2 className="text-2xl font-bold text-foreground">Give them their own access</h2>
+      <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">
+        Each older adult gets an email with a six-digit code. They type it into
+        the sign-in page, and never need a password.
+      </p>
+      <ul className="mt-5 divide-y divide-border border-y border-border">
+        {withEmail.map((person) => (
+          <li
+            className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+            key={person.id}
+          >
+            <div>
+              <strong className="text-lg text-foreground">
+                {person.preferred_name || person.name}
+              </strong>
+              <p className="mt-1 text-base text-foreground">{person.email}</p>
+            </div>
+            {sentTo.includes(person.email ?? "") ? (
+              <p className="text-base font-bold text-foreground" role="status">
+                Link sent
+              </p>
+            ) : (
+              <button
+                className={secondaryButtonClass}
+                disabled={sendLink.isPending}
+                onClick={() => void send(person.email ?? "")}
+                type="button"
+              >
+                {sendLink.isPending ? "Sending\u2026" : "Send sign-in code"}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {error ? (
+        <p className="mt-4 font-bold text-foreground" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+/**
+ * The organizer's account exists to set the family up, so there is nowhere for
+ * them to go afterwards. Say so plainly, and point at the handover instead.
+ */
+function SetupComplete({
+  olderAdults,
+  onReview,
+}: {
+  olderAdults: OlderAdult[];
+  onReview: () => void;
+}) {
+  const names = olderAdults.map(
+    (person) => person.preferred_name || person.name,
+  );
+  const who = names.length ? names.join(" and ") : "your older adult";
+
+  return (
+    <div>
+      <StepHeading
+        title="Your family is ready."
+        description={`${who} can sign in with the code you sent, and start looking for activities. Everyone you added will be asked whenever they need support.`}
+      />
+      <div className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7">
+        <h2 className="text-xl font-bold text-foreground">What happens next</h2>
+        <ol className="mt-4 list-decimal space-y-3 pl-6 text-lg leading-relaxed text-foreground">
+          <li>{who} opens the sign-in link on their own device.</li>
+          <li>They find an activity and ask the family about it.</li>
+          <li>
+            Everyone you added is emailed at once. The first person to answer
+            decides, and anyone can offer to help.
+          </li>
+        </ol>
+        <p className="mt-5 text-base leading-relaxed text-foreground">
+          You can come back to this page at any time to change who is in the
+          family.
+        </p>
+      </div>
+      <div className="mt-8">
+        <button className={secondaryButtonClass} type="button" onClick={onReview}>
+          Change the family
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -11,53 +11,68 @@ Rather than sending a direct request to one person, PeiPal asks the entire famil
 ## The experience
 
 ```text
-Family member creates an account
+An organizer creates an account with an email and password
 → creates the family
-→ verifies their email
-→ adds older adults
-→ adds family members and relationships
-→ older adult chooses an activity
-→ requests approval or practical help
-→ all family members receive email links
-→ first approve/reject decision wins
-→ everyone, including the older adult, receives the result
+→ adds the older adults, each with their own email
+→ adds family members and how they are related
+→ each older adult gets a sign-in link, and never needs a password
+→ the older adult finds an activity and confirms it
+→ every family member is emailed their own link straight away
+→ the first person to approve or reject decides for everyone
+→ anyone can offer to sign them up or get them there
+→ the plan is ready once all three are settled, and done afterwards
 ```
 
-## Family-member roles
+## Who is who
 
-A **family** is the coordinating group. Two kinds of people belong to it:
+Three kinds of people, and only one of them has a password.
 
-- **Family accounts** are signed-in users. The person who creates the family becomes its **owner**; other accounts may be `family_member` or `caregiver`. Accounts manage setup and can share an approved plan.
-- **Family members** are the people the family can ask for support. They are records holding a name, an email address, and a relationship to each older adult. **They do not need an account** — they are reached by email and act through signed links.
+| | How they sign in | What they do |
+|---|---|---|
+| **Organizer** | Email and password | Owns the family group, adds older adults and family members |
+| **Older adult** | Their email is their login; a magic link each time, **never a password** | Finds activities, asks the family, sees how it is going |
+| **Family member** | **No account at all.** Their own link in every email | Approves, rejects, or offers to help |
 
-One family can support several older adults, and the relationship is stored per older adult. The same person can be a *daughter* to one older adult and a *sister* to another.
+Nobody ever hands over a password. The organizer keeps their own account, and
+each older adult gets their own way in, so setup actions are recorded honestly
+against the person who really did them.
 
-## Email verification
+One family can support several older adults, and the relationship is stored per
+older adult, so the same person can be a *daughter* to one and a *sister* to
+another.
 
-The family is created by one person, who enters their own email address. PeiPal sends a six-digit code to that address, and the family is only confirmed once the code is verified. Codes are stored as a hash, expire after 30 minutes, and a wrong or expired code never confirms the address.
+## What the family is asked
 
-Setup continues even when email delivery is unavailable, but the interface says so plainly, so nobody assumes invitations were sent when they were not.
+Asking the family creates three tasks everyone can see, and emails every family
+member their own link:
 
-## Approval link behaviour
+| Task | Rule |
+|---|---|
+| **Approval** | The first person to approve or reject decides for everyone. It cannot be handed on. |
+| **Signing up** | One person at a time. They can step back, hand it over, finish it, or the family can mark it not needed. |
+| **Getting there** | The same. |
 
-When an older adult asks for approval, **every** family member is emailed a link containing a random, single-use token. Only the hash of that token is stored, and it expires after seven days.
+Links carry a random token, stored only as a hash, and stay usable for the whole
+plan so family members can return to see how things are going. They expire seven
+days after the activity, and are revoked if the member is removed.
 
-The link opens a page that needs no account, showing who the plan is for, the activity, and approve and reject buttons.
+## First-decision-wins, and no lost work
 
-## First-decision-wins rule
+The first valid decision settles the request for the whole family. Any later
+attempt is told it has already been decided.
 
-The first valid decision settles the request for the whole family:
+Every change carries the version the page was showing. If two people act at the
+same moment, one succeeds and the other is refused and shown what actually
+happened, rather than quietly overwriting it. A rejection ends the plan outright.
 
-- The decision is applied with a guarded update that only matches a plan still `awaiting_approval`, so two simultaneous clicks cannot both win.
-- Any later decision returns “already decided”.
-- PeiPal records the decision, the family member who made it, the timestamp, and an optional reason.
-- A signed-in account cannot shortcut this; deciding belongs to the emailed link.
+A signed-in account cannot shortcut any of this. Approving, rejecting, and
+helping belong to the family members holding their links.
 
-Plans move through `draft → awaiting_approval → approved | rejected`, and an approved plan can then be `shared` so people can offer practical help. Any active plan can be `cancelled`.
+## Ready, then done
 
-## Booking and transport requests
-
-Alongside plain approval, an older adult can ask for **booking help** or **transport help**. Once a plan is shared, family members can each offer one small kind of support: joining, a reminder, transport, booking help, encouragement, or suggesting an easier alternative. No one is assigned the whole responsibility.
+A plan becomes **ready** the moment it is approved and both practical tasks are
+resolved. Afterwards the older adult marks it **done**. Cancelling is the only
+status change a signed-in account makes directly.
 
 ## Notification failure behaviour
 
@@ -69,12 +84,12 @@ Every recipient of a decision email gets its own delivery record, so a failure i
 
 ## What the prototype demonstrates
 
-- Family setup with a verified creator email
+- An organizer account, and passwordless sign-in for each older adult
 - Several older adults in one family, with a relationship per older adult
 - Nearby activity discovery, with mobility, language, and transport context
 - One request that reaches the whole family at once
-- First-decision-wins approval through account-free email links
-- Result emails to the whole family and to the older adult
+- First-decision-wins approval, and shared ownership of signing up and transport
+- A shared page every family member can return to, with the full history
 - Per-recipient email delivery tracking, including failures that can be retried
 - An optional browser voice companion that uses the same activity and plan workflow as the visible controls
 
@@ -84,14 +99,20 @@ Older adults may want to join in without feeling that they are burdening a parti
 
 ## Demo walkthrough
 
-1. Anna signs up and creates the **Lim Family**, entering her own email address.
-2. She receives a six-digit code and confirms the address.
-3. She adds her mother **Mary** as an older adult, with an optional email so Mary hears the outcome directly.
-4. She adds family members — herself as *Daughter of Mary*, her brother **David** as *Son of Mary* — each with an email address.
-5. Mary picks a quiet nearby activity and asks the family to approve it.
-6. Anna and David both receive an email with approve and reject links.
-7. David opens his link first and approves. Anna’s link now reports that the request has already been decided.
-8. Anna, David, and Mary all receive an email saying the activity was approved, who approved it, and when.
+1. Anna signs up with her email and password and creates the **Lim Family**.
+2. She adds her mother **Mary**, including Mary's own email address.
+3. She adds family members — herself as *Daughter of Mary*, her brother **David**
+   as *Son of Mary*.
+4. She presses **Send sign-in link**, and Mary taps it once on her tablet. Mary
+   is now signed in, with no password to remember.
+5. Mary finds a quiet nearby activity and confirms it. That one action asks
+   her whole family.
+6. Anna and David each receive their own link.
+7. David opens his and approves. Anna's link now shows the plan as approved, and
+   offers her the chance to help instead.
+8. Anna takes on getting Mary there. David marks signing up as not needed.
+9. The plan turns **ready**, and everyone can see who is doing what.
+10. After the activity, Mary marks it **done**.
 
 The final demo message:
 
@@ -99,6 +120,6 @@ The final demo message:
 
 ## Current scope
 
-The prototype focuses on coordination. It does not arrange transport, complete bookings, or track RSVP responses. Family members decide through their emailed links rather than through accounts of their own.
+The prototype focuses on coordination. It does not itself arrange transport or complete bookings: it records which family member has taken those on. Family members act through their emailed links rather than accounts of their own.
 
 Technical setup, API documentation, migrations, testing, and troubleshooting are in [DEVELOPMENT.md](DEVELOPMENT.md).

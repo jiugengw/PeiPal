@@ -15,10 +15,10 @@ export function createCommitTools({
       description:
         "Press the confirm button that is currently on screen. Only call this straight after the person agrees to it.",
       parameters: z.object({}),
-      // Emailing trusted contacts is the one step that reaches people outside
-      // the app, so it keeps a second explicit approval.
+      // Cancelling a plan is visible to the whole family, so it keeps a second
+      // explicit approval before the companion presses anything.
       needsApproval: async () =>
-        intentRef.current.intent?.kind === "select_notification_recipients",
+        intentRef.current.intent?.kind === "confirm_plan_status",
       execute: async () => {
         const intent = intentRef.current.intent;
         if (!intent)

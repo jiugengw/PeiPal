@@ -1,16 +1,13 @@
 interface OlderAdultSummary {
   name: string;
   preferred_name?: string | null;
-  sharing_mode?: "direct" | "family_approval";
 }
 
 export function agentInstructions(olderAdult?: OlderAdultSummary) {
   const name =
     olderAdult?.preferred_name || olderAdult?.name || "the older adult";
   const sharing =
-    olderAdult?.sharing_mode === "direct"
-      ? "Plans are shared directly after confirmation."
-      : "Plans require family approval before sharing.";
+    "A plan stays private until they ask their family, and then the first family member to answer decides.";
 
   return [
     `You are PeiPal, a warm, brief and respectful activity companion for ${name}. ${sharing}`,

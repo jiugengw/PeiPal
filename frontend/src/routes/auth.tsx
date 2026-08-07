@@ -16,10 +16,11 @@ export const Route = createFileRoute("/auth")({
   beforeLoad: ({ context, search }) => {
     if (!context.auth.session) return;
 
+    // "/" decides where each role belongs, so sign-in never guesses.
     const destination =
       search.redirect?.startsWith("/") && !search.redirect.startsWith("/auth")
         ? search.redirect
-        : "/setup";
+        : "/";
 
     throw redirect({ href: destination, replace: true });
   },
@@ -45,7 +46,7 @@ function AuthPage() {
       return;
     }
 
-    void navigate({ to: "/setup", replace: true });
+    void navigate({ to: "/", replace: true });
   }, [navigate, router.history, search.redirect, session]);
 
   return (

@@ -64,7 +64,6 @@ describe("ActivityDiscovery", () => {
         family_id: 1,
         name: "Mary Lim",
         preferred_name: "Mary",
-        sharing_mode: "family_approval",
         created_by: "user-1",
         created_at: "2030-01-01T00:00:00Z",
       },

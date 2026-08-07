@@ -2,6 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent } from "react";
 import { signIn } from "@/features/auth/signIn";
 import { signUp } from "@/features/auth/signUp";
+import { sendSignInLink } from "@/features/auth/sendSignInLink";
+import { signInWithCode } from "@/features/auth/signInWithCode";
 import { SupabaseConfigurationError } from "@/lib/supabase";
 
 type AuthMode = "login" | "signup";
@@ -33,7 +35,7 @@ export function AuthForm() {
     onSuccess: () => {
       setValues(emptyValues);
       setShowPassword(false);
-      setSuccessMessage("Signed in. Taking you to setup…");
+      setSuccessMessage("Signed in. Taking you to the right place…");
     },
     onError: (error) => {
       setSubmissionError(
@@ -318,7 +320,143 @@ export function AuthForm() {
             </p>
           ) : null}
         </form>
+        <MagicLinkPanel />
       </div>
     </div>
+  );
+}
+
+/**
+ * The way in for an older adult. Their email is their login, so they receive a
+ * link and a code rather than typing a password they would have to remember.
+ */
+function MagicLinkPanel() {
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const sendLink = useMutation({
+    mutationFn: () => sendSignInLink(email),
+    throwOnError: false,
+    onSuccess: () => {
+      setSent(true);
+      setError("");
+    },
+    onError: (caught) =>
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "We could not send that email. Check the address and try again.",
+      ),
+  });
+
+  const enterCode = useMutation({
+    mutationFn: () => signInWithCode(email, code),
+    throwOnError: false,
+    onError: () =>
+      setError("That code did not work. It may have expired, so ask for a new one."),
+  });
+
+  return (
+    <section className="mt-8 border-t border-border pt-8">
+      <h2 className="text-xl font-bold text-foreground">
+        Signing in without a password
+      </h2>
+      <p className="mt-2 text-base leading-relaxed text-foreground">
+        If your family set this up for you, enter your email and we will send you
+        a six-digit code to type in here.
+      </p>
+
+      {!sent ? (
+        <form
+          className="mt-4 flex flex-col gap-3 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError("");
+            sendLink.mutate();
+          }}
+        >
+          <label className="sr-only" htmlFor="magic-link-email">
+            Email me a sign-in link
+          </label>
+          <input
+            className="min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-lg text-foreground"
+            id="magic-link-email"
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+          />
+          <button
+            className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-xl border border-input bg-background px-6 font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
+            disabled={sendLink.isPending}
+            type="submit"
+          >
+            {sendLink.isPending ? "Sending\u2026" : "Email me a code"}
+          </button>
+        </form>
+      ) : (
+        <form
+          className="mt-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError("");
+            enterCode.mutate();
+          }}
+        >
+          <p
+            className="rounded-xl bg-muted p-[18px] leading-normal font-bold text-foreground"
+            role="status"
+          >
+            We sent a six-digit code to {email}. Type it in below.
+          </p>
+          <label
+            className="mt-5 block text-base font-extrabold text-foreground"
+            htmlFor="sign-in-code"
+          >
+            Six-digit code
+          </label>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+            <input
+              className="min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-2xl tracking-[0.3em] text-foreground"
+              id="sign-in-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={8}
+              required
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="123456"
+            />
+            <button
+              className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-xl bg-primary px-6 font-extrabold text-primary-foreground hover:bg-foreground disabled:opacity-50"
+              disabled={enterCode.isPending}
+              type="submit"
+            >
+              {enterCode.isPending ? "Checking\u2026" : "Sign me in"}
+            </button>
+          </div>
+          <button
+            className="mt-4 min-h-11 text-base font-bold text-foreground underline"
+            onClick={() => {
+              setSent(false);
+              setCode("");
+              setError("");
+            }}
+            type="button"
+          >
+            Use a different email address
+          </button>
+        </form>
+      )}
+
+      {error ? (
+        <p className="mt-4 font-bold text-foreground" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
   );
 }

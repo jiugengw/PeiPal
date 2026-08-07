@@ -31,6 +31,10 @@ OPENAPI_TAGS = [
         "description": "Manage the people a family can ask for support.",
     },
     {
+        "name": "Coordination",
+        "description": "Ask the whole family, and track approval, registration, and transport.",
+    },
+    {
         "name": "Plans",
         "description": "Create plans and move them through approval and sharing.",
     },

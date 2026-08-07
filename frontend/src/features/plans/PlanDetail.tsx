@@ -21,12 +21,12 @@ import {
   type PlanStatus,
 } from "@/features/plans/api/planQueries";
 import { planStatusLabels } from "@/features/plans/status";
-import { NotificationPanel } from "@/features/notifications/NotificationPanel";
+import { CoordinationProgress } from "@/features/coordination/CoordinationProgress";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function PlanDetail({ planId }: { planId: number }) {
   const queryClient = useQueryClient();
-  const { olderAdult, familyMembers = [] } = useSetupProgress();
+  const { olderAdult } = useSetupProgress();
   const hasValidPlanId = Number.isInteger(planId) && planId > 0;
   const planQuery = useQuery({
     ...planQueryOptions(planId),
@@ -43,21 +43,14 @@ export function PlanDetail({ planId }: { planId: number }) {
   const [updateNotice, setUpdateNotice] = useState("");
 
   const updateMutation = useMutation({
-    mutationFn: (status: Exclude<PlanStatus, "draft">) =>
-      updatePlanStatus(planId, status),
+    mutationFn: () => updatePlanStatus(planId, "cancelled"),
     onSuccess: (updatedPlan) => {
       queryClient.setQueryData(planQueryKey(planId), updatedPlan);
       void queryClient.invalidateQueries({
         queryKey: plansQueryKey(updatedPlan.family_id),
       });
       setConfirmingStatus(undefined);
-      setUpdateNotice(
-        updatedPlan.status === "awaiting_approval"
-          ? "The whole family has been asked to decide."
-          : updatedPlan.status === "cancelled"
-            ? "The plan has been cancelled."
-            : "The plan has been updated.",
-      );
+      setUpdateNotice("The plan has been cancelled.");
     },
     onError: (error) => {
       if (error instanceof PlanRequestError && error.status === 409) {
@@ -69,7 +62,7 @@ export function PlanDetail({ planId }: { planId: number }) {
 
   const staged = useStagedIntent(
     "confirm_plan_status",
-    (intent) => intent.planId === planId && intent.status !== "shared",
+    (intent) => intent.planId === planId,
   );
 
   const [appliedIntentId, setAppliedIntentId] = useState<string>();
@@ -79,11 +72,11 @@ export function PlanDetail({ planId }: { planId: number }) {
   if (staged && staged.id !== appliedIntentId) {
     setAppliedIntentId(staged.id);
     setUpdateNotice("");
-    setConfirmingStatus(staged.status as PlanStatusChange);
+    setConfirmingStatus("cancelled");
   }
 
   useStagedCommit(Boolean(staged) && Boolean(confirmingStatus), () => {
-    if (confirmingStatus) updateMutation.mutate(confirmingStatus);
+    if (confirmingStatus) updateMutation.mutate();
   });
 
   if (!hasValidPlanId) {
@@ -106,7 +99,7 @@ export function PlanDetail({ planId }: { planId: number }) {
 
   const activity = activityQuery.data ? toActivity(activityQuery.data) : null;
   const olderAdultName = olderAdult?.preferred_name || olderAdult?.name || "your family member";
-  const isActive = plan.status !== "cancelled" && plan.status !== "rejected";
+  const isActive = plan.status !== "cancelled" && plan.status !== "rejected" && plan.status !== "completed";
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -141,37 +134,22 @@ export function PlanDetail({ planId }: { planId: number }) {
               </>
             )}
           </div>
-          {plan.status === "shared" ? (
-            <NotificationPanel planId={plan.id} familyMembers={familyMembers} />
-          ) : null}
+          <CoordinationProgress planId={plan.id} planStatus={plan.status} />
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
           <div className="rounded-2xl bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
             <h2 className="text-xl font-bold text-foreground">{planStatusLabels[plan.status]}</h2>
-            <p className="mt-2 text-base leading-relaxed text-foreground">{statusExplanation(plan.status, olderAdult?.sharing_mode)}</p>
+            <p className="mt-2 text-base leading-relaxed text-foreground">{statusExplanation(plan.status)}</p>
 
             {updateNotice ? <p className="mt-4 rounded-xl bg-muted p-4 font-bold text-foreground" role="status">{updateNotice}</p> : null}
             {updateMutation.error && !(updateMutation.error instanceof PlanRequestError && updateMutation.error.status === 409) ? (
               <p className="mt-4 font-bold text-foreground" role="alert">{updateMutation.error.message}</p>
             ) : null}
 
-            {plan.status === "draft" && confirmingStatus !== "awaiting_approval" ? (
-              <button className={`${primaryButtonClass} mt-6 w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus("awaiting_approval")} type="button">Ask for family approval</button>
-            ) : null}
 
-            {confirmingStatus === "awaiting_approval" ? (
-              <div className="mt-5 rounded-xl bg-muted p-4">
-                <h3 className="font-bold text-foreground">Ask the family to decide on this plan?</h3>
-                <p className="mt-1 text-base leading-relaxed text-foreground">Every family member receives an email with approve and reject links. The first person to answer decides for everyone.</p>
-                <div className="mt-4 space-y-2">
-                  <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate("awaiting_approval")} type="button">{updateMutation.isPending ? "Updating…" : "Send for family review"}</button>
-                  <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus(undefined)} type="button">Not yet</button>
-                </div>
-              </div>
-            ) : null}
 
-            {plan.status === "awaiting_approval" || plan.status === "approved" || plan.status === "rejected" ? (
+            {plan.status === "coordinating" || plan.status === "ready" || plan.status === "rejected" ? (
               <Link className={`${secondaryButtonClass} mt-6 w-full no-underline`} to="/family">Open the family view</Link>
             ) : null}
 
@@ -184,7 +162,7 @@ export function PlanDetail({ planId }: { planId: number }) {
                 <h3 className="font-bold text-foreground">Cancel this plan?</h3>
                 <p className="mt-1 text-base leading-relaxed text-foreground">The plan will remain visible as cancelled, and no further sharing should happen.</p>
                 <div className="mt-4 space-y-2">
-                  <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate("cancelled")} type="button">{updateMutation.isPending ? "Cancelling…" : "Confirm cancellation"}</button>
+                  <button className={`${primaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => updateMutation.mutate()} type="button">{updateMutation.isPending ? "Cancelling…" : "Confirm cancellation"}</button>
                   <button className={`${secondaryButtonClass} w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus(undefined)} type="button">Keep plan</button>
                 </div>
               </div>
@@ -198,20 +176,23 @@ export function PlanDetail({ planId }: { planId: number }) {
   );
 }
 
-/** Status changes the plan owner can start from this page. */
-type PlanStatusChange = "awaiting_approval" | "cancelled";
+/** The only status change the plan owner makes directly. */
+type PlanStatusChange = "cancelled";
 
 function PlanRow({ label, value }: { label: string; value: string }) {
   return <div className="flex justify-between gap-4 py-4"><dt className="font-bold">{label}</dt><dd className="text-right">{value}</dd></div>;
 }
 
-function statusExplanation(status: PlanStatus, sharingMode?: "direct" | "family_approval") {
-  if (status === "draft") return "Nothing has been shared. Ask the family to review when the details feel right.";
-  if (status === "awaiting_approval") return "Every family member has been emailed an approve or reject link. The first person to answer decides for everyone.";
-  if (status === "approved") return "Your family approved this plan. Everyone was told, and it can now be shared so people can offer practical help.";
-  if (status === "rejected") return "Your family did not approve this plan this time. Everyone was told, and nothing further will be sent.";
-  if (status === "shared" && sharingMode === "direct") return "This was shared after personal confirmation, so family approval was skipped.";
-  if (status === "shared") return "The plan is shared. Choosing email recipients happens in the next step.";
+function statusExplanation(status: PlanStatus) {
+  if (status === "draft")
+    return "Nothing has been sent yet. Ask your family when the details feel right.";
+  if (status === "coordinating")
+    return "Your whole family has been asked. The first person to answer decides for everyone.";
+  if (status === "ready")
+    return "Everything is arranged. Tell us afterwards how it went.";
+  if (status === "completed") return "This activity is done.";
+  if (status === "rejected")
+    return "Your family decided against this one, and nothing further will be sent.";
   return "This plan is no longer active and no further action will be taken.";
 }
 

@@ -1,4 +1,4 @@
-# Count Me In Development Guide
+# PeiPal Development Guide
 
 This document contains local setup, backend, frontend, API, migration, testing, activity-ingestion, and troubleshooting instructions. The product overview for judges and collaborators is in [README.md](README.md).
 
@@ -243,6 +243,30 @@ future-dated activities for local demos.
 ```bash
 supabase db reset
 ```
+
+## WorkBuddy MCP server
+
+Run the Count Me In API and MCP bridge in separate terminals:
+
+```bash
+uvicorn src.api.main:app --reload --port 8000
+uvicorn src.mcp.server:app --host 0.0.0.0 --port 8001
+```
+
+Configure `COUNT_ME_IN_API_URL`, `MCP_ACCESS_TOKEN`, and
+`COUNT_ME_IN_API_TOKEN` in the server environment. Connect WorkBuddy to:
+
+```text
+http://127.0.0.1:8001/mcp
+```
+
+The server exposes activity search, household and older-adult lookup, plan
+creation, plan retrieval, and plan status updates. For a hosted WorkBuddy
+demo, deploy the MCP server behind HTTPS and provide the HTTPS `/mcp` URL.
+
+Suggested demo request:
+
+> Find a gentle social activity under $10 for Mary, then prepare it for family approval.
 
 ## Manual demo walkthrough
 

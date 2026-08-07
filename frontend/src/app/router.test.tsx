@@ -113,6 +113,27 @@ describe("application routes", () => {
     );
   });
 
+  it("bounces a trusted contact away from a household page, even if they navigate there directly", async () => {
+    useViewerRole.mockReturnValue(
+      viewerRole("trusted_contact", setupProgress(), [
+        {
+          id: 5,
+          older_adult_id: 2,
+          name: "Anna Lim",
+          relationship: "Daughter",
+          consent_status: "accepted",
+          created_at: "2030-01-01T00:00:00Z",
+          older_adult_name: "Mary Lim",
+          older_adult_preferred_name: "Mary",
+        },
+      ]),
+    );
+    const { router } = renderRoute("/discover", true);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/family-portal"),
+    );
+  });
+
   it("renders a helpful not-found page for an authenticated user", async () => {
     renderRoute("/missing", true);
     expect(

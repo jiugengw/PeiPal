@@ -13,7 +13,7 @@ const contactError = document.querySelector("#contactError");
 const profileSummary = document.querySelector("#profileSummary");
 const contactSummary = document.querySelector("#contactSummary");
 const addContactButton = document.querySelector("#addContact");
-const API_BASE_URL = window.COUNT_ME_IN_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = window.PEIPAL_API_URL || "http://127.0.0.1:8000";
 
 const roleOptions = [
   "Join activities",

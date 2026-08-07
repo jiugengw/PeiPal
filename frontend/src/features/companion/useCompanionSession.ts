@@ -120,7 +120,7 @@ export function useCompanionSession() {
         import("@openai/agents/realtime"),
       ]);
       const agent = new realtime.RealtimeAgent({
-        name: "Count Me In companion",
+        name: "PeiPal companion",
         instructions: agentInstructions(setupRef.current.olderAdult),
         tools: createCompanionTools({
           toolFactory: agents.tool,
@@ -135,7 +135,7 @@ export function useCompanionSession() {
         model: MODEL,
         transport: nextMode === "voice" ? "webrtc" : "websocket",
         toolExecution: { preApprovalInputGuardrails: true },
-        workflowName: "Count Me In browser companion",
+        workflowName: "PeiPal browser companion",
         config:
           nextMode === "voice"
             ? {

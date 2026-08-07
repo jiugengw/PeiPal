@@ -161,9 +161,6 @@ class ActivityResponse(BaseModel):
     mobility_notes: str | None = None
     intensity: str | None = None
     tags: list[str] | None = None
-    suitability_score: float | None = None
-    engagement_score: float | None = None
-    total_score: float | None = None
     status: str
     first_seen_at: datetime
     last_seen_at: datetime
@@ -175,6 +172,16 @@ class ActivityResponse(BaseModel):
 
 class ActivityListResponse(BaseModel):
     activities: list[ActivityResponse]
+
+
+class ActivityRecommendationResponse(BaseModel):
+    activity: ActivityResponse
+    recommendation_score: float
+    match_factors: dict[str, float]
+
+
+class ActivityRecommendationListResponse(BaseModel):
+    recommendations: list[ActivityRecommendationResponse]
 
 
 class HouseholdListResponse(BaseModel):

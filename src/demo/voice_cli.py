@@ -1,4 +1,4 @@
-"""Run Count Me In as a local microphone-to-speaker voice companion."""
+"""Run PeiPal as a local microphone-to-speaker voice companion."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ try:
 except ImportError:  # pragma: no cover - exercised by the startup instructions.
     sd = None
 
-from src.agents.count_me_in_voice import (
+from src.agents.peipal_voice import (
     AUDIO_CHANNELS,
     AUDIO_DTYPE,
     AUDIO_SAMPLE_RATE,
@@ -93,7 +93,7 @@ def transcript_line(item: Any) -> str | None:
 
     if not parts:
         return None
-    speaker = "You" if role == "user" else "Count Me In"
+    speaker = "You" if role == "user" else "PeiPal"
     return f"{speaker}: {' '.join(parts)}"
 
 

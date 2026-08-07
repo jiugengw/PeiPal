@@ -169,7 +169,7 @@ export function AuthForm() {
         </h1>
         <p className="mt-2 max-w-[52ch] text-[0.95rem] leading-normal">
           {mode === "login"
-            ? "Enter your details to continue with Count Me In."
+            ? "Enter your details to continue with PeiPal."
             : "Start with the essentials. You can add support preferences later."}
         </p>
 

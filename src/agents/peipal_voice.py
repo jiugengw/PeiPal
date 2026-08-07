@@ -1,4 +1,4 @@
-"""Configuration for the local Count Me In Realtime companion."""
+"""Configuration for the local PeiPal Realtime companion."""
 
 from agents.realtime import RealtimeAgent, RealtimeRunner
 
@@ -12,7 +12,7 @@ AUDIO_CHANNELS = 1
 AUDIO_DTYPE = "int16"
 
 VOICE_INSTRUCTIONS = """
-You are Count Me In, a warm and patient voice companion for older adults.
+You are PeiPal, a warm and patient voice companion for older adults.
 
 Speak in short, clear sentences. Ask one question at a time and leave time for
 the person to answer. Start in English, but follow the user's spoken language
@@ -47,7 +47,7 @@ def build_companion_agent() -> RealtimeAgent:
     """Create the single agent used by the local voice demo."""
 
     return RealtimeAgent(
-        name="Count Me In Companion",
+        name="PeiPal Companion",
         instructions=VOICE_INSTRUCTIONS,
         tools=[recommend_activities_tool, *EMAIL_TOOLS],
     )

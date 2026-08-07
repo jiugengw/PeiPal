@@ -1,4 +1,4 @@
-from src.agents.count_me_in_voice import (
+from src.agents.peipal_voice import (
     AUDIO_CHANNELS,
     AUDIO_DTYPE,
     AUDIO_SAMPLE_RATE,
@@ -11,12 +11,12 @@ from src.agents.count_me_in_voice import (
 )
 
 
-def test_companion_uses_the_count_me_in_voice_prompt():
+def test_companion_uses_the_peipal_voice_prompt():
     """Keep the agent identity and elderly-friendly conversation rules intact."""
 
     agent = build_companion_agent()
 
-    assert agent.name == "Count Me In Companion"
+    assert agent.name == "PeiPal Companion"
     assert agent.instructions == VOICE_INSTRUCTIONS
     assert "short, clear sentences" in VOICE_INSTRUCTIONS
     assert "one question at a time" in VOICE_INSTRUCTIONS
@@ -76,7 +76,7 @@ def test_text_runner_uses_the_same_agent_with_text_output():
     agent = build_companion_agent()
     config = build_realtime_config(["text"])
 
-    assert agent.name == "Count Me In Companion"
+    assert agent.name == "PeiPal Companion"
     assert config["model_settings"]["output_modalities"] == ["text"]
     assert [tool.name for tool in agent.tools] == [
         "recommend_activities",

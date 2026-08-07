@@ -1,1 +1,1 @@
-"""Local demo entry points for Count Me In."""
+"""Local demo entry points for PeiPal."""

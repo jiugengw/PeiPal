@@ -359,12 +359,6 @@ export interface components {
             intensity?: string | null;
             /** Tags */
             tags?: string[] | null;
-            /** Suitability Score */
-            suitability_score?: number | null;
-            /** Engagement Score */
-            engagement_score?: number | null;
-            /** Total Score */
-            total_score?: number | null;
             /** Status */
             status: string;
             /**

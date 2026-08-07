@@ -52,7 +52,7 @@ def test_transcript_line_uses_audio_transcripts_and_text():
     )
 
     assert transcript_line(user_item) == "You: Hello there"
-    assert transcript_line(assistant_item) == "Count Me In: How can I help?"
+    assert transcript_line(assistant_item) == "PeiPal: How can I help?"
 
 
 def test_transcript_line_ignores_non_message_items():
@@ -83,7 +83,7 @@ def test_chat_only_displays_assistant_transcripts():
     )
 
     assert assistant_transcript(user_item) is None
-    assert assistant_transcript(assistant_item) == "Count Me In: Hi there"
+    assert assistant_transcript(assistant_item) == "PeiPal: Hi there"
 
 
 def test_chat_prints_final_text_from_history_update(capsys):
@@ -103,4 +103,4 @@ def test_chat_prints_final_text_from_history_update(capsys):
 
     asyncio.run(receive_response(FakeSession()))
 
-    assert capsys.readouterr().out == "Count Me In: I can help with that.\n"
+    assert capsys.readouterr().out == "PeiPal: I can help with that.\n"

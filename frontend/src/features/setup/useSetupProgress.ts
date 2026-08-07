@@ -7,13 +7,13 @@ import {
 
 export function useSetupProgress() {
   const householdsQuery = useQuery(householdsQueryOptions());
-  const household = householdsQuery.data?.households[0];
+  const household = householdsQuery.data?.households?.[0];
 
   const olderAdultsQuery = useQuery({
     ...olderAdultsQueryOptions(household?.id ?? 0),
     enabled: Boolean(household),
   });
-  const olderAdult = olderAdultsQuery.data?.older_adults[0];
+  const olderAdult = olderAdultsQuery.data?.older_adults?.[0];
 
   const trustedContactsQuery = useQuery({
     ...trustedContactsQueryOptions(olderAdult?.id ?? 0),

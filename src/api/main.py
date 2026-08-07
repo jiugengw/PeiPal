@@ -11,10 +11,6 @@ load_config()
 
 OPENAPI_TAGS = [
     {
-        "name": "System",
-        "description": "Service health and operational checks.",
-    },
-    {
         "name": "Activities",
         "description": "Browse active activities available for planning.",
     },

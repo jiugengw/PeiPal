@@ -20,6 +20,7 @@ from src.api.dependencies import (
 )
 from src.api.models import (
     ActivityListResponse,
+    ActivityRecommendationListResponse,
     ActivityResponse,
     HouseholdCreate,
     HouseholdListResponse,
@@ -47,6 +48,7 @@ from src.api.models import (
 )
 from src.services.notifications import send_plan_email
 from src.services.realtime import create_realtime_client_secret
+from src.services.recommendations import recommend_activities
 
 
 router = APIRouter(prefix="/api")
@@ -717,7 +719,7 @@ def list_activities(
         .select("*")
         .eq("status", "active")
         .gte("start_at", datetime.now(timezone.utc).isoformat())
-        .order("total_score", desc=True)
+        .order("start_at", desc=False)
         .limit(limit)
     )
     if location:
@@ -726,6 +728,38 @@ def list_activities(
         return {"activities": query.execute().data}
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not load activities.") from error
+
+
+@router.get(
+    "/older-adults/{older_adult_id}/recommendations",
+    response_model=ActivityRecommendationListResponse,
+    tags=["Activities"],
+    summary="Recommend activities for an older adult",
+)
+def list_activity_recommendations(
+    older_adult_id: int,
+    location: str | None = Query(default=None, max_length=120),
+    interest: str | None = Query(default=None, max_length=240),
+    max_cost: float | None = Query(default=None, ge=0),
+    limit: int = Query(default=20, ge=1, le=20),
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_older_adult_access(client, older_adult_id, user)
+    try:
+        recommendations = recommend_activities(
+            client,
+            older_adult_id,
+            interest=interest,
+            max_cost=max_cost,
+            location=location,
+            limit=limit,
+        )
+        return {"recommendations": recommendations}
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not calculate activity recommendations.") from error
 
 
 @router.get(

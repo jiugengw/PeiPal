@@ -1,4 +1,4 @@
-import { isTrustedContactPath } from "@/app/App";
+import { isTrustedContactPath } from "@/app/trustedContactPaths";
 
 describe("isTrustedContactPath", () => {
   it("allows the family portal itself", () => {

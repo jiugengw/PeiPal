@@ -1,18 +1,12 @@
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { StagedIntentProvider } from "@/app/providers/StagedIntentProvider";
 import { Navbar } from "@/components/Navbar";
 import { ActivityWorkflowProvider } from "@/features/activities/ActivityWorkflowProvider";
-import { VoiceCompanion } from "@/features/voice/VoiceCompanion";
+import { CompanionPanel } from "@/features/companion/CompanionPanel";
 import { useViewerRole } from "@/hooks/useViewerRole";
 import styles from "./AppShell.module.css";
-
-// Pages a trusted contact is actually allowed to reach. Everything else
-// under _authenticated is a household-side page (discover, setup, the demo
-// family view) that assumes a household exists and would otherwise show a
-// broken or empty state for someone who has no household at all.
-export function isTrustedContactPath(pathname: string) {
-  return pathname === "/family-portal" || pathname.startsWith("/plans/");
-}
+import { isTrustedContactPath } from "./trustedContactPaths";
 
 export function App() {
   const { role } = useViewerRole();
@@ -27,24 +21,26 @@ export function App() {
     }
   }, [isBlocked, navigate]);
 
-  // ActivityWorkflowProvider is always mounted, even for a trusted contact,
+  // The application providers stay mounted even for a trusted contact,
   // because TanStack Router's Outlet/Match tree can render a matched child
   // route's component as part of its own internal match resolution even
   // when it is not the branch we display below - a route that depends on
-  // this context (like /discover's ActivityDiscovery) would otherwise crash
-  // outright rather than just being visually hidden. VoiceCompanion stays
-  // gated on role since it is a floating, visible control, not a context.
+  // these contexts would otherwise crash outright rather than just being
+  // visually hidden. CompanionPanel stays gated on role since it is a
+  // floating, visible control, not a context.
   return (
     <div className={styles.clnShell}>
       <a className={styles.clnSkipLink} href="#main-content">
         Skip to main content
       </a>
       <ActivityWorkflowProvider>
-        <Navbar />
-        <main className={styles.clnMain} id="main-content">
-          {isBlocked ? <RedirectingMessage /> : <Outlet />}
-        </main>
-        {isTrustedContact ? null : <VoiceCompanion />}
+        <StagedIntentProvider>
+          <Navbar />
+          <main className={styles.clnMain} id="main-content">
+            {isBlocked ? <RedirectingMessage /> : <Outlet />}
+          </main>
+          {isTrustedContact ? null : <CompanionPanel />}
+        </StagedIntentProvider>
       </ActivityWorkflowProvider>
     </div>
   );

@@ -29,6 +29,9 @@ from src.api.models import (
     FamilyMemberListResponse,
     FamilyMemberResponse,
     FamilyMemberUpdate,
+    CoordinationActionRequest,
+    CoordinationLaunchResponse,
+    CoordinationStateResponse,
     FamilyResponse,
     FamilyUpdate,
     DecisionDeliveryListResponse,
@@ -54,6 +57,8 @@ from src.api.models import (
 )
 from src.services.notifications import send_plan_email
 from src.services.family_email import digest, expires_in, generate_token
+from src.services.coordination import apply_action, ensure_coordination, load_state
+from src.services.coordination_email import send_coordination_emails
 from src.services.plan_decisions import (
     decision_message,
     delivery_summary,
@@ -575,6 +580,272 @@ def delete_family_member(
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not remove family member.") from error
+
+
+
+# --- Coordination ------------------------------------------------------------------
+# One plan, three shared tasks, and a reusable link for every family member.
+
+COORDINATION_COOKIE = "peipal_coordination"
+
+
+def _plan_context(client: Client, plan_id: int) -> dict[str, Any]:
+    plan = (
+        client.table("plans")
+        .select("id, family_id, older_adult_id, activity_id, status")
+        .eq("id", plan_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found.")
+    profile = (
+        client.table("older_adult_profiles")
+        .select("name, preferred_name")
+        .eq("id", plan[0]["older_adult_id"])
+        .limit(1)
+        .execute()
+        .data[0]
+    )
+    activity = (
+        client.table("activities")
+        .select("name, location, start_at, end_at, info_link")
+        .eq("id", plan[0]["activity_id"])
+        .limit(1)
+        .execute()
+        .data[0]
+    )
+    return {
+        "plan": plan[0],
+        "person_name": profile.get("preferred_name") or profile["name"],
+        "activity": activity,
+    }
+
+
+def _member_names(client: Client, family_id: int) -> dict[int, str]:
+    rows = (
+        client.table("family_members").select("id, name").eq("family_id", family_id).execute().data
+        or []
+    )
+    return {int(row["id"]): row["name"] for row in rows}
+
+
+def _shape_state(
+    client: Client, context: dict[str, Any], responding_as: str | None = None
+) -> dict[str, Any]:
+    plan = context["plan"]
+    state = load_state(client, plan["id"])
+    names = _member_names(client, plan["family_id"])
+    return {
+        "plan_id": plan["id"],
+        "plan_status": plan["status"],
+        "older_adult": context["person_name"],
+        "activity": context["activity"],
+        "tasks": [
+            {
+                "task_type": task["task_type"],
+                "status": task["status"],
+                "owner_name": names.get(task.get("owner_family_member_id")),
+                "decided_by_name": names.get(task.get("decided_by_family_member_id")),
+                "reason": task.get("reason"),
+                "version": task["version"],
+            }
+            for task in state["tasks"]
+        ],
+        "events": state["events"],
+        "responding_as": responding_as,
+    }
+
+
+@router.post(
+    "/plans/{plan_id}/coordination",
+    response_model=CoordinationLaunchResponse,
+    tags=["Coordination"],
+    summary="Ask the family",
+    description=(
+        "Create the approval, registration, and transport tasks and email every "
+        "family member their own link. Safe to call again: a family member who "
+        "was already emailed successfully is never emailed twice."
+    ),
+)
+def launch_coordination(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    context = _plan_context(client, plan_id)
+    plan = context["plan"]
+    if plan["status"] not in {"draft", "coordinating"}:
+        raise HTTPException(status_code=409, detail="This plan is no longer waiting on the family.")
+    try:
+        ensure_coordination(client, plan_id)
+        if plan["status"] == "draft":
+            client.table("plans").update({"status": "coordinating"}).eq("id", plan_id).execute()
+            plan["status"] = "coordinating"
+
+        # The link outlives the activity by a week so latecomers can still read it.
+        deliveries = send_coordination_emails(
+            client,
+            plan_id=plan_id,
+            family_id=plan["family_id"],
+            person_name=context["person_name"],
+            activity=context["activity"],
+            expires_at=expires_in(7 * 24 * 60),
+        )
+        failed = [item for item in deliveries if item["status"] == "failed"]
+        if not deliveries:
+            message = "There is nobody in your family to ask yet."
+        elif not failed:
+            message = "Your whole family has been asked."
+        elif len(failed) == len(deliveries):
+            message = "Nobody could be emailed. You can try again once email is working."
+        else:
+            message = (
+                f"{len(deliveries) - len(failed)} of {len(deliveries)} family members were "
+                f"emailed; {len(failed)} could not be reached and can be retried."
+            )
+        return {
+            "plan_id": plan_id,
+            "plan_status": plan["status"],
+            "deliveries": deliveries,
+            "message": message,
+        }
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=502, detail="Could not ask the family.") from error
+
+
+@router.get(
+    "/plans/{plan_id}/coordination",
+    response_model=CoordinationStateResponse,
+    tags=["Coordination"],
+    summary="Read coordination progress",
+)
+def get_coordination(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    return _shape_state(client, _plan_context(client, plan_id))
+
+
+@router.post(
+    "/plans/{plan_id}/complete",
+    response_model=PlanResponse,
+    tags=["Coordination"],
+    summary="Mark a ready plan as done",
+)
+def complete_plan(
+    plan_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    require_plan_access(client, plan_id, user)
+    updated = (
+        client.table("plans")
+        .update({"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()})
+        .eq("id", plan_id)
+        .eq("status", "ready")
+        .execute()
+        .data
+    )
+    if not updated:
+        raise HTTPException(status_code=409, detail="Only a ready plan can be marked as done.")
+    return updated[0]
+
+
+def _link_for_token(client: Client, token: str) -> dict[str, Any]:
+    rows = (
+        client.table("plan_coordination_links")
+        .select("plan_id, family_member_id, expires_at, revoked_at")
+        .eq("token_hash", digest(token))
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not rows or rows[0].get("revoked_at"):
+        raise HTTPException(status_code=404, detail="This link is not valid.")
+    link = rows[0]
+    if datetime.fromisoformat(link["expires_at"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="This link has expired.")
+    member = (
+        client.table("family_members")
+        .select("name")
+        .eq("id", link["family_member_id"])
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not member:
+        raise HTTPException(status_code=404, detail="This link is not valid.")
+    link["member_name"] = member[0]["name"]
+    return link
+
+
+@router.get(
+    "/coordination/{token}",
+    response_model=CoordinationStateResponse,
+    tags=["Coordination"],
+    summary="Open a family coordination link",
+    description=(
+        "Public on purpose. Family members hold no account, so possession of the "
+        "emailed token is what identifies them. Never returns email addresses, "
+        "phone numbers, or anything about the wider family."
+    ),
+)
+def read_coordination(
+    token: str,
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    link = _link_for_token(client, token)
+    context = _plan_context(client, link["plan_id"])
+    ensure_coordination(client, link["plan_id"])
+    return _shape_state(client, context, responding_as=link["member_name"])
+
+
+@router.post(
+    "/coordination/{token}/tasks/{task_type}",
+    response_model=CoordinationStateResponse,
+    tags=["Coordination"],
+    summary="Approve, reject, or help with a task",
+    description=(
+        "Every change carries the version the page was showing. A change that "
+        "lost a race returns 409 so the page can refresh rather than overwrite "
+        "somebody else's action."
+    ),
+)
+def act_on_coordination_task(
+    token: str,
+    task_type: str,
+    payload: CoordinationActionRequest,
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    link = _link_for_token(client, token)
+    context = _plan_context(client, link["plan_id"])
+    plan = context["plan"]
+    if plan["status"] not in {"draft", "coordinating"}:
+        raise HTTPException(
+            status_code=409,
+            detail="This plan is already settled, so it cannot be changed.",
+        )
+    coordination = ensure_coordination(client, plan["id"])
+    apply_action(
+        client,
+        plan_id=plan["id"],
+        coordination_id=coordination["id"],
+        task_type=task_type,
+        action=payload.action,
+        expected_version=payload.expected_version,
+        actor_id=link["family_member_id"],
+        actor_name=link["member_name"],
+        reason=payload.reason,
+    )
+    refreshed = _plan_context(client, plan["id"])
+    return _shape_state(client, refreshed, responding_as=link["member_name"])
 
 
 @router.post("/plans", status_code=status.HTTP_201_CREATED, response_model=PlanResponse, tags=["Plans"], summary="Create a plan")

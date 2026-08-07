@@ -185,6 +185,55 @@ class PlanNotificationCreate(BaseModel):
     family_member_ids: list[int] = Field(min_length=1, max_length=20)
 
 
+class CoordinationTaskResponse(BaseModel):
+    task_type: Literal["approval", "registration", "transport"]
+    status: Literal["open", "claimed", "done", "not_needed", "approved", "rejected"]
+    owner_name: str | None = None
+    decided_by_name: str | None = None
+    reason: str | None = None
+    version: int
+
+
+class CoordinationEventResponse(BaseModel):
+    task_type: Literal["approval", "registration", "transport"] | None = None
+    action: str
+    actor_name: str
+    detail: str | None = None
+    created_at: datetime
+
+
+class CoordinationActivityResponse(BaseModel):
+    name: str
+    location: str
+    start_at: datetime
+    info_link: str
+
+
+class CoordinationStateResponse(BaseModel):
+    """The shared view of a plan. Never carries private contact details."""
+
+    plan_id: int
+    plan_status: Literal["draft", "coordinating", "ready", "completed", "rejected", "cancelled"]
+    older_adult: str
+    activity: CoordinationActivityResponse
+    tasks: list[CoordinationTaskResponse]
+    events: list[CoordinationEventResponse]
+    responding_as: str | None = None
+
+
+class CoordinationActionRequest(BaseModel):
+    action: Literal["approve", "reject", "claim", "take_over", "release", "complete", "not_needed"]
+    expected_version: int
+    reason: str | None = Field(default=None, max_length=2_000)
+
+
+class CoordinationLaunchResponse(BaseModel):
+    plan_id: int
+    plan_status: str
+    deliveries: list["DecisionDeliveryResponse"]
+    message: str
+
+
 class ViewerResponse(BaseModel):
     """Which kind of person is signed in, and what they may act on."""
 

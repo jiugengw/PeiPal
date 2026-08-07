@@ -30,7 +30,7 @@ The current prototype is a family-assisted setup flow followed by a voice- or ch
 
 - The current implementation is a local static web prototype for family-assisted setup.
 - The broader MVP includes chat-first or voice-friendly activity discovery, practical support actions, and draft notifications.
-- The Python agent can send a confirmed email notification to locally configured trusted contacts through Resend.
+- The Python agent can send a confirmed email notification to locally configured trusted contacts through Gmail SMTP.
 - The prototype does not track responses, arrange transport, make bookings, or perform other external actions.
 - Data and activity results are mock/demo data for now.
 - The prototype has no selected app framework or production deployment target yet.

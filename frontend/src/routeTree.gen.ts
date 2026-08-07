@@ -15,6 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSplatRouteImport } from './routes/_authenticated/$'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
+import { Route as AuthenticatedFamilyPortalRouteImport } from './routes/_authenticated/family-portal'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedPlansPlanIdRouteImport } from './routes/_authenticated/plans/$planId'
 
@@ -47,6 +48,12 @@ const AuthenticatedFamilyRoute = AuthenticatedFamilyRouteImport.update({
   path: '/family',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedFamilyPortalRoute =
+  AuthenticatedFamilyPortalRouteImport.update({
+    id: '/family-portal',
+    path: '/family-portal',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof AuthenticatedSplatRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
+  '/family-portal': typeof AuthenticatedFamilyPortalRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
 }
@@ -73,6 +81,7 @@ export interface FileRoutesByTo {
   '/$': typeof AuthenticatedSplatRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
+  '/family-portal': typeof AuthenticatedFamilyPortalRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/': typeof AuthenticatedIndexRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
@@ -84,6 +93,7 @@ export interface FileRoutesById {
   '/_authenticated/$': typeof AuthenticatedSplatRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
+  '/_authenticated/family-portal': typeof AuthenticatedFamilyPortalRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
@@ -91,10 +101,24 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/$' | '/discover' | '/family' | '/setup' | '/plans/$planId'
+    | '/'
+    | '/auth'
+    | '/$'
+    | '/discover'
+    | '/family'
+    | '/family-portal'
+    | '/setup'
+    | '/plans/$planId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/auth' | '/$' | '/discover' | '/family' | '/setup' | '/' | '/plans/$planId'
+    | '/auth'
+    | '/$'
+    | '/discover'
+    | '/family'
+    | '/family-portal'
+    | '/setup'
+    | '/'
+    | '/plans/$planId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -102,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$'
     | '/_authenticated/discover'
     | '/_authenticated/family'
+    | '/_authenticated/family-portal'
     | '/_authenticated/setup'
     | '/_authenticated/'
     | '/_authenticated/plans/$planId'
@@ -156,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFamilyRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/family-portal': {
+      id: '/_authenticated/family-portal'
+      path: '/family-portal'
+      fullPath: '/family-portal'
+      preLoaderRoute: typeof AuthenticatedFamilyPortalRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/setup': {
       id: '/_authenticated/setup'
       path: '/setup'
@@ -177,6 +209,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSplatRoute: typeof AuthenticatedSplatRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedFamilyRoute: typeof AuthenticatedFamilyRoute
+  AuthenticatedFamilyPortalRoute: typeof AuthenticatedFamilyPortalRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPlansPlanIdRoute: typeof AuthenticatedPlansPlanIdRoute
@@ -186,6 +219,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSplatRoute: AuthenticatedSplatRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedFamilyRoute: AuthenticatedFamilyRoute,
+  AuthenticatedFamilyPortalRoute: AuthenticatedFamilyPortalRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPlansPlanIdRoute: AuthenticatedPlansPlanIdRoute,

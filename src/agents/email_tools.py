@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-import resend
 from agents import function_tool
+from src.services.notifications import send_email
 
 
 MAXIMUM_SUBJECT_LENGTH = 160
@@ -114,24 +114,13 @@ def prepare_invitation_email(contact_ids: list[str], subject: str, body: str) ->
 def _deliver_email(
     recipient: dict[str, str], subject: str, body: str, idempotency_key: str
 ) -> str:
-    api_key = os.getenv("RESEND_API_KEY")
-    sender = os.getenv("EMAIL_FROM")
-    if not api_key or not sender:
-        raise ValueError("RESEND_API_KEY and EMAIL_FROM must be configured.")
-
-    resend.api_key = api_key
-    message: resend.Emails.SendParams = {
-        "from": sender,
-        "to": [recipient["email"]],
-        "subject": subject,
-        "text": body,
-        "html": f"<p>{escape(body).replace(chr(10), '<br>')}</p>",
-    }
-    # reply_to = os.getenv("EMAIL_REPLY_TO")
-    # if reply_to:
-    #     message["reply_to"] = reply_to
-    response = resend.Emails.send(message, options={"idempotency_key": idempotency_key})
-    return str(response.get("id", "sent"))
+    return send_email(
+        recipient_email=recipient["email"],
+        subject=subject,
+        body=body,
+        html_body=f"<p>{escape(body).replace(chr(10), '<br>')}</p>",
+        idempotency_key=idempotency_key,
+    )
 
 
 def send_invitation_email(prepared_email_id: str) -> str:

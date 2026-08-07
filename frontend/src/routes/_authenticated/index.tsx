@@ -1,24 +1,28 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useSetupProgress } from "@/features/setup/useSetupProgress";
+import { useViewerRole } from "@/hooks/useViewerRole";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: HomePage,
 });
 
 function HomePage() {
-  const progress = useSetupProgress();
+  const { role, setup, isPending, isError } = useViewerRole();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (progress.isPending || progress.isError) return;
+    if (isPending || isError) return;
+    if (role === "trusted_contact") {
+      void navigate({ to: "/family-portal", replace: true });
+      return;
+    }
     void navigate({
-      to: progress.isComplete ? "/discover" : "/setup",
+      to: setup.isComplete ? "/discover" : "/setup",
       replace: true,
     });
-  }, [navigate, progress.isComplete, progress.isError, progress.isPending]);
+  }, [isError, isPending, navigate, role, setup.isComplete]);
 
-  if (progress.isError) {
+  if (isError) {
     return (
       <section className="grid min-h-full place-items-center px-6 py-12 text-center">
         <div>
@@ -30,7 +34,7 @@ function HomePage() {
           </p>
           <button
             className="mt-6 min-h-14 rounded-xl bg-primary px-6 font-extrabold text-primary-foreground hover:bg-foreground"
-            onClick={() => void progress.householdsQuery.refetch()}
+            onClick={() => void setup.householdsQuery.refetch()}
           >
             Try again
           </button>

@@ -164,6 +164,46 @@ export interface paths {
         patch: operations["update_trusted_contact_api_trusted_contacts__contact_id__patch"];
         trace?: never;
     };
+    "/api/trusted-contacts/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my trusted-contact links
+         * @description Returns the trusted-contact records matching the authenticated user's email, across every older adult. Used right after magic-link sign-in so a trusted contact's own portal can discover which older adult(s) they have a link to, and whether each is still pending or accepted.
+         */
+        get: operations["list_my_trusted_contacts_api_trusted_contacts_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/older-adults/{older_adult_id}/family-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List plans visible to a trusted contact
+         * @description The trusted-contact view of one older adult's plans: only plans awaiting approval or already shared are returned - never draft or cancelled. Requires an accepted trusted-contact link for this older adult (see require_trusted_contact_access).
+         */
+        get: operations["list_plans_for_trusted_contact_api_older_adults__older_adult_id__family_plans_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plans": {
         parameters: {
             query?: never;
@@ -649,12 +689,16 @@ export interface components {
             created_by: string;
             /** Approved By */
             approved_by?: string | null;
+            /** Approved By Name */
+            approved_by_name?: string | null;
             /** Approved At */
             approved_at?: string | null;
             /** Shared At */
             shared_at?: string | null;
             /** Cancelled At */
             cancelled_at?: string | null;
+            /** Note */
+            note?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -672,9 +716,11 @@ export interface components {
          *       "status": "awaiting_approval"
          *     }
          * @example {
+         *       "note": "Happy to help with this one!",
          *       "status": "shared"
          *     }
          * @example {
+         *       "note": "Mary would rather skip this week.",
          *       "status": "cancelled"
          *     }
          */
@@ -684,6 +730,8 @@ export interface components {
              * @enum {string}
              */
             status: "awaiting_approval" | "shared" | "cancelled";
+            /** Note */
+            note?: string | null;
         };
         /**
          * SupportOfferCreate
@@ -714,6 +762,8 @@ export interface components {
             plan_id: number;
             /** Offered By */
             offered_by: string;
+            /** Offered By Name */
+            offered_by_name?: string | null;
             /**
              * Support Type
              * @enum {string}
@@ -794,6 +844,10 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Older Adult Name */
+            older_adult_name?: string | null;
+            /** Older Adult Preferred Name */
+            older_adult_preferred_name?: string | null;
         };
         /** TrustedContactUpdate */
         TrustedContactUpdate: {
@@ -1267,6 +1321,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrustedContactResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_my_trusted_contacts_api_trusted_contacts_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_plans_for_trusted_contact_api_older_adults__older_adult_id__family_plans_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                older_adult_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanListResponse"];
                 };
             };
             /** @description Validation Error */

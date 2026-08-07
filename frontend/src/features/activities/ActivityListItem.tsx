@@ -61,16 +61,6 @@ export function ActivityListItem({
                 {activity.description ||
                   "No further description is available yet."}
               </p>
-              {activity.mobilityNotes ? (
-                <p className="mt-2">
-                  <strong>Mobility:</strong> {activity.mobilityNotes}
-                </p>
-              ) : null}
-              {activity.slotsAvailability ? (
-                <p className="mt-2">
-                  <strong>Availability:</strong> {activity.slotsAvailability}
-                </p>
-              ) : null}
               {activity.infoLink ? (
                 <p className="mt-3">
                   <a

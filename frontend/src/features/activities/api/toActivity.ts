@@ -24,11 +24,8 @@ export function toActivity(response: ActivityResponse): Activity {
     endsAt: parseDate(response.end_at),
     cost: response.cost ?? null,
     currency: response.currency,
-    priceRemarks: response.price_remarks ?? null,
     description: response.description ?? "",
     tags: response.tags ?? [],
-    mobilityNotes: response.mobility_notes ?? null,
-    slotsAvailability: response.slots_availability ?? null,
     infoLink: response.info_link ?? null,
     signupLink: response.signup_link ?? null,
   };

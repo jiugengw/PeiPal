@@ -345,18 +345,10 @@ export interface components {
             cost?: number | null;
             /** Currency */
             currency: string;
-            /** Price Remarks */
-            price_remarks?: string | null;
-            /** Slots Availability */
-            slots_availability?: string | null;
             /** Info Link */
             info_link: string;
             /** Signup Link */
             signup_link?: string | null;
-            /** Mobility Notes */
-            mobility_notes?: string | null;
-            /** Intensity */
-            intensity?: string | null;
             /** Tags */
             tags?: string[] | null;
             /** Status */
@@ -376,8 +368,6 @@ export interface components {
              * Format: date-time
              */
             last_checked_at: string;
-            /** Content Hash */
-            content_hash?: string | null;
             /**
              * Created At
              * Format: date-time

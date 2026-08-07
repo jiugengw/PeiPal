@@ -20,12 +20,8 @@ create table if not exists public.activities (
     end_at timestamptz,
     cost numeric(10, 2),
     currency text not null default 'SGD',
-    price_remarks text,
-    slots_availability text,
     info_link text not null,
     signup_link text,
-    mobility_notes text,
-    intensity text,
     tags text[],
     suitability_score numeric(5, 2),
     engagement_score numeric(5, 2),
@@ -35,7 +31,6 @@ create table if not exists public.activities (
     first_seen_at timestamptz not null default now(),
     last_seen_at timestamptz not null default now(),
     last_checked_at timestamptz not null default now(),
-    content_hash text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );

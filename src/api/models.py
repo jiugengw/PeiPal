@@ -154,18 +154,13 @@ class ActivityResponse(BaseModel):
     end_at: datetime | None = None
     cost: float | None = None
     currency: str
-    price_remarks: str | None = None
-    slots_availability: str | None = None
     info_link: str
     signup_link: str | None = None
-    mobility_notes: str | None = None
-    intensity: str | None = None
     tags: list[str] | None = None
     status: str
     first_seen_at: datetime
     last_seen_at: datetime
     last_checked_at: datetime
-    content_hash: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -246,15 +246,15 @@ supabase db reset
 
 ## WorkBuddy MCP server
 
-Run the Count Me In API and MCP bridge in separate terminals:
+Run the PeiPal API and MCP bridge in separate terminals:
 
 ```bash
 uvicorn src.api.main:app --reload --port 8000
 uvicorn src.mcp.server:app --host 0.0.0.0 --port 8001
 ```
 
-Configure `COUNT_ME_IN_API_URL`, `MCP_ACCESS_TOKEN`, and
-`COUNT_ME_IN_API_TOKEN` in the server environment. Connect WorkBuddy to:
+Configure `PEIPAL_API_URL`, `MCP_ACCESS_TOKEN`, and `PEIPAL_API_TOKEN` in the
+server environment. Connect WorkBuddy to:
 
 ```text
 http://127.0.0.1:8001/mcp

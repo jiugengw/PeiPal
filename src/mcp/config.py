@@ -12,7 +12,7 @@ def load_config() -> None:
 
 
 def count_me_in_api_url() -> str:
-    return os.getenv("COUNT_ME_IN_API_URL", "http://127.0.0.1:8000").rstrip("/")
+    return os.getenv("PEIPAL_API_URL", "http://127.0.0.1:8000").rstrip("/")
 
 
 def mcp_access_token() -> str:
@@ -23,9 +23,9 @@ def mcp_access_token() -> str:
 
 
 def count_me_in_api_token() -> str:
-    value = os.getenv("COUNT_ME_IN_API_TOKEN")
+    value = os.getenv("PEIPAL_API_TOKEN")
     if not value:
-        raise RuntimeError("COUNT_ME_IN_API_TOKEN is not configured.")
+        raise RuntimeError("PEIPAL_API_TOKEN is not configured.")
     return value
 
 

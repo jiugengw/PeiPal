@@ -38,7 +38,7 @@ def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
             f"Known preferences: {json.dumps(details)}"
         )
 
-    @mcp.resource("count-me-in://activities")
+    @mcp.resource("peipal://activities")
     async def activities_resource() -> str:
         """Read the public upcoming activity catalog."""
         try:
@@ -47,7 +47,7 @@ def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
         except CountMeInApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})
 
-    @mcp.resource("count-me-in://households")
+    @mcp.resource("peipal://households")
     async def households_resource() -> str:
         """Read households available to the authenticated demo user."""
         try:
@@ -55,7 +55,7 @@ def register_context(mcp: FastMCP, api: CountMeInApi | None = None) -> None:
         except CountMeInApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})
 
-    @mcp.resource("count-me-in://households/{household_id}/older-adults")
+    @mcp.resource("peipal://households/{household_id}/older-adults")
     async def older_adults_resource(household_id: int) -> str:
         """Read older-adult profiles for one household."""
         try:

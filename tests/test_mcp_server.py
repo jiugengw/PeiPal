@@ -2,7 +2,7 @@ import asyncio
 import os
 
 os.environ.setdefault("MCP_ACCESS_TOKEN", "mcp-test-token")
-os.environ.setdefault("COUNT_ME_IN_API_TOKEN", "api-test-token")
+os.environ.setdefault("PEIPAL_API_TOKEN", "api-test-token")
 
 from mcp.server.fastmcp import FastMCP
 from starlette.testclient import TestClient

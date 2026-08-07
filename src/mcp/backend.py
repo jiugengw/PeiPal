@@ -1,4 +1,4 @@
-"""Async client for the existing Count Me In FastAPI endpoints."""
+"""Async client for the existing PeiPal FastAPI endpoints."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ class CountMeInApi:
                 return None
             return response.json()
         except httpx.HTTPError as error:
-            raise CountMeInApiError(503, f"Count Me In API is unavailable: {error}") from error
+            raise CountMeInApiError(503, f"PeiPal API is unavailable: {error}") from error
         finally:
             if owns_client:
                 await client.aclose()

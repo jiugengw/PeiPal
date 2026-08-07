@@ -1,4 +1,4 @@
-"""Count Me In MCP tool registrations."""
+"""PeiPal MCP tool registrations."""
 
 from __future__ import annotations
 

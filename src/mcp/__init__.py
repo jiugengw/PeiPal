@@ -1,1 +1,1 @@
-"""Count Me In MCP integration for WorkBuddy."""
+"""PeiPal MCP integration for WorkBuddy."""

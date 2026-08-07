@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/voice/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a browser voice session
+         * @description Create a short-lived OpenAI Realtime credential for the signed-in browser. The permanent OpenAI API key is never returned.
+         */
+        post: operations["create_voice_session_api_voice_session_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/households": {
         parameters: {
             query?: never;
@@ -218,6 +238,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plans/{plan_id}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List plan notifications */
+        get: operations["list_plan_notifications_api_plans__plan_id__notifications_get"];
+        put?: never;
+        /**
+         * Send plan notifications
+         * @description Send one email to each selected trusted contact for a shared plan. Successful recipients are not sent again if this request is retried; failed recipients can be retried.
+         */
+        post: operations["send_plan_notifications_api_plans__plan_id__notifications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/activities": {
         parameters: {
             query?: never;
@@ -227,6 +268,26 @@ export interface paths {
         };
         /** List active activities */
         get: operations["list_activities_api_activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/activities/{activity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an activity
+         * @description Load an activity referenced by an existing plan, including an expired activity.
+         */
+        get: operations["get_activity_api_activities__activity_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -378,6 +439,27 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** NotificationDeliveryListResponse */
+        NotificationDeliveryListResponse: {
+            /** Deliveries */
+            deliveries: components["schemas"]["NotificationDeliveryResponse"][];
+        };
+        /** NotificationDeliveryResponse */
+        NotificationDeliveryResponse: {
+            /** Contact Id */
+            contact_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "sent" | "already_sent" | "failed";
+            /** Provider Id */
+            provider_id?: string | null;
+            /** Error */
+            error?: string | null;
+        };
         /**
          * OlderAdultCreate
          * @example {
@@ -495,6 +577,101 @@ export interface components {
             /** Activity Id */
             activity_id: number;
         };
+        /** PlanListResponse */
+        PlanListResponse: {
+            /** Plans */
+            plans: components["schemas"]["PlanResponse"][];
+        };
+        /**
+         * PlanNotificationCreate
+         * @example {
+         *       "contact_ids": [
+         *         1,
+         *         2
+         *       ]
+         *     }
+         */
+        PlanNotificationCreate: {
+            /** Contact Ids */
+            contact_ids: number[];
+        };
+        /** PlanNotificationListResponse */
+        PlanNotificationListResponse: {
+            /** Notifications */
+            notifications: components["schemas"]["PlanNotificationResponse"][];
+        };
+        /** PlanNotificationResponse */
+        PlanNotificationResponse: {
+            /** Id */
+            id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Trusted Contact Id */
+            trusted_contact_id: number;
+            /** Recipient Name */
+            recipient_name: string;
+            /** Recipient Email */
+            recipient_email?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "sent" | "failed";
+            /** Provider Id */
+            provider_id?: string | null;
+            /** Error Message */
+            error_message?: string | null;
+            /** Attempted At */
+            attempted_at?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PlanResponse */
+        PlanResponse: {
+            /** Id */
+            id: number;
+            /** Household Id */
+            household_id: number;
+            /** Older Adult Id */
+            older_adult_id: number;
+            /** Activity Id */
+            activity_id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "awaiting_approval" | "shared" | "cancelled";
+            /** Created By */
+            created_by: string;
+            /** Approved By */
+            approved_by?: string | null;
+            /** Approved At */
+            approved_at?: string | null;
+            /** Shared At */
+            shared_at?: string | null;
+            /** Cancelled At */
+            cancelled_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /**
          * PlanUpdate
          * @example {
@@ -529,6 +706,42 @@ export interface components {
             support_type: "join" | "remind" | "transport" | "alternative" | "booking" | "encourage";
             /** Note */
             note?: string | null;
+        };
+        /** SupportOfferListResponse */
+        SupportOfferListResponse: {
+            /** Support Offers */
+            support_offers: components["schemas"]["SupportOfferResponse"][];
+        };
+        /** SupportOfferResponse */
+        SupportOfferResponse: {
+            /** Id */
+            id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Offered By */
+            offered_by: string;
+            /**
+             * Support Type
+             * @enum {string}
+             */
+            support_type: "join" | "remind" | "transport" | "alternative" | "booking" | "encourage";
+            /** Note */
+            note?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "offered" | "withdrawn";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /**
          * TrustedContactCreate
@@ -612,6 +825,17 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** VoiceSessionResponse */
+        VoiceSessionResponse: {
+            /** Client Secret */
+            client_secret: string;
+            /** Expires At */
+            expires_at?: number | null;
+            /** Session */
+            session?: {
+                [key: string]: unknown;
+            } | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -621,6 +845,37 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    create_voice_session_api_voice_session_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_households_api_households_get: {
         parameters: {
             query?: never;
@@ -1051,9 +1306,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["PlanListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1088,9 +1341,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["PlanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1123,9 +1374,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["PlanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1162,9 +1411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["PlanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1197,9 +1444,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["SupportOfferListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1236,9 +1481,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["SupportOfferResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1283,6 +1526,76 @@ export interface operations {
             };
         };
     };
+    list_plan_notifications_api_plans__plan_id__notifications_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanNotificationListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_plan_notifications_api_plans__plan_id__notifications_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanNotificationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationDeliveryListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_activities_api_activities_get: {
         parameters: {
             query?: {
@@ -1302,6 +1615,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_activity_api_activities__activity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityResponse"];
                 };
             };
             /** @description Validation Error */

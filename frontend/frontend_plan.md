@@ -602,40 +602,40 @@ Verify on desktop and mobile:
 
 ## Commit-by-Commit Delivery Plan
 
-1. `feat: add typed frontend api client` — completed
+1. `feat: add typed frontend api client` - completed
    - Generated OpenAPI declarations, authentication-aware client, and TanStack Query helpers.
 
-2. `test: cover frontend api contracts` — completed
+2. `test: cover frontend api contracts` - completed
    - Covers authentication middleware, typed query/path/body serialization, no-content and error responses, and activity query defaults.
 
-3. `feat: build household setup flow` — completed
+3. `feat: build household setup flow` - completed
    - Household, profile, sharing mode, trusted contacts, review, and redirect logic.
 
-4. `test: cover household setup flow`
+4. `test: cover household setup flow` - completed
    - Validation, persistence, failure recovery, and setup routing.
 
-5. `feat: build activity discovery`
+5. `feat: build activity discovery` - completed
    - Activity query, filters, list/detail selection, empty states, and typed interaction.
 
-6. `feat: add plan workflow`
+6. `feat: add plan workflow` - completed
    - Plan creation, direct sharing, family approval, cancellation, and plan detail route.
 
-7. `feat: add notifications and family support`
+7. `feat: add notifications and family support` - completed
    - Recipient selection, delivery results, demo family view, support offers, and withdrawal.
 
-8. `test: cover plan and support workflow`
+8. `test: cover plan and support workflow` - completed
    - Status transitions, partial delivery, retries, conflicts, and cancellations.
 
-9. `feat: add browser voice companion`
+9. `feat: add browser voice companion` - completed
    - Realtime WebRTC session, transcript, controls, shared workflow tools, approvals, and cleanup.
 
-10. `test: cover browser voice workflow`
+10. `test: cover browser voice workflow` - completed
     - Session states, tool guards, human approval, failures, and fallback interaction.
 
-11. `test: add core workflow browser coverage`
+11. `test: add core workflow browser coverage` - skipped
     - Playwright judge path and direct-sharing path.
 
-12. `docs: explain frontend workflow`
+12. `docs: explain frontend workflow` - completed
     - Environment setup, route map, API dependencies, demo limitations, test commands, and judge walkthrough.
 
 ## Acceptance Criteria

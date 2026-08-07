@@ -20,7 +20,7 @@ const mockedProgress = vi.mocked(useSetupProgress);
 function planResponse(status: "draft" | "awaiting_approval" | "shared" | "cancelled") {
   return {
     id: 9,
-    household_id: 1,
+    family_id: 1,
     older_adult_id: 2,
     activity_id: 27,
     status,
@@ -75,7 +75,7 @@ describe("PlanDetail", () => {
     mockedProgress.mockReturnValue({
       olderAdult: {
         id: 2,
-        household_id: 1,
+        family_id: 1,
         name: "Mary Lim",
         preferred_name: "Mary",
         sharing_mode: "family_approval",

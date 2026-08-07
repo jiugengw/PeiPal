@@ -9,7 +9,7 @@ vi.mock("@tanstack/react-router", () => ({ Link: ({ children }: { children: Reac
 vi.mock("@/features/family/SupportOfferPanel", () => ({ SupportOfferPanel: () => <div>Support controls</div> }));
 
 function planResponse(status: "awaiting_approval" | "shared" | "cancelled") {
-  return { id: 9, household_id: 1, older_adult_id: 2, activity_id: 27, status, created_by: "user-1", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" };
+  return { id: 9, family_id: 1, older_adult_id: 2, activity_id: 27, status, created_by: "user-1", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" };
 }
 
 const activity = { id: 27, dedupe_key: "yoga", name: "Senior Yoga", location: "Bishan", start_at: "2030-06-01T09:00:00Z", currency: "SGD", info_link: "https://example.com", status: "active", first_seen_at: "2030-01-01T00:00:00Z", last_seen_at: "2030-01-01T00:00:00Z", last_checked_at: "2030-01-01T00:00:00Z", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" };

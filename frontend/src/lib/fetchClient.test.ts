@@ -68,14 +68,14 @@ describe("fetchClient", () => {
       .mockResolvedValue(Response.json({ id: 7 }));
     const client = createApiFetchClient(fetchImplementation);
 
-    await client.PATCH("/api/households/{household_id}", {
-      params: { path: { household_id: 7 } },
+    await client.PATCH("/api/families/{family_id}", {
+      params: { path: { family_id: 7 } },
       body: { name: "Lim Family" },
     });
 
     const request = requestFromFetchCall(fetchImplementation);
     expect(request.method).toBe("PATCH");
-    expect(request.url).toBe("https://api.example.test/api/households/7");
+    expect(request.url).toBe("https://api.example.test/api/families/7");
     expect(await request.json()).toEqual({ name: "Lim Family" });
   });
 
@@ -85,8 +85,8 @@ describe("fetchClient", () => {
       .mockResolvedValue(new Response(null, { status: 204 }));
     const client = createApiFetchClient(fetchImplementation);
 
-    const result = await client.DELETE("/api/trusted-contacts/{contact_id}", {
-      params: { path: { contact_id: 9 } },
+    const result = await client.DELETE("/api/family-members/{family_member_id}", {
+      params: { path: { family_member_id: 9 } },
     });
 
     expect(result.data).toBeUndefined();
@@ -99,18 +99,18 @@ describe("fetchClient", () => {
       .fn()
       .mockResolvedValue(
         Response.json(
-          { detail: "The household was not found." },
+          { detail: "The family was not found." },
           { status: 404 },
         ),
       );
     const client = createApiFetchClient(fetchImplementation);
 
-    const result = await client.GET("/api/households/{household_id}", {
-      params: { path: { household_id: 404 } },
+    const result = await client.GET("/api/families/{family_id}", {
+      params: { path: { family_id: 404 } },
     });
 
     expect(result.data).toBeUndefined();
-    expect(result.error).toEqual({ detail: "The household was not found." });
+    expect(result.error).toEqual({ detail: "The family was not found." });
     expect(result.response.status).toBe(404);
   });
 });

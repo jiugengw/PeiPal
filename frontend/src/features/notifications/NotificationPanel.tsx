@@ -13,14 +13,14 @@ import {
   type NotificationDelivery,
 } from "@/features/notifications/api/notificationQueries";
 
-type TrustedContact = components["schemas"]["TrustedContactResponse"];
+type FamilyMember = components["schemas"]["FamilyMemberResponse"];
 
 export function NotificationPanel({
   planId,
-  contacts,
+  familyMembers,
 }: {
   planId: number;
-  contacts: TrustedContact[];
+  familyMembers: FamilyMember[];
 }) {
   const queryClient = useQueryClient();
   const historyQuery = useQuery(notificationsQueryOptions(planId));
@@ -31,7 +31,7 @@ export function NotificationPanel({
   const sentContactIds = new Set(
     notifications
       .filter((item) => item.status === "sent")
-      .map((item) => item.trusted_contact_id),
+      .map((item) => item.family_member_id),
   );
 
   const staged = useStagedIntent(
@@ -48,9 +48,9 @@ export function NotificationPanel({
     setAppliedIntentId(staged.id);
     setDeliveries([]);
     const requested = staged.contactIds.filter((id) =>
-      contacts.some(
-        (contact) =>
-          contact.id === id && contact.email && !sentContactIds.has(contact.id),
+      familyMembers.some(
+        (member) =>
+          member.id === id && member.email && !sentContactIds.has(member.id),
       ),
     );
     setSelectedIds(requested);
@@ -84,15 +84,15 @@ export function NotificationPanel({
     const failedIds =
       notifications
         .filter((item) => item.status === "failed")
-        .map((item) => item.trusted_contact_id);
+        .map((item) => item.family_member_id);
     setSelectedIds(failedIds);
     setDeliveries([]);
     setIsConfirming(failedIds.length > 0);
   }
 
-  const selectedNames = contacts
-    .filter((contact) => selectedIds.includes(contact.id))
-    .map((contact) => contact.name);
+  const selectedNames = familyMembers
+    .filter((member) => selectedIds.includes(member.id))
+    .map((member) => member.name);
   const hasFailedHistory = notifications.some(
     (item) => item.status === "failed",
   );
@@ -100,7 +100,7 @@ export function NotificationPanel({
   return (
     <section className="mt-10 border-y border-border bg-background px-5 py-7 sm:px-7" aria-labelledby="notification-heading">
       <h2 id="notification-heading" className="text-2xl font-bold tracking-[-0.025em] text-foreground">
-        Let the trusted circle know
+        Let the family know
       </h2>
       <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">
         Choose who should receive this plan by email. Nobody is contacted until you confirm below.
@@ -115,23 +115,23 @@ export function NotificationPanel({
         </div>
       ) : (
         <fieldset className="mt-6 divide-y divide-border border-y border-border">
-          <legend className="sr-only">Trusted contacts</legend>
-          {contacts.map((contact) => {
-            const wasSent = sentContactIds.has(contact.id);
-            const disabled = !contact.email || wasSent;
+          <legend className="sr-only">Family members</legend>
+          {familyMembers.map((member) => {
+            const wasSent = sentContactIds.has(member.id);
+            const disabled = !member.email || wasSent;
             return (
-              <label key={contact.id} className={`flex min-h-20 gap-4 py-4 ${disabled ? "cursor-not-allowed opacity-65" : "cursor-pointer"}`}>
+              <label key={member.id} className={`flex min-h-20 gap-4 py-4 ${disabled ? "cursor-not-allowed opacity-65" : "cursor-pointer"}`}>
                 <input
                   className="mt-1 size-6 shrink-0 accent-primary"
                   type="checkbox"
-                  checked={selectedIds.includes(contact.id)}
+                  checked={selectedIds.includes(member.id)}
                   disabled={disabled || sendMutation.isPending}
-                  onChange={() => toggleContact(contact.id)}
+                  onChange={() => toggleContact(member.id)}
                 />
                 <span className="min-w-0">
-                  <span className="block text-lg font-bold text-foreground">{contact.name}</span>
+                  <span className="block text-lg font-bold text-foreground">{member.name}</span>
                   <span className="block text-base leading-relaxed text-foreground">
-                    {contact.relationship} · {!contact.email ? "No email address saved" : wasSent ? "Email already sent" : contact.email}
+                    {formatRelationships(member)} · {!member.email ? "No email address saved" : wasSent ? "Email already sent" : member.email}
                   </span>
                 </span>
               </label>
@@ -182,7 +182,7 @@ function DeliveryResults({ deliveries }: { deliveries: NotificationDelivery[] })
       <h3 className="text-lg font-bold text-foreground">{hasFailure ? "Some emails need another try" : "Email delivery complete"}</h3>
       <ul className="mt-2 divide-y divide-border border-y border-border">
         {deliveries.map((delivery) => (
-          <li className="flex flex-col justify-between gap-1 py-3 sm:flex-row sm:items-center" key={delivery.contact_id}>
+          <li className="flex flex-col justify-between gap-1 py-3 sm:flex-row sm:items-center" key={delivery.family_member_id}>
             <span className="font-bold text-foreground">{delivery.name}</span>
             <span className="text-base text-foreground">{delivery.status === "sent" ? "Email sent" : delivery.status === "already_sent" ? "Already sent" : "Could not send"}</span>
           </li>
@@ -190,6 +190,11 @@ function DeliveryResults({ deliveries }: { deliveries: NotificationDelivery[] })
       </ul>
     </div>
   );
+}
+
+/** Joins the per-older-adult relationships into one readable line. */
+function formatRelationships(member: FamilyMember) {
+  return member.relationships.map((link) => link.relationship).join(" · ");
 }
 
 function historyLabel(status: "pending" | "sent" | "failed") {

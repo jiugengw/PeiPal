@@ -11,13 +11,13 @@ vi.mock("@/features/setup/useSetupProgress", () => ({ useSetupProgress: vi.fn() 
 vi.mock("@/features/family/FamilyPlanRow", () => ({ FamilyPlanRow: ({ plan }: { plan: { id: number; status: string } }) => <p>Plan {plan.id}: {plan.status}</p> }));
 
 function plan(id: number, status: string) {
-  return { id, household_id: 1, older_adult_id: 2, activity_id: id + 20, status, created_by: "user-1", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" };
+  return { id, family_id: 1, older_adult_id: 2, activity_id: id + 20, status, created_by: "user-1", created_at: "2030-01-01T00:00:00Z", updated_at: "2030-01-01T00:00:00Z" };
 }
 
 describe("FamilyView", () => {
   beforeEach(() => {
     vi.mocked(useAuthSession).mockReturnValue({ session: { user: { id: "user-1" } } } as never);
-    vi.mocked(useSetupProgress).mockReturnValue({ household: { id: 1 }, olderAdult: { name: "Mary Lim", preferred_name: "Mary" }, isPending: false, isError: false } as never);
+    vi.mocked(useSetupProgress).mockReturnValue({ family: { id: 1 }, olderAdult: { name: "Mary Lim", preferred_name: "Mary" }, isPending: false, isError: false } as never);
   });
   afterEach(() => vi.restoreAllMocks());
 

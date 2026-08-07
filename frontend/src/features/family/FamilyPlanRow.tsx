@@ -42,11 +42,11 @@ export function FamilyPlanRow({
       updatePlanStatus(plan.id, status),
     onSuccess: (updated) => {
       queryClient.setQueryData(planQueryKey(plan.id), updated);
-      void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.household_id) });
+      void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.family_id) });
       setNotice(updated.status === "shared" ? "The plan is approved and shared." : "The plan was cancelled.");
       setPendingAction(undefined);
     },
-    onError: () => void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.household_id) }),
+    onError: () => void queryClient.invalidateQueries({ queryKey: plansQueryKey(plan.family_id) }),
   });
   const staged = useStagedIntent(
     "confirm_plan_status",

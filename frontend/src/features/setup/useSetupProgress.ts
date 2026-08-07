@@ -1,41 +1,45 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  householdsQueryOptions,
+  familiesQueryOptions,
+  familyMembersQueryOptions,
   olderAdultsQueryOptions,
-  trustedContactsQueryOptions,
 } from "@/features/setup/api/setupQueries";
 
 export function useSetupProgress() {
-  const householdsQuery = useQuery(householdsQueryOptions());
-  const household = householdsQuery.data?.households?.[0];
+  const familiesQuery = useQuery(familiesQueryOptions());
+  const family = familiesQuery.data?.families?.[0];
 
   const olderAdultsQuery = useQuery({
-    ...olderAdultsQueryOptions(household?.id ?? 0),
-    enabled: Boolean(household),
+    ...olderAdultsQueryOptions(family?.id ?? 0),
+    enabled: Boolean(family),
   });
-  const olderAdult = olderAdultsQuery.data?.older_adults?.[0];
+  const olderAdults = olderAdultsQuery.data?.older_adults ?? [];
+  const olderAdult = olderAdults[0];
 
-  const trustedContactsQuery = useQuery({
-    ...trustedContactsQueryOptions(olderAdult?.id ?? 0),
-    enabled: Boolean(olderAdult),
+  // Family members belong to the family, not to a single older adult, so one
+  // person can support several older adults with a different relationship each.
+  const familyMembersQuery = useQuery({
+    ...familyMembersQueryOptions(family?.id ?? 0),
+    enabled: Boolean(family),
   });
-  const contacts = trustedContactsQuery.data?.trusted_contacts ?? [];
+  const familyMembers = familyMembersQuery.data?.family_members ?? [];
 
   return {
-    household,
+    family,
     olderAdult,
-    contacts,
-    householdsQuery,
+    olderAdults,
+    familyMembers,
+    familiesQuery,
     olderAdultsQuery,
-    trustedContactsQuery,
+    familyMembersQuery,
     isPending:
-      householdsQuery.isPending ||
-      (Boolean(household) && olderAdultsQuery.isPending) ||
-      (Boolean(olderAdult) && trustedContactsQuery.isPending),
+      familiesQuery.isPending ||
+      (Boolean(family) && olderAdultsQuery.isPending) ||
+      (Boolean(family) && familyMembersQuery.isPending),
     isError:
-      householdsQuery.isError ||
+      familiesQuery.isError ||
       olderAdultsQuery.isError ||
-      trustedContactsQuery.isError,
-    isComplete: Boolean(household && olderAdult && contacts.length > 0),
+      familyMembersQuery.isError,
+    isComplete: Boolean(family && olderAdult && familyMembers.length > 0),
   };
 }

@@ -48,20 +48,20 @@ def register_context(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
         except PeiPalApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})
 
-    @mcp.resource("peipal://households")
-    async def households_resource() -> str:
-        """Read households available to the authenticated demo user."""
+    @mcp.resource("peipal://families")
+    async def families_resource() -> str:
+        """Read families available to the authenticated demo user."""
         try:
-            return json.dumps(await backend.request("GET", "/api/households"))
+            return json.dumps(await backend.request("GET", "/api/families"))
         except PeiPalApiError as error:
             return json.dumps({"error": error.detail, "status_code": error.status_code})
 
-    @mcp.resource("peipal://households/{household_id}/older-adults")
-    async def older_adults_resource(household_id: int) -> str:
-        """Read older-adult profiles for one household."""
+    @mcp.resource("peipal://families/{family_id}/older-adults")
+    async def older_adults_resource(family_id: int) -> str:
+        """Read older-adult profiles for one family."""
         try:
             result = await backend.request(
-                "GET", f"/api/households/{household_id}/older-adults"
+                "GET", f"/api/families/{family_id}/older-adults"
             )
             return json.dumps(result)
         except PeiPalApiError as error:

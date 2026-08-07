@@ -24,8 +24,8 @@ using (
     exists (
         select 1
         from public.older_adult_profiles profile
-        join public.household_members member on member.household_id = profile.household_id
+        join public.family_accounts account on account.family_id = profile.family_id
         where profile.id = activity_recommendations.older_adult_id
-          and member.user_id = auth.uid()
+          and account.user_id = auth.uid()
     )
 );

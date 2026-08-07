@@ -30,9 +30,9 @@ export function createStagingTools({
         "Show the review panel for making a plan from the selected activity. Creates nothing.",
       parameters: z.object({}),
       execute: async () => {
-        const { household, olderAdult } = setupRef.current;
+        const { family, olderAdult } = setupRef.current;
         const activity = workflowRef.current.selectedActivity;
-        if (!household || !olderAdult)
+        if (!family || !olderAdult)
           throw new Error("Finish setup before making a plan.");
         if (!activity)
           throw new Error("Select a visible activity before making a plan.");
@@ -77,7 +77,7 @@ export function createStagingTools({
     toolFactory({
       name: "stage_notification_recipients",
       description:
-        "Tick the chosen trusted contacts on the plan page and open the email review block. Sends nothing.",
+        "Tick the chosen family members on the plan page and open the email review block. Sends nothing.",
       parameters: z.object({
         planId: z.number().int().positive(),
         contactIds: z.array(z.number().int().positive()).min(1).max(20),
@@ -87,14 +87,14 @@ export function createStagingTools({
         if (plan.status !== "shared")
           throw new Error("Only a shared plan can be emailed.");
         const emailable = new Map(
-          setupRef.current.contacts
-            .filter((contact) => contact.email)
-            .map((contact) => [contact.id, contact.name]),
+          setupRef.current.familyMembers
+            .filter((member) => member.email)
+            .map((member) => [member.id, member.name]),
         );
         const unknown = contactIds.filter((id) => !emailable.has(id));
         if (unknown.length > 0)
           throw new Error(
-            "One or more of those contacts are unavailable or have no email address.",
+            "One or more of those family members are unavailable or have no email address.",
           );
         await navigate({ to: PLAN_PATH, params: { planId: String(planId) } });
         intentRef.current.stage(

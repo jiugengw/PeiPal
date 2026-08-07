@@ -13,7 +13,7 @@ import {
 export function CompanionPanel() {
   const companion = useCompanionSession();
   const { intent } = useStagedIntentContext();
-  const { contacts } = useSetupProgress();
+  const { familyMembers } = useSetupProgress();
   const [isOpen, setIsOpen] = useState(false);
   const [typedMessage, setTypedMessage] = useState("");
 
@@ -36,9 +36,9 @@ export function CompanionPanel() {
 
   const recipientNames =
     intent?.kind === "select_notification_recipients"
-      ? contacts
-          .filter((contact) => intent.contactIds.includes(contact.id))
-          .map((contact) => contact.name)
+      ? familyMembers
+          .filter((member) => intent.contactIds.includes(member.id))
+          .map((member) => member.name)
       : [];
 
   return (

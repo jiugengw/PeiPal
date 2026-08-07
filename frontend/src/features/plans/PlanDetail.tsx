@@ -26,7 +26,7 @@ import { useSetupProgress } from "@/features/setup/useSetupProgress";
 
 export function PlanDetail({ planId }: { planId: number }) {
   const queryClient = useQueryClient();
-  const { olderAdult, contacts = [] } = useSetupProgress();
+  const { olderAdult, familyMembers = [] } = useSetupProgress();
   const hasValidPlanId = Number.isInteger(planId) && planId > 0;
   const planQuery = useQuery({
     ...planQueryOptions(planId),
@@ -48,7 +48,7 @@ export function PlanDetail({ planId }: { planId: number }) {
     onSuccess: (updatedPlan) => {
       queryClient.setQueryData(planQueryKey(planId), updatedPlan);
       void queryClient.invalidateQueries({
-        queryKey: plansQueryKey(updatedPlan.household_id),
+        queryKey: plansQueryKey(updatedPlan.family_id),
       });
       setConfirmingStatus(undefined);
       setUpdateNotice(
@@ -142,7 +142,7 @@ export function PlanDetail({ planId }: { planId: number }) {
             )}
           </div>
           {plan.status === "shared" ? (
-            <NotificationPanel planId={plan.id} contacts={contacts} />
+            <NotificationPanel planId={plan.id} familyMembers={familyMembers} />
           ) : null}
         </div>
 

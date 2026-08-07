@@ -1,4 +1,4 @@
-const steps = ["Household", "Profile", "Sharing", "Trusted circle"];
+const steps = ["Family", "Profile", "Sharing", "Trusted circle"];
 
 export function SetupProgress({ currentStep }: { currentStep: number }) {
   return (

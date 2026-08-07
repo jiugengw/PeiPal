@@ -33,7 +33,7 @@ def contacts_file(monkeypatch, tmp_path):
 
 
 def test_list_contacts_hides_addresses():
-    result = json.loads(email_tools.list_trusted_contacts())
+    result = json.loads(email_tools.list_family_members())
 
     assert result["contacts"][0] == {
         "id": "anna",
@@ -46,12 +46,12 @@ def test_list_contacts_hides_addresses():
 def test_invalid_or_duplicate_contacts_are_rejected(contacts_file):
     contacts_file.write_text("not json", encoding="utf-8")
     with pytest.raises(ValueError, match="could not be read"):
-        email_tools.list_trusted_contacts()
+        email_tools.list_family_members()
 
     duplicated = {"contacts": [CONTACTS["contacts"][0], CONTACTS["contacts"][0]]}
     contacts_file.write_text(json.dumps(duplicated), encoding="utf-8")
     with pytest.raises(ValueError, match="Duplicate"):
-        email_tools.list_trusted_contacts()
+        email_tools.list_family_members()
 
 
 def test_prepare_email_returns_an_immutable_preview():

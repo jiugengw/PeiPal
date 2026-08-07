@@ -24,40 +24,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/households": {
+    "/api/families": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List my households */
-        get: operations["list_households_api_households_get"];
+        /** List my families */
+        get: operations["list_families_api_families_get"];
         put?: never;
-        /** Create a household */
-        post: operations["create_household_api_households_post"];
+        /** Create a family */
+        post: operations["create_family_api_families_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/households/{household_id}": {
+    "/api/families/{family_id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get a household */
-        get: operations["get_household_api_households__household_id__get"];
+        /** Get a family */
+        get: operations["get_family_api_families__family_id__get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Update a household */
-        patch: operations["update_household_api_households__household_id__patch"];
+        /** Update a family */
+        patch: operations["update_family_api_families__family_id__patch"];
         trace?: never;
     };
     "/api/older-adults": {
@@ -77,15 +77,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/households/{household_id}/older-adults": {
+    "/api/families/{family_id}/older-adults": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List household older-adult profiles */
-        get: operations["list_older_adults_api_households__household_id__older_adults_get"];
+        /** List family older-adult profiles */
+        get: operations["list_older_adults_api_families__family_id__older_adults_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -112,15 +112,15 @@ export interface paths {
         patch: operations["update_older_adult_api_older_adults__older_adult_id__patch"];
         trace?: never;
     };
-    "/api/older-adults/{older_adult_id}/trusted-contacts": {
+    "/api/families/{family_id}/family-members": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List trusted contacts */
-        get: operations["list_trusted_contacts_api_older_adults__older_adult_id__trusted_contacts_get"];
+        /** List family members */
+        get: operations["list_family_members_api_families__family_id__family_members_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -129,7 +129,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/trusted-contacts": {
+    "/api/family-members": {
         parameters: {
             query?: never;
             header?: never;
@@ -138,15 +138,18 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Add a trusted contact */
-        post: operations["create_trusted_contact_api_trusted_contacts_post"];
+        /**
+         * Add a family member
+         * @description Add one person the family can ask for support. Each relationship names how this person is related to one older adult, so the same person can be a daughter to one older adult and a sister to another.
+         */
+        post: operations["create_family_member_api_family_members_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/trusted-contacts/{contact_id}": {
+    "/api/family-members/{family_member_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -156,12 +159,12 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Remove a trusted contact */
-        delete: operations["delete_trusted_contact_api_trusted_contacts__contact_id__delete"];
+        /** Remove a family member */
+        delete: operations["delete_family_member_api_family_members__family_member_id__delete"];
         options?: never;
         head?: never;
-        /** Update a trusted contact */
-        patch: operations["update_trusted_contact_api_trusted_contacts__contact_id__patch"];
+        /** Update a family member */
+        patch: operations["update_family_member_api_family_members__family_member_id__patch"];
         trace?: never;
     };
     "/api/plans": {
@@ -171,7 +174,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List household plans */
+        /** List family plans */
         get: operations["list_plans_api_plans_get"];
         put?: never;
         /** Create a plan */
@@ -198,7 +201,7 @@ export interface paths {
         head?: never;
         /**
          * Update a plan status
-         * @description Use this resource update for the plan lifecycle. Valid transitions are draft → awaiting_approval → shared for family approval, or cancellation from any active state. Direct-sharing profiles create plans as shared. Sharing requires the household owner.
+         * @description Use this resource update for the plan lifecycle. Valid transitions are draft → awaiting_approval → shared for family approval, or cancellation from any active state. Direct-sharing profiles create plans as shared. Sharing requires the family owner.
          */
         patch: operations["update_plan_api_plans__plan_id__patch"];
         trace?: never;
@@ -250,7 +253,7 @@ export interface paths {
         put?: never;
         /**
          * Send plan notifications
-         * @description Send one email to each selected trusted contact for a shared plan. Successful recipients are not sent again if this request is retried; failed recipients can be retried.
+         * @description Send one email to each selected family member for a shared plan. Successful recipients are not sent again if this request is retried; failed recipients can be retried.
          */
         post: operations["send_plan_notifications_api_plans__plan_id__notifications_post"];
         delete?: never;
@@ -268,6 +271,23 @@ export interface paths {
         };
         /** List active activities */
         get: operations["list_activities_api_activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/older-adults/{older_adult_id}/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recommend activities for an older adult */
+        get: operations["list_activity_recommendations_api_older_adults__older_adult_id__recommendations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -321,6 +341,21 @@ export interface components {
         ActivityListResponse: {
             /** Activities */
             activities: components["schemas"]["ActivityResponse"][];
+        };
+        /** ActivityRecommendationListResponse */
+        ActivityRecommendationListResponse: {
+            /** Recommendations */
+            recommendations: components["schemas"]["ActivityRecommendationResponse"][];
+        };
+        /** ActivityRecommendationResponse */
+        ActivityRecommendationResponse: {
+            activity: components["schemas"]["ActivityResponse"];
+            /** Recommendation Score */
+            recommendation_score: number;
+            /** Match Factors */
+            match_factors: {
+                [key: string]: number;
+            };
         };
         /** ActivityResponse */
         ActivityResponse: {
@@ -379,33 +414,104 @@ export interface components {
              */
             updated_at: string;
         };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
         /**
-         * HouseholdCreate
+         * FamilyCreate
          * @example {
          *       "name": "Lim Family"
          *     }
          */
-        HouseholdCreate: {
+        FamilyCreate: {
             /** Name */
             name: string;
         };
-        /** HouseholdListResponse */
-        HouseholdListResponse: {
-            /** Households */
-            households: components["schemas"]["HouseholdResponse"][];
+        /** FamilyListResponse */
+        FamilyListResponse: {
+            /** Families */
+            families: components["schemas"]["FamilyResponse"][];
         };
         /**
-         * HouseholdResponse
+         * FamilyMemberCreate
+         * @example {
+         *       "email": "anna@example.com",
+         *       "family_id": 1,
+         *       "name": "Anna Lim",
+         *       "relationships": [
+         *         {
+         *           "older_adult_id": 1,
+         *           "relationship": "Daughter"
+         *         }
+         *       ]
+         *     }
+         */
+        FamilyMemberCreate: {
+            /** Family Id */
+            family_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Relationships */
+            relationships: components["schemas"]["FamilyMemberRelationship"][];
+        };
+        /** FamilyMemberListResponse */
+        FamilyMemberListResponse: {
+            /** Family Members */
+            family_members: components["schemas"]["FamilyMemberResponse"][];
+        };
+        /**
+         * FamilyMemberRelationship
+         * @description How one family member is related to one older adult.
+         * @example {
+         *       "older_adult_id": 1,
+         *       "relationship": "Daughter"
+         *     }
+         */
+        FamilyMemberRelationship: {
+            /** Older Adult Id */
+            older_adult_id: number;
+            /** Relationship */
+            relationship: string;
+        };
+        /** FamilyMemberResponse */
+        FamilyMemberResponse: {
+            /** Id */
+            id: number;
+            /** Family Id */
+            family_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Relationships */
+            relationships: components["schemas"]["FamilyMemberRelationship"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** FamilyMemberUpdate */
+        FamilyMemberUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Relationships */
+            relationships?: components["schemas"]["FamilyMemberRelationship"][] | null;
+        };
+        /**
+         * FamilyResponse
          * @example {
          *       "name": "Lim Family"
          *     }
          */
-        HouseholdResponse: {
+        FamilyResponse: {
             /** Name */
             name: string;
             /** Id */
@@ -418,10 +524,15 @@ export interface components {
              */
             created_at: string;
         };
-        /** HouseholdUpdate */
-        HouseholdUpdate: {
+        /** FamilyUpdate */
+        FamilyUpdate: {
             /** Name */
             name: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
         };
         /** NotificationDeliveryListResponse */
         NotificationDeliveryListResponse: {
@@ -430,8 +541,8 @@ export interface components {
         };
         /** NotificationDeliveryResponse */
         NotificationDeliveryResponse: {
-            /** Contact Id */
-            contact_id: number;
+            /** Family Member Id */
+            family_member_id: number;
             /** Name */
             name: string;
             /**
@@ -448,7 +559,8 @@ export interface components {
          * OlderAdultCreate
          * @example {
          *       "age": 75,
-         *       "household_id": 1,
+         *       "email": "mary@example.com",
+         *       "family_id": 1,
          *       "language": "English",
          *       "mobility_notes": "Prefers seated activities",
          *       "name": "Mary Lim",
@@ -458,8 +570,8 @@ export interface components {
          *     }
          */
         OlderAdultCreate: {
-            /** Household Id */
-            household_id: number;
+            /** Family Id */
+            family_id: number;
             /** Name */
             name: string;
             /** Preferred Name */
@@ -468,6 +580,11 @@ export interface components {
             age?: number | null;
             /** Language */
             language?: string | null;
+            /**
+             * Email
+             * @description Optional. When present, the older adult also receives the plan decision.
+             */
+            email?: string | null;
             /** Mobility Notes */
             mobility_notes?: string | null;
             /** Transport Notes */
@@ -488,7 +605,8 @@ export interface components {
          * OlderAdultResponse
          * @example {
          *       "age": 75,
-         *       "household_id": 1,
+         *       "email": "mary@example.com",
+         *       "family_id": 1,
          *       "language": "English",
          *       "mobility_notes": "Prefers seated activities",
          *       "name": "Mary Lim",
@@ -498,8 +616,8 @@ export interface components {
          *     }
          */
         OlderAdultResponse: {
-            /** Household Id */
-            household_id: number;
+            /** Family Id */
+            family_id: number;
             /** Name */
             name: string;
             /** Preferred Name */
@@ -508,6 +626,11 @@ export interface components {
             age?: number | null;
             /** Language */
             language?: string | null;
+            /**
+             * Email
+             * @description Optional. When present, the older adult also receives the plan decision.
+             */
+            email?: string | null;
             /** Mobility Notes */
             mobility_notes?: string | null;
             /** Transport Notes */
@@ -538,6 +661,8 @@ export interface components {
             age?: number | null;
             /** Language */
             language?: string | null;
+            /** Email */
+            email?: string | null;
             /** Mobility Notes */
             mobility_notes?: string | null;
             /** Transport Notes */
@@ -549,13 +674,13 @@ export interface components {
          * PlanCreate
          * @example {
          *       "activity_id": 1,
-         *       "household_id": 1,
+         *       "family_id": 1,
          *       "older_adult_id": 1
          *     }
          */
         PlanCreate: {
-            /** Household Id */
-            household_id: number;
+            /** Family Id */
+            family_id: number;
             /** Older Adult Id */
             older_adult_id: number;
             /** Activity Id */
@@ -569,15 +694,15 @@ export interface components {
         /**
          * PlanNotificationCreate
          * @example {
-         *       "contact_ids": [
+         *       "family_member_ids": [
          *         1,
          *         2
          *       ]
          *     }
          */
         PlanNotificationCreate: {
-            /** Contact Ids */
-            contact_ids: number[];
+            /** Family Member Ids */
+            family_member_ids: number[];
         };
         /** PlanNotificationListResponse */
         PlanNotificationListResponse: {
@@ -590,8 +715,8 @@ export interface components {
             id: number;
             /** Plan Id */
             plan_id: number;
-            /** Trusted Contact Id */
-            trusted_contact_id: number;
+            /** Family Member Id */
+            family_member_id: number;
             /** Recipient Name */
             recipient_name: string;
             /** Recipient Email */
@@ -624,8 +749,8 @@ export interface components {
         PlanResponse: {
             /** Id */
             id: number;
-            /** Household Id */
-            household_id: number;
+            /** Family Id */
+            family_id: number;
             /** Older Adult Id */
             older_adult_id: number;
             /** Activity Id */
@@ -727,75 +852,6 @@ export interface components {
              */
             updated_at: string;
         };
-        /**
-         * TrustedContactCreate
-         * @example {
-         *       "email": "anna@example.com",
-         *       "name": "Anna Lim",
-         *       "older_adult_id": 1,
-         *       "phone": "+65 91234567",
-         *       "relationship": "Daughter"
-         *     }
-         */
-        TrustedContactCreate: {
-            /** Older Adult Id */
-            older_adult_id: number;
-            /** Name */
-            name: string;
-            /** Relationship */
-            relationship: string;
-            /** Email */
-            email?: string | null;
-            /** Phone */
-            phone?: string | null;
-        };
-        /** TrustedContactListResponse */
-        TrustedContactListResponse: {
-            /** Trusted Contacts */
-            trusted_contacts: components["schemas"]["TrustedContactResponse"][];
-        };
-        /**
-         * TrustedContactResponse
-         * @example {
-         *       "email": "anna@example.com",
-         *       "name": "Anna Lim",
-         *       "older_adult_id": 1,
-         *       "phone": "+65 91234567",
-         *       "relationship": "Daughter"
-         *     }
-         */
-        TrustedContactResponse: {
-            /** Older Adult Id */
-            older_adult_id: number;
-            /** Name */
-            name: string;
-            /** Relationship */
-            relationship: string;
-            /** Email */
-            email?: string | null;
-            /** Phone */
-            phone?: string | null;
-            /** Id */
-            id: number;
-            /** Consent Status */
-            consent_status: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /** TrustedContactUpdate */
-        TrustedContactUpdate: {
-            /** Name */
-            name?: string | null;
-            /** Relationship */
-            relationship?: string | null;
-            /** Email */
-            email?: string | null;
-            /** Phone */
-            phone?: string | null;
-        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -860,7 +916,7 @@ export interface operations {
             };
         };
     };
-    list_households_api_households_get: {
+    list_families_api_families_get: {
         parameters: {
             query?: never;
             header?: {
@@ -877,7 +933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HouseholdListResponse"];
+                    "application/json": components["schemas"]["FamilyListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -891,7 +947,7 @@ export interface operations {
             };
         };
     };
-    create_household_api_households_post: {
+    create_family_api_families_post: {
         parameters: {
             query?: never;
             header?: {
@@ -902,7 +958,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["HouseholdCreate"];
+                "application/json": components["schemas"]["FamilyCreate"];
             };
         };
         responses: {
@@ -912,7 +968,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HouseholdResponse"];
+                    "application/json": components["schemas"]["FamilyResponse"];
                 };
             };
             /** @description Validation Error */
@@ -926,14 +982,14 @@ export interface operations {
             };
         };
     };
-    get_household_api_households__household_id__get: {
+    get_family_api_families__family_id__get: {
         parameters: {
             query?: never;
             header?: {
                 authorization?: string | null;
             };
             path: {
-                household_id: number;
+                family_id: number;
             };
             cookie?: never;
         };
@@ -945,7 +1001,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HouseholdResponse"];
+                    "application/json": components["schemas"]["FamilyResponse"];
                 };
             };
             /** @description Validation Error */
@@ -959,20 +1015,20 @@ export interface operations {
             };
         };
     };
-    update_household_api_households__household_id__patch: {
+    update_family_api_families__family_id__patch: {
         parameters: {
             query?: never;
             header?: {
                 authorization?: string | null;
             };
             path: {
-                household_id: number;
+                family_id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["HouseholdUpdate"];
+                "application/json": components["schemas"]["FamilyUpdate"];
             };
         };
         responses: {
@@ -982,7 +1038,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HouseholdResponse"];
+                    "application/json": components["schemas"]["FamilyResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1031,14 +1087,14 @@ export interface operations {
             };
         };
     };
-    list_older_adults_api_households__household_id__older_adults_get: {
+    list_older_adults_api_families__family_id__older_adults_get: {
         parameters: {
             query?: never;
             header?: {
                 authorization?: string | null;
             };
             path: {
-                household_id: number;
+                family_id: number;
             };
             cookie?: never;
         };
@@ -1134,14 +1190,14 @@ export interface operations {
             };
         };
     };
-    list_trusted_contacts_api_older_adults__older_adult_id__trusted_contacts_get: {
+    list_family_members_api_families__family_id__family_members_get: {
         parameters: {
             query?: never;
             header?: {
                 authorization?: string | null;
             };
             path: {
-                older_adult_id: number;
+                family_id: number;
             };
             cookie?: never;
         };
@@ -1153,7 +1209,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrustedContactListResponse"];
+                    "application/json": components["schemas"]["FamilyMemberListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1167,7 +1223,7 @@ export interface operations {
             };
         };
     };
-    create_trusted_contact_api_trusted_contacts_post: {
+    create_family_member_api_family_members_post: {
         parameters: {
             query?: never;
             header?: {
@@ -1178,7 +1234,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TrustedContactCreate"];
+                "application/json": components["schemas"]["FamilyMemberCreate"];
             };
         };
         responses: {
@@ -1188,7 +1244,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrustedContactResponse"];
+                    "application/json": components["schemas"]["FamilyMemberResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1202,14 +1258,14 @@ export interface operations {
             };
         };
     };
-    delete_trusted_contact_api_trusted_contacts__contact_id__delete: {
+    delete_family_member_api_family_members__family_member_id__delete: {
         parameters: {
             query?: never;
             header?: {
                 authorization?: string | null;
             };
             path: {
-                contact_id: number;
+                family_member_id: number;
             };
             cookie?: never;
         };
@@ -1233,20 +1289,20 @@ export interface operations {
             };
         };
     };
-    update_trusted_contact_api_trusted_contacts__contact_id__patch: {
+    update_family_member_api_family_members__family_member_id__patch: {
         parameters: {
             query?: never;
             header?: {
                 authorization?: string | null;
             };
             path: {
-                contact_id: number;
+                family_member_id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TrustedContactUpdate"];
+                "application/json": components["schemas"]["FamilyMemberUpdate"];
             };
         };
         responses: {
@@ -1256,7 +1312,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrustedContactResponse"];
+                    "application/json": components["schemas"]["FamilyMemberResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1273,7 +1329,7 @@ export interface operations {
     list_plans_api_plans_get: {
         parameters: {
             query: {
-                household_id: number;
+                family_id: number;
                 status?: string | null;
             };
             header?: {
@@ -1599,6 +1655,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_activity_recommendations_api_older_adults__older_adult_id__recommendations_get: {
+        parameters: {
+            query?: {
+                location?: string | null;
+                interest?: string | null;
+                max_cost?: number | null;
+                mobility?: string | null;
+                activity_id?: number | null;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                older_adult_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityRecommendationListResponse"];
                 };
             };
             /** @description Validation Error */

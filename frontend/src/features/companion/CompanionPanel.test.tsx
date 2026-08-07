@@ -47,16 +47,26 @@ const sdk = vi.hoisted(() => {
       setIsReviewingPlan: vi.fn(),
     },
     setup: {
-      household: { id: 1, name: "Lim Family" },
+      family: { id: 1, name: "Lim Family" },
       olderAdult: {
         id: 2,
         name: "Mary Lim",
         preferred_name: "Mary",
         sharing_mode: "family_approval",
       },
-      contacts: [
-        { id: 3, name: "Anna", relationship: "Daughter", email: "anna@example.com" },
-        { id: 4, name: "Ben", relationship: "Son", email: null },
+      familyMembers: [
+        {
+          id: 3,
+          name: "Anna",
+          email: "anna@example.com",
+          relationships: [{ older_adult_id: 2, relationship: "Daughter" }],
+        },
+        {
+          id: 4,
+          name: "Ben",
+          email: "",
+          relationships: [{ older_adult_id: 2, relationship: "Son" }],
+        },
       ],
     },
   };
@@ -321,7 +331,7 @@ describe("companion tools", () => {
     const user = userEvent.setup();
     await openCompanion(user);
     vi.spyOn(fetchClient, "GET").mockResolvedValue({
-      data: { id: 12, household_id: 1, older_adult_id: 2, activity_id: 27, status: "shared" },
+      data: { id: 12, family_id: 1, older_adult_id: 2, activity_id: 27, status: "shared" },
       response: new Response(null, { status: 200 }),
     } as never);
     const post = vi.spyOn(fetchClient, "POST");
@@ -343,7 +353,7 @@ describe("companion tools", () => {
     const user = userEvent.setup();
     await openCompanion(user);
     vi.spyOn(fetchClient, "GET").mockResolvedValue({
-      data: { id: 12, household_id: 1, older_adult_id: 2, activity_id: 27, status: "shared" },
+      data: { id: 12, family_id: 1, older_adult_id: 2, activity_id: 27, status: "shared" },
       response: new Response(null, { status: 200 }),
     } as never);
 
@@ -410,7 +420,7 @@ describe("companion tools", () => {
       expect.arrayContaining([
         "open_page",
         "find_activities",
-        "list_trusted_contacts",
+        "list_family_members",
         "list_plans",
         "review_plan",
         "stage_plan_status",

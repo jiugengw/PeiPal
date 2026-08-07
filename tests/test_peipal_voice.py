@@ -41,7 +41,7 @@ def test_agent_exposes_recommendation_and_email_tools():
 
     assert [tool.name for tool in agent.tools] == [
         "recommend_activities",
-        "list_trusted_contacts",
+        "list_family_members",
         "prepare_invitation_email",
         "send_invitation_email",
     ]
@@ -80,7 +80,7 @@ def test_text_runner_uses_the_same_agent_with_text_output():
     assert config["model_settings"]["output_modalities"] == ["text"]
     assert [tool.name for tool in agent.tools] == [
         "recommend_activities",
-        "list_trusted_contacts",
+        "list_family_members",
         "prepare_invitation_email",
         "send_invitation_email",
     ]

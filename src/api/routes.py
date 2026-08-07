@@ -9,10 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
 from src.api.dependencies import (
+    family_id_for_older_adult,
     get_supabase_client,
-    household_id_for_older_adult,
-    require_household_owner,
-    require_household_member,
+    require_family_account,
+    require_family_member_access,
+    require_family_owner,
     require_older_adult_access,
     require_plan_access,
     require_user,
@@ -22,15 +23,19 @@ from src.api.models import (
     ActivityListResponse,
     ActivityRecommendationListResponse,
     ActivityResponse,
-    HouseholdCreate,
-    HouseholdListResponse,
-    HouseholdResponse,
-    HouseholdUpdate,
+    FamilyCreate,
+    FamilyListResponse,
+    FamilyMemberCreate,
+    FamilyMemberListResponse,
+    FamilyMemberResponse,
+    FamilyMemberUpdate,
+    FamilyResponse,
+    FamilyUpdate,
+    NotificationDeliveryListResponse,
     OlderAdultCreate,
     OlderAdultListResponse,
     OlderAdultResponse,
     OlderAdultUpdate,
-    NotificationDeliveryListResponse,
     PlanCreate,
     PlanListResponse,
     PlanNotificationCreate,
@@ -40,10 +45,6 @@ from src.api.models import (
     SupportOfferCreate,
     SupportOfferListResponse,
     SupportOfferResponse,
-    TrustedContactCreate,
-    TrustedContactListResponse,
-    TrustedContactResponse,
-    TrustedContactUpdate,
     VoiceSessionResponse,
 )
 from src.services.notifications import send_plan_email
@@ -52,6 +53,73 @@ from src.services.recommendations import recommend_activities
 
 
 router = APIRouter(prefix="/api")
+
+FAMILY_MEMBER_SELECT = "*, family_member_older_adults(older_adult_id, relationship)"
+
+
+def _shape_family_member(row: dict[str, Any]) -> dict[str, Any]:
+    """Flatten the embedded join rows into the `relationships` field."""
+
+    links = row.pop("family_member_older_adults", None) or []
+    row["relationships"] = [
+        {"older_adult_id": link["older_adult_id"], "relationship": link["relationship"]}
+        for link in links
+    ]
+    return row
+
+
+def _validate_older_adults_in_family(
+    client: Client, family_id: int, older_adult_ids: list[int]
+) -> None:
+    """Reject relationships that point outside this family."""
+
+    unique_ids = sorted(set(older_adult_ids))
+    rows = (
+        client.table("older_adult_profiles")
+        .select("id")
+        .eq("family_id", family_id)
+        .in_("id", unique_ids)
+        .execute()
+        .data
+        or []
+    )
+    found = {int(row["id"]) for row in rows}
+    missing = [item for item in unique_ids if item not in found]
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"These older adults are not in this family: {missing}",
+        )
+
+
+def _replace_relationships(
+    client: Client, family_member_id: int, relationships: list[Any]
+) -> None:
+    client.table("family_member_older_adults").delete().eq(
+        "family_member_id", family_member_id
+    ).execute()
+    client.table("family_member_older_adults").insert([
+        {
+            "family_member_id": family_member_id,
+            "older_adult_id": item.older_adult_id,
+            "relationship": item.relationship,
+        }
+        for item in relationships
+    ]).execute()
+
+
+def _load_family_member(client: Client, family_member_id: int) -> dict[str, Any]:
+    rows = (
+        client.table("family_members")
+        .select(FAMILY_MEMBER_SELECT)
+        .eq("id", family_member_id)
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Family member not found.")
+    return _shape_family_member(rows[0])
 
 
 @router.post(
@@ -75,84 +143,84 @@ def create_voice_session(
         raise HTTPException(status_code=502, detail="Could not create browser voice session.") from error
 
 
-@router.post("/households", status_code=status.HTTP_201_CREATED, response_model=HouseholdResponse, tags=["Households"], summary="Create a household")
-def create_household(
-    payload: HouseholdCreate,
+@router.post("/families", status_code=status.HTTP_201_CREATED, response_model=FamilyResponse, tags=["Families"], summary="Create a family")
+def create_family(
+    payload: FamilyCreate,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
     try:
-        household = (
-            client.table("households")
+        family = (
+            client.table("families")
             .insert({"name": payload.name, "created_by": user_id(user)})
             .execute()
             .data[0]
         )
-        client.table("household_members").insert({
-            "household_id": household["id"],
+        client.table("family_accounts").insert({
+            "family_id": family["id"],
             "user_id": user_id(user),
             "role": "owner",
         }).execute()
-        return household
+        return family
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not create household.") from error
+        raise HTTPException(status_code=502, detail="Could not create family.") from error
 
 
-@router.get("/households", response_model=HouseholdListResponse, tags=["Households"], summary="List my households")
-def list_households(
+@router.get("/families", response_model=FamilyListResponse, tags=["Families"], summary="List my families")
+def list_families(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
     try:
-        members = (
-            client.table("household_members")
-            .select("households(*)")
+        accounts = (
+            client.table("family_accounts")
+            .select("families(*)")
             .eq("user_id", user_id(user))
             .execute()
             .data
         )
-        return {"households": [item["households"] for item in members if item.get("households")]}
+        return {"families": [item["families"] for item in accounts if item.get("families")]}
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not load households.") from error
+        raise HTTPException(status_code=502, detail="Could not load families.") from error
 
 
-@router.get("/households/{household_id}", response_model=HouseholdResponse, tags=["Households"], summary="Get a household")
-def get_household(
-    household_id: int,
+@router.get("/families/{family_id}", response_model=FamilyResponse, tags=["Families"], summary="Get a family")
+def get_family(
+    family_id: int,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_household_member(client, household_id, user)
+    require_family_account(client, family_id, user)
     try:
-        result = client.table("households").select("*").eq("id", household_id).limit(1).execute().data
+        result = client.table("families").select("*").eq("id", family_id).limit(1).execute().data
         if not result:
-            raise HTTPException(status_code=404, detail="Household not found.")
+            raise HTTPException(status_code=404, detail="Family not found.")
         return result[0]
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not load household.") from error
+        raise HTTPException(status_code=502, detail="Could not load family.") from error
 
 
-@router.patch("/households/{household_id}", response_model=HouseholdResponse, tags=["Households"], summary="Update a household")
-def update_household(
-    household_id: int,
-    payload: HouseholdUpdate,
+@router.patch("/families/{family_id}", response_model=FamilyResponse, tags=["Families"], summary="Update a family")
+def update_family(
+    family_id: int,
+    payload: FamilyUpdate,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_household_member(client, household_id, user)
+    require_family_account(client, family_id, user)
     try:
-        result = client.table("households").update(payload.model_dump()).eq("id", household_id).execute().data
+        result = client.table("families").update(payload.model_dump()).eq("id", family_id).execute().data
         if not result:
-            raise HTTPException(status_code=404, detail="Household not found.")
+            raise HTTPException(status_code=404, detail="Family not found.")
         return result[0]
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not update household.") from error
+        raise HTTPException(status_code=502, detail="Could not update family.") from error
 
 
 @router.post("/older-adults", status_code=status.HTTP_201_CREATED, response_model=OlderAdultResponse, tags=["Older adults"], summary="Create an older-adult profile")
@@ -161,7 +229,7 @@ def create_older_adult(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_household_member(client, payload.household_id, user)
+    require_family_account(client, payload.family_id, user)
     values = payload.model_dump(exclude_none=True)
     values["created_by"] = user_id(user)
     try:
@@ -170,15 +238,15 @@ def create_older_adult(
         raise HTTPException(status_code=502, detail="Could not create older-adult profile.") from error
 
 
-@router.get("/households/{household_id}/older-adults", response_model=OlderAdultListResponse, tags=["Older adults"], summary="List household older-adult profiles")
+@router.get("/families/{family_id}/older-adults", response_model=OlderAdultListResponse, tags=["Older adults"], summary="List family older-adult profiles")
 def list_older_adults(
-    household_id: int,
+    family_id: int,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_household_member(client, household_id, user)
+    require_family_account(client, family_id, user)
     try:
-        result = client.table("older_adult_profiles").select("*").eq("household_id", household_id).execute()
+        result = client.table("older_adult_profiles").select("*").eq("family_id", family_id).execute()
         return {"older_adults": result.data or []}
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not load older-adult profiles.") from error
@@ -210,7 +278,7 @@ def update_older_adult(
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
     require_older_adult_access(client, older_adult_id, user)
-    values = payload.model_dump(exclude_unset=True)
+    values = payload.model_dump(exclude_unset=True, mode="json")
     if not values:
         raise HTTPException(status_code=422, detail="At least one field is required.")
     try:
@@ -224,86 +292,150 @@ def update_older_adult(
         raise HTTPException(status_code=502, detail="Could not update older-adult profile.") from error
 
 
-@router.get("/older-adults/{older_adult_id}/trusted-contacts", response_model=TrustedContactListResponse, tags=["Trusted contacts"], summary="List trusted contacts")
-def list_trusted_contacts(
-    older_adult_id: int,
+@router.get(
+    "/families/{family_id}/family-members",
+    response_model=FamilyMemberListResponse,
+    tags=["Family members"],
+    summary="List family members",
+)
+def list_family_members(
+    family_id: int,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_older_adult_access(client, older_adult_id, user)
+    require_family_account(client, family_id, user)
     try:
-        result = client.table("trusted_contacts").select("*").eq("older_adult_id", older_adult_id).execute()
-        return {"trusted_contacts": result.data or []}
+        result = (
+            client.table("family_members")
+            .select(FAMILY_MEMBER_SELECT)
+            .eq("family_id", family_id)
+            .order("created_at")
+            .execute()
+        )
+        return {"family_members": [_shape_family_member(row) for row in result.data or []]}
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not load trusted contacts.") from error
+        raise HTTPException(status_code=502, detail="Could not load family members.") from error
 
 
-@router.post("/trusted-contacts", status_code=status.HTTP_201_CREATED, response_model=TrustedContactResponse, tags=["Trusted contacts"], summary="Add a trusted contact")
-def create_trusted_contact(
-    payload: TrustedContactCreate,
+@router.post(
+    "/family-members",
+    status_code=status.HTTP_201_CREATED,
+    response_model=FamilyMemberResponse,
+    tags=["Family members"],
+    summary="Add a family member",
+    description=(
+        "Add one person the family can ask for support. Each relationship names how "
+        "this person is related to one older adult, so the same person can be a "
+        "daughter to one older adult and a sister to another."
+    ),
+)
+def create_family_member(
+    payload: FamilyMemberCreate,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
+    require_family_account(client, payload.family_id, user)
+    _validate_older_adults_in_family(
+        client, payload.family_id, [item.older_adult_id for item in payload.relationships]
+    )
+    email = str(payload.email).strip().lower()
     try:
-        profile = (
-            client.table("older_adult_profiles")
-            .select("household_id")
-            .eq("id", payload.older_adult_id)
+        duplicate = (
+            client.table("family_members")
+            .select("id")
+            .eq("family_id", payload.family_id)
+            .ilike("email", email)
             .limit(1)
             .execute()
             .data
         )
-        if not profile:
-            raise HTTPException(status_code=404, detail="Older-adult profile not found.")
-        require_household_member(client, profile[0]["household_id"], user)
-        return client.table("trusted_contacts").insert(
-            payload.model_dump(exclude_none=True)
-        ).execute().data[0]
+        if duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This email address is already a family member.",
+            )
+        created = (
+            client.table("family_members")
+            .insert({"family_id": payload.family_id, "name": payload.name, "email": email})
+            .execute()
+            .data[0]
+        )
+        _replace_relationships(client, created["id"], payload.relationships)
+        return _load_family_member(client, created["id"])
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not create trusted contact.") from error
+        raise HTTPException(status_code=502, detail="Could not add family member.") from error
 
 
-@router.patch("/trusted-contacts/{contact_id}", response_model=TrustedContactResponse, tags=["Trusted contacts"], summary="Update a trusted contact")
-def update_trusted_contact(
-    contact_id: int,
-    payload: TrustedContactUpdate,
+@router.patch(
+    "/family-members/{family_member_id}",
+    response_model=FamilyMemberResponse,
+    tags=["Family members"],
+    summary="Update a family member",
+)
+def update_family_member(
+    family_member_id: int,
+    payload: FamilyMemberUpdate,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    values = payload.model_dump(exclude_unset=True)
+    values = payload.model_dump(exclude_unset=True, mode="json")
     if not values:
         raise HTTPException(status_code=422, detail="At least one field is required.")
+    family_id = require_family_member_access(client, family_member_id, user)
     try:
-        result = client.table("trusted_contacts").select("older_adult_id").eq("id", contact_id).limit(1).execute().data
-        if not result:
-            raise HTTPException(status_code=404, detail="Trusted contact not found.")
-        require_older_adult_access(client, result[0]["older_adult_id"], user)
-        updated = client.table("trusted_contacts").update(values).eq("id", contact_id).execute().data
-        return updated[0]
+        if payload.relationships is not None:
+            _validate_older_adults_in_family(
+                client, family_id, [item.older_adult_id for item in payload.relationships]
+            )
+        columns = {key: values[key] for key in ("name", "email") if key in values}
+        if "email" in columns:
+            columns["email"] = str(columns["email"]).strip().lower()
+            duplicate = (
+                client.table("family_members")
+                .select("id")
+                .eq("family_id", family_id)
+                .ilike("email", columns["email"])
+                .neq("id", family_member_id)
+                .limit(1)
+                .execute()
+                .data
+            )
+            if duplicate:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This email address is already a family member.",
+                )
+        if columns:
+            client.table("family_members").update(columns).eq("id", family_member_id).execute()
+        if payload.relationships is not None:
+            _replace_relationships(client, family_member_id, payload.relationships)
+        return _load_family_member(client, family_member_id)
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not update trusted contact.") from error
+        raise HTTPException(status_code=502, detail="Could not update family member.") from error
 
 
-@router.delete("/trusted-contacts/{contact_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Trusted contacts"], summary="Remove a trusted contact")
-def delete_trusted_contact(
-    contact_id: int,
+@router.delete(
+    "/family-members/{family_member_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Family members"],
+    summary="Remove a family member",
+)
+def delete_family_member(
+    family_member_id: int,
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> None:
+    require_family_member_access(client, family_member_id, user)
     try:
-        result = client.table("trusted_contacts").select("older_adult_id").eq("id", contact_id).limit(1).execute().data
-        if not result:
-            raise HTTPException(status_code=404, detail="Trusted contact not found.")
-        require_older_adult_access(client, result[0]["older_adult_id"], user)
-        client.table("trusted_contacts").delete().eq("id", contact_id).execute()
+        client.table("family_members").delete().eq("id", family_member_id).execute()
     except HTTPException:
         raise
     except Exception as error:
-        raise HTTPException(status_code=502, detail="Could not delete trusted contact.") from error
+        raise HTTPException(status_code=502, detail="Could not remove family member.") from error
 
 
 @router.post("/plans", status_code=status.HTTP_201_CREATED, response_model=PlanResponse, tags=["Plans"], summary="Create a plan")
@@ -312,12 +444,12 @@ def create_plan(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_household_member(client, payload.household_id, user)
-    older_adult_household_id = household_id_for_older_adult(client, payload.older_adult_id)
-    if older_adult_household_id != payload.household_id:
+    require_family_account(client, payload.family_id, user)
+    older_adult_family_id = family_id_for_older_adult(client, payload.older_adult_id)
+    if older_adult_family_id != payload.family_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The older-adult profile does not belong to this household.",
+            detail="The older-adult profile does not belong to this family.",
         )
     try:
         activity = (
@@ -355,15 +487,15 @@ def create_plan(
         raise HTTPException(status_code=502, detail="Could not create plan.") from error
 
 
-@router.get("/plans", response_model=PlanListResponse, tags=["Plans"], summary="List household plans")
+@router.get("/plans", response_model=PlanListResponse, tags=["Plans"], summary="List family plans")
 def list_plans(
-    household_id: int,
+    family_id: int,
     status_filter: str | None = Query(default=None, alias="status"),
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_household_member(client, household_id, user)
-    query = client.table("plans").select("*").eq("household_id", household_id).order("created_at", desc=True)
+    require_family_account(client, family_id, user)
+    query = client.table("plans").select("*").eq("family_id", family_id).order("created_at", desc=True)
     if status_filter:
         query = query.eq("status", status_filter)
     try:
@@ -399,7 +531,7 @@ def get_plan(
         "Use this resource update for the plan lifecycle. Valid transitions are "
         "draft → awaiting_approval → shared for family approval, or cancellation "
         "from any active state. Direct-sharing profiles create plans as shared. "
-        "Sharing requires the household owner."
+        "Sharing requires the family owner."
     ),
 )
 def update_plan(
@@ -408,7 +540,7 @@ def update_plan(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    household_id = require_plan_access(client, plan_id, user)
+    family_id = require_plan_access(client, plan_id, user)
     try:
         plan = client.table("plans").select("status").eq("id", plan_id).limit(1).execute().data[0]
         current_status = plan["status"]
@@ -428,7 +560,7 @@ def update_plan(
         values: dict[str, Any] = {"status": next_status}
         now = datetime.now(timezone.utc).isoformat()
         if next_status == "shared":
-            require_household_owner(client, household_id, user)
+            require_family_owner(client, family_id, user)
             values.update({"approved_by": user_id(user), "approved_at": now, "shared_at": now})
         elif next_status == "cancelled":
             values["cancelled_at"] = now
@@ -535,7 +667,7 @@ def withdraw_support_offer(
     tags=["Notifications"],
     summary="Send plan notifications",
     description=(
-        "Send one email to each selected trusted contact for a shared plan. "
+        "Send one email to each selected family member for a shared plan. "
         "Successful recipients are not sent again if this request is retried; "
         "failed recipients can be retried."
     ),
@@ -546,8 +678,8 @@ def send_plan_notifications(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
-    selected_contact_ids = list(dict.fromkeys(payload.contact_ids))
+    family_id = require_plan_access(client, plan_id, user)
+    selected_member_ids = list(dict.fromkeys(payload.family_member_ids))
     try:
         plan_rows = (
             client.table("plans")
@@ -563,19 +695,19 @@ def send_plan_notifications(
         if plan["status"] != "shared":
             raise HTTPException(status_code=409, detail="Only shared plans can send notifications.")
 
-        contacts = (
-            client.table("trusted_contacts")
+        members = (
+            client.table("family_members")
             .select("id, name, email")
-            .eq("older_adult_id", plan["older_adult_id"])
-            .in_("id", selected_contact_ids)
+            .eq("family_id", family_id)
+            .in_("id", selected_member_ids)
             .execute()
             .data
             or []
         )
-        contacts_by_id = {int(contact["id"]): contact for contact in contacts}
-        missing_ids = [contact_id for contact_id in selected_contact_ids if contact_id not in contacts_by_id]
+        members_by_id = {int(member["id"]): member for member in members}
+        missing_ids = [member_id for member_id in selected_member_ids if member_id not in members_by_id]
         if missing_ids:
-            raise HTTPException(status_code=404, detail=f"Trusted contacts not found: {missing_ids}")
+            raise HTTPException(status_code=404, detail=f"Family members not found: {missing_ids}")
 
         profile = (
             client.table("older_adult_profiles")
@@ -604,28 +736,28 @@ def send_plan_notifications(
         )
 
         deliveries: list[dict[str, Any]] = []
-        for contact_id in selected_contact_ids:
-            contact = contacts_by_id[contact_id]
+        for member_id in selected_member_ids:
+            member = members_by_id[member_id]
             existing = (
                 client.table("plan_notifications")
                 .select("id, status")
                 .eq("plan_id", plan_id)
-                .eq("trusted_contact_id", contact_id)
+                .eq("family_member_id", member_id)
                 .limit(1)
                 .execute()
                 .data
                 or []
             )
             if existing and existing[0]["status"] == "sent":
-                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "already_sent"})
+                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "already_sent"})
                 continue
 
             if existing:
                 notification_id = existing[0]["id"]
                 client.table("plan_notifications").update({
                     "status": "pending",
-                    "recipient_name": contact["name"],
-                    "recipient_email": contact.get("email"),
+                    "recipient_name": member["name"],
+                    "recipient_email": member.get("email"),
                     "error_message": None,
                     "attempted_at": datetime.now(timezone.utc).isoformat(),
                 }).eq("id", notification_id).execute()
@@ -634,9 +766,9 @@ def send_plan_notifications(
                     client.table("plan_notifications")
                     .insert({
                         "plan_id": plan_id,
-                        "trusted_contact_id": contact_id,
-                        "recipient_name": contact["name"],
-                        "recipient_email": contact.get("email"),
+                        "family_member_id": member_id,
+                        "recipient_name": member["name"],
+                        "recipient_email": member.get("email"),
                         "status": "pending",
                         "attempted_at": datetime.now(timezone.utc).isoformat(),
                     })
@@ -644,21 +776,21 @@ def send_plan_notifications(
                     .data[0]["id"]
                 )
 
-            if not contact.get("email"):
-                error_message = "This trusted contact has no email address."
+            if not member.get("email"):
+                error_message = "This family member has no email address."
                 client.table("plan_notifications").update({
                     "status": "failed",
                     "error_message": error_message,
                 }).eq("id", notification_id).execute()
-                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "failed", "error": error_message})
+                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "failed", "error": error_message})
                 continue
 
             try:
                 provider_id = send_plan_email(
-                    recipient_email=contact["email"],
+                    recipient_email=member["email"],
                     subject=subject,
                     body=body,
-                    idempotency_key=f"plan-notification/{plan_id}/{contact_id}",
+                    idempotency_key=f"plan-notification/{plan_id}/{member_id}",
                 )
             except Exception:
                 error_message = "Email delivery failed."
@@ -666,7 +798,7 @@ def send_plan_notifications(
                     "status": "failed",
                     "error_message": error_message,
                 }).eq("id", notification_id).execute()
-                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "failed", "error": error_message})
+                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "failed", "error": error_message})
             else:
                 client.table("plan_notifications").update({
                     "status": "sent",
@@ -674,7 +806,7 @@ def send_plan_notifications(
                     "sent_at": datetime.now(timezone.utc).isoformat(),
                     "error_message": None,
                 }).eq("id", notification_id).execute()
-                deliveries.append({"contact_id": contact_id, "name": contact["name"], "status": "sent", "provider_id": provider_id})
+                deliveries.append({"family_member_id": member_id, "name": member["name"], "status": "sent", "provider_id": provider_id})
 
         return {"deliveries": deliveries}
     except HTTPException:

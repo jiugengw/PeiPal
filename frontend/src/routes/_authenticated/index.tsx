@@ -30,7 +30,7 @@ function HomePage() {
           </p>
           <button
             className="mt-6 min-h-14 rounded-xl bg-primary px-6 font-extrabold text-primary-foreground hover:bg-foreground"
-            onClick={() => void progress.householdsQuery.refetch()}
+            onClick={() => void progress.familiesQuery.refetch()}
           >
             Try again
           </button>

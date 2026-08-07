@@ -16,15 +16,16 @@ vi.mock("@/features/setup/useSetupProgress", () => ({ useSetupProgress }));
 
 function setupProgress(complete = false) {
   return {
-    household: complete ? { id: 1, name: "Lim Family" } : undefined,
-    olderAdult: complete ? { id: 2, household_id: 1, name: "Mary" } : undefined,
-    contacts: complete ? [{ id: 3, name: "Anna" }] : [],
+    family: complete ? { id: 1, name: "Lim Family" } : undefined,
+    olderAdult: complete ? { id: 2, family_id: 1, name: "Mary" } : undefined,
+    olderAdults: complete ? [{ id: 2, family_id: 1, name: "Mary" }] : [],
+    familyMembers: complete ? [{ id: 3, name: "Anna" }] : [],
     isPending: false,
     isError: false,
     isComplete: complete,
-    householdsQuery: { refetch: vi.fn() },
+    familiesQuery: { refetch: vi.fn() },
     olderAdultsQuery: { refetch: vi.fn() },
-    trustedContactsQuery: { refetch: vi.fn() },
+    familyMembersQuery: { refetch: vi.fn() },
   };
 }
 

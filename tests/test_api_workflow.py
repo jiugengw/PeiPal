@@ -16,12 +16,12 @@ client = TestClient(app)
 @pytest.mark.parametrize(
     "method,path",
     [
-        ("get", "/api/households"),
-        ("get", "/api/households/1"),
+        ("get", "/api/families"),
+        ("get", "/api/families/1"),
         ("get", "/api/older-adults/1"),
         ("patch", "/api/older-adults/1"),
         ("post", "/api/plans"),
-        ("get", "/api/plans?household_id=1"),
+        ("get", "/api/plans?family_id=1"),
         ("get", "/api/plans/1"),
         ("patch", "/api/plans/1"),
         ("post", "/api/plans/1/support-offers"),
@@ -39,7 +39,7 @@ def test_core_workflow_requires_authentication(method, path):
 
 def test_plan_create_requires_the_three_relationship_ids():
     with pytest.raises(ValidationError):
-        PlanCreate(household_id=1, older_adult_id=1)
+        PlanCreate(family_id=1, older_adult_id=1)
 
 
 def test_support_offer_rejects_unknown_support_type():
@@ -48,25 +48,25 @@ def test_support_offer_rejects_unknown_support_type():
 
 
 def test_older_adult_sharing_mode_defaults_to_family_approval():
-    profile = OlderAdultCreate(household_id=1, name="Mary Lim")
+    profile = OlderAdultCreate(family_id=1, name="Mary Lim")
 
     assert profile.sharing_mode == "family_approval"
 
 
 def test_plan_notification_requires_at_least_one_contact():
     with pytest.raises(ValidationError):
-        PlanNotificationCreate(contact_ids=[])
+        PlanNotificationCreate(family_member_ids=[])
 
 
 @pytest.mark.parametrize(
     "path,method,status_code,schema_name",
     [
-        ("/api/households", "get", "200", "HouseholdListResponse"),
-        ("/api/households/{household_id}", "get", "200", "HouseholdResponse"),
-        ("/api/households/{household_id}/older-adults", "get", "200", "OlderAdultListResponse"),
+        ("/api/families", "get", "200", "FamilyListResponse"),
+        ("/api/families/{family_id}", "get", "200", "FamilyResponse"),
+        ("/api/families/{family_id}/older-adults", "get", "200", "OlderAdultListResponse"),
         ("/api/older-adults/{older_adult_id}", "patch", "200", "OlderAdultResponse"),
-        ("/api/older-adults/{older_adult_id}/trusted-contacts", "get", "200", "TrustedContactListResponse"),
-        ("/api/trusted-contacts/{contact_id}", "patch", "200", "TrustedContactResponse"),
+        ("/api/families/{family_id}/family-members", "get", "200", "FamilyMemberListResponse"),
+        ("/api/family-members/{family_member_id}", "patch", "200", "FamilyMemberResponse"),
         ("/api/plans", "post", "201", "PlanResponse"),
         ("/api/plans", "get", "200", "PlanListResponse"),
         ("/api/plans/{plan_id}", "get", "200", "PlanResponse"),
@@ -170,8 +170,8 @@ class QueueClient:
 
 def test_plan_can_move_from_awaiting_approval_to_shared(monkeypatch):
     monkeypatch.setattr(routes, "require_plan_access", lambda *_args: 1)
-    monkeypatch.setattr(routes, "require_household_owner", lambda *_args: None)
-    shared = {"id": 9, "household_id": 1, "status": "shared"}
+    monkeypatch.setattr(routes, "require_family_owner", lambda *_args: None)
+    shared = {"id": 9, "family_id": 1, "status": "shared"}
 
     result = update_plan(
         9,
@@ -203,7 +203,7 @@ def test_notifications_reject_a_plan_that_is_not_shared(monkeypatch):
     with pytest.raises(HTTPException) as error:
         send_plan_notifications(
             9,
-            PlanNotificationCreate(contact_ids=[1]),
+            PlanNotificationCreate(family_member_ids=[1]),
             SimpleNamespace(id="user-1"),
             QueueClient([[{"status": "draft", "older_adult_id": 2, "activity_id": 3}]]),
         )
@@ -227,14 +227,14 @@ def test_notifications_preserve_sent_contacts_and_report_partial_failure(monkeyp
 
     result = send_plan_notifications(
         9,
-        PlanNotificationCreate(contact_ids=[1, 2]),
+        PlanNotificationCreate(family_member_ids=[1, 2]),
         SimpleNamespace(id="user-1"),
         client,
     )
 
     assert result["deliveries"] == [
-        {"contact_id": 1, "name": "Anna", "status": "already_sent"},
-        {"contact_id": 2, "name": "David", "status": "failed", "error": "Email delivery failed."},
+        {"family_member_id": 1, "name": "Anna", "status": "already_sent"},
+        {"family_member_id": 2, "name": "David", "status": "failed", "error": "Email delivery failed."},
     ]
 
 

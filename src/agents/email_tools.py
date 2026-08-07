@@ -1,4 +1,4 @@
-"""Compact trusted-contact email tools for the PeiPal agent."""
+"""Compact family-member email tools for the PeiPal agent."""
 
 from __future__ import annotations
 
@@ -33,34 +33,34 @@ def _load_contacts() -> list[dict[str, str]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as error:
-        raise ValueError(f"Trusted contacts file was not found: {path}") from error
+        raise ValueError(f"Family members file was not found: {path}") from error
     except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Trusted contacts file could not be read: {path}") from error
+        raise ValueError(f"Family members file could not be read: {path}") from error
 
     contacts = data.get("contacts") if isinstance(data, dict) else None
     if not isinstance(contacts, list):
-        raise ValueError("Trusted contacts file must contain a contacts list.")
+        raise ValueError("Family members file must contain a contacts list.")
 
     required_fields = {"id", "name", "relationship", "email"}
     contact_ids: set[str] = set()
     validated_contacts: list[dict[str, str]] = []
     for contact in contacts:
         if not isinstance(contact, dict) or not required_fields <= contact.keys():
-            raise ValueError("Every trusted contact needs an id, name, relationship, and email.")
+            raise ValueError("Every family member needs an id, name, relationship, and email.")
         validated_contact = {
             field: str(contact[field]).strip() for field in required_fields
         }
         if not all(validated_contact.values()) or not _valid_email(validated_contact["email"]):
-            raise ValueError(f"Trusted contact {validated_contact['id'] or '(unknown)'} is invalid.")
+            raise ValueError(f"Family member {validated_contact['id'] or '(unknown)'} is invalid.")
         if validated_contact["id"] in contact_ids:
-            raise ValueError(f"Duplicate trusted contact id: {validated_contact['id']}")
+            raise ValueError(f"Duplicate family member id: {validated_contact['id']}")
         contact_ids.add(validated_contact["id"])
         validated_contacts.append(validated_contact)
     return validated_contacts
 
 
-def list_trusted_contacts() -> str:
-    """List trusted contacts without exposing their email addresses."""
+def list_family_members() -> str:
+    """List family members without exposing their email addresses."""
 
     contacts = [
         {
@@ -78,7 +78,7 @@ def prepare_invitation_email(contact_ids: list[str], subject: str, body: str) ->
 
     selected_ids = list(dict.fromkeys(contact_ids))
     if not selected_ids:
-        raise ValueError("Choose at least one trusted contact.")
+        raise ValueError("Choose at least one family member.")
 
     subject = subject.strip()
     body = body.strip()
@@ -90,7 +90,7 @@ def prepare_invitation_email(contact_ids: list[str], subject: str, body: str) ->
     contacts_by_id = {contact["id"]: contact for contact in _load_contacts()}
     unknown_ids = [contact_id for contact_id in selected_ids if contact_id not in contacts_by_id]
     if unknown_ids:
-        raise ValueError(f"Unknown trusted contact ids: {', '.join(unknown_ids)}")
+        raise ValueError(f"Unknown family member ids: {', '.join(unknown_ids)}")
 
     selected_contacts = [contacts_by_id[contact_id] for contact_id in selected_ids]
     prepared_email_id = str(uuid4())
@@ -167,12 +167,12 @@ def send_invitation_email(prepared_email_id: str) -> str:
     return json.dumps({"deliveries": delivery_results})
 
 
-list_trusted_contacts_tool = function_tool(list_trusted_contacts)
+list_family_members_tool = function_tool(list_family_members)
 prepare_invitation_email_tool = function_tool(prepare_invitation_email)
 send_invitation_email_tool = function_tool(send_invitation_email)
 
 EMAIL_TOOLS = [
-    list_trusted_contacts_tool,
+    list_family_members_tool,
     prepare_invitation_email_tool,
     send_invitation_email_tool,
 ]

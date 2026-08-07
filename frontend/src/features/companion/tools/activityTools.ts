@@ -66,22 +66,22 @@ export function createActivityTools({
       },
     }),
     toolFactory({
-      name: "list_trusted_contacts",
+      name: "list_family_members",
       description:
-        "List the trusted contacts saved in setup, with the ids needed to email them.",
+        "List the family members saved in setup, with the ids needed to email them.",
       parameters: z.object({}),
       execute: async () => {
-        const contacts = setupRef.current.contacts.map((contact) => ({
-          contactId: contact.id,
-          name: contact.name,
-          relationship: contact.relationship,
-          canBeEmailed: Boolean(contact.email),
+        const contacts = setupRef.current.familyMembers.map((member) => ({
+          contactId: member.id,
+          name: member.name,
+          relationships: member.relationships,
+          canBeEmailed: Boolean(member.email),
         }));
         return {
           display:
             contacts.length === 0
-              ? "No trusted contacts are saved yet; they are added on the setup page."
-              : `${contacts.length} trusted ${contacts.length === 1 ? "contact is" : "contacts are"} saved.`,
+              ? "No family members are saved yet; they are added on the setup page."
+              : `${contacts.length} family ${contacts.length === 1 ? "member is" : "members are"} saved.`,
           contacts,
         };
       },
@@ -89,7 +89,7 @@ export function createActivityTools({
     toolFactory({
       name: "list_plans",
       description:
-        "List the household's plans, with the ids needed for any plan action.",
+        "List the family's plans, with the ids needed for any plan action.",
       parameters: z.object({
         status: z
           .enum(["draft", "awaiting_approval", "shared", "cancelled"])
@@ -97,11 +97,11 @@ export function createActivityTools({
           .optional(),
       }),
       execute: async ({ status }) => {
-        const household = setupRef.current.household;
-        if (!household)
-          throw new Error("Finish the household step in setup first.");
+        const family = setupRef.current.family;
+        if (!family)
+          throw new Error("Finish the family step in setup first.");
         const data = await queryClient.fetchQuery(
-          plansQueryOptions(household.id, status ?? undefined),
+          plansQueryOptions(family.id, status ?? undefined),
         );
         const plans = data.plans.map((plan) => ({
           planId: plan.id,

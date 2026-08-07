@@ -10,15 +10,15 @@ export function FamilyView() {
   const { session } = useAuthSession();
   const setup = useSetupProgress();
   const plansQuery = useQuery({
-    ...plansQueryOptions(setup.household?.id ?? 0),
-    enabled: Boolean(setup.household),
+    ...plansQueryOptions(setup.family?.id ?? 0),
+    enabled: Boolean(setup.family),
   });
 
-  if (setup.isPending || (setup.household && plansQuery.isPending)) {
+  if (setup.isPending || (setup.family && plansQuery.isPending)) {
     return <FamilyMessage message="Loading the family view…" status />;
   }
   if (setup.isError || plansQuery.isError) {
-    return <FamilyMessage message="We could not load the family view." action={() => { void setup.householdsQuery.refetch(); void plansQuery.refetch(); }} />;
+    return <FamilyMessage message="We could not load the family view." action={() => { void setup.familiesQuery.refetch(); void plansQuery.refetch(); }} />;
   }
 
   const plans = plansQuery.data?.plans ?? [];

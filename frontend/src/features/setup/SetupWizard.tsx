@@ -4,16 +4,17 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { SetupProgress } from "@/features/setup/SetupProgress";
 import {
-  householdsQueryOptions,
+  familiesQueryOptions,
   olderAdultsQueryOptions,
-  trustedContactsQueryOptions,
+  familyMembersQueryOptions,
 } from "@/features/setup/api/setupQueries";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { fetchClient } from "@/lib/fetchClient";
 
 type OlderAdultDraft = components["schemas"]["OlderAdultCreate"];
 type OlderAdultUpdate = components["schemas"]["OlderAdultUpdate"];
-type TrustedContact = components["schemas"]["TrustedContactResponse"];
+type FamilyMember = components["schemas"]["FamilyMemberResponse"];
+type OlderAdult = components["schemas"]["OlderAdultResponse"];
 
 const fieldClass =
   "mt-2 min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-lg text-foreground placeholder:text-foreground/60";
@@ -43,7 +44,7 @@ export function SetupWizard() {
         action={
           <button
             className={primaryButtonClass}
-            onClick={() => void progress.householdsQuery.refetch()}
+            onClick={() => void progress.familiesQuery.refetch()}
           >
             Try again
           </button>
@@ -63,13 +64,13 @@ function SetupWizardForm({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(
-    progress.olderAdult ? 3 : progress.household ? 1 : 0,
+    progress.olderAdult ? 3 : progress.family ? 1 : 0,
   );
-  const [householdName, setHouseholdName] = useState(
-    progress.household?.name ?? "",
+  const [familyName, setFamilyName] = useState(
+    progress.family?.name ?? "",
   );
   const [profile, setProfile] = useState<OlderAdultDraft>({
-    household_id: progress.household?.id ?? 0,
+    family_id: progress.family?.id ?? 0,
     name: progress.olderAdult?.name ?? "",
     preferred_name: progress.olderAdult?.preferred_name ?? "",
     age: progress.olderAdult?.age ?? null,
@@ -80,21 +81,21 @@ function SetupWizardForm({
   });
   const [saveError, setSaveError] = useState("");
 
-  const createHousehold = useMutation({
+  const createFamily = useMutation({
     mutationFn: async (name: string) => {
-      const { data, error } = await fetchClient.POST("/api/households", {
+      const { data, error } = await fetchClient.POST("/api/families", {
         body: { name },
       });
       if (error) throw error;
       return data;
     },
   });
-  const updateHousehold = useMutation({
+  const updateFamily = useMutation({
     mutationFn: async ({ id, name }: { id: number; name: string }) => {
       const { data, error } = await fetchClient.PATCH(
-        "/api/households/{household_id}",
+        "/api/families/{family_id}",
         {
-          params: { path: { household_id: id } },
+          params: { path: { family_id: id } },
           body: { name },
         },
       );
@@ -132,20 +133,20 @@ function SetupWizardForm({
     },
   });
 
-  async function submitHousehold(event: FormEvent<HTMLFormElement>) {
+  async function submitFamily(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaveError("");
     try {
-      const saved = progress.household
-        ? await updateHousehold.mutateAsync({
-            id: progress.household.id,
-            name: householdName.trim(),
+      const saved = progress.family
+        ? await updateFamily.mutateAsync({
+            id: progress.family.id,
+            name: familyName.trim(),
           })
-        : await createHousehold.mutateAsync(householdName.trim());
+        : await createFamily.mutateAsync(familyName.trim());
       await queryClient.invalidateQueries({
-        queryKey: householdsQueryOptions().queryKey,
+        queryKey: familiesQueryOptions().queryKey,
       });
-      if (saved) setProfile((value) => ({ ...value, household_id: saved.id }));
+      if (saved) setProfile((value) => ({ ...value, family_id: saved.id }));
       setCurrentStep(1);
     } catch (error) {
       setSaveError(errorMessage(error));
@@ -164,7 +165,7 @@ function SetupWizardForm({
     try {
       const saved = await saveProfile.mutateAsync({
         ...profile,
-        household_id: progress.household?.id ?? profile.household_id,
+        family_id: progress.family?.id ?? profile.family_id,
         preferred_name: profile.preferred_name || null,
         language: profile.language || null,
         mobility_notes: profile.mobility_notes || null,
@@ -172,7 +173,7 @@ function SetupWizardForm({
       });
       if (saved) {
         await queryClient.invalidateQueries({
-          queryKey: olderAdultsQueryOptions(saved.household_id).queryKey,
+          queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
         });
       }
       setCurrentStep(3);
@@ -182,8 +183,8 @@ function SetupWizardForm({
   }
 
   const isSaving =
-    createHousehold.isPending ||
-    updateHousehold.isPending ||
+    createFamily.isPending ||
+    updateFamily.isPending ||
     saveProfile.isPending;
 
   return (
@@ -198,28 +199,28 @@ function SetupWizardForm({
 
         <div className="max-w-[760px]">
           {currentStep === 0 ? (
-            <form onSubmit={submitHousehold}>
+            <form onSubmit={submitFamily}>
               <StepHeading
                 title="Who are we setting this up for?"
-                description="Start with a household name everyone will recognize."
+                description="Start with a family name everyone will recognize."
               />
-              <label className={labelClass} htmlFor="household-name">
-                Household name
+              <label className={labelClass} htmlFor="family-name">
+                Family name
               </label>
               <input
                 className={fieldClass}
-                id="household-name"
+                id="family-name"
                 maxLength={120}
                 required
-                value={householdName}
-                onChange={(event) => setHouseholdName(event.target.value)}
+                value={familyName}
+                onChange={(event) => setFamilyName(event.target.value)}
                 placeholder="For example, Lim Family"
               />
               <FormActions
                 error={saveError}
                 isSaving={isSaving}
                 primaryLabel={
-                  progress.household ? "Save and continue" : "Create household"
+                  progress.family ? "Save and continue" : "Create family"
                 }
               />
             </form>
@@ -354,10 +355,11 @@ function SetupWizardForm({
             </form>
           ) : null}
 
-          {currentStep === 3 && progress.olderAdult ? (
-            <TrustedCircleStep
-              contacts={progress.contacts}
-              olderAdultId={progress.olderAdult.id}
+          {currentStep === 3 && progress.family ? (
+            <FamilyMembersStep
+              familyMembers={progress.familyMembers}
+              familyId={progress.family.id}
+              olderAdults={progress.olderAdults}
               queryClient={queryClient}
               onBack={() => setCurrentStep(2)}
               onFinish={() => void navigate({ to: "/discover" })}
@@ -499,133 +501,160 @@ function SetupStatus({
   );
 }
 
-function TrustedCircleStep({
-  contacts,
-  olderAdultId,
+function FamilyMembersStep({
+  familyMembers,
+  familyId,
+  olderAdults,
   queryClient,
   onBack,
   onFinish,
 }: {
-  contacts: TrustedContact[];
-  olderAdultId: number;
+  familyMembers: FamilyMember[];
+  familyId: number;
+  olderAdults: OlderAdult[];
   queryClient: ReturnType<typeof useQueryClient>;
   onBack: () => void;
   onFinish: () => void;
 }) {
-  const [editing, setEditing] = useState<TrustedContact | null>(null);
-  const [draft, setDraft] = useState({
-    name: "",
-    relationship: "",
-    email: "",
-    phone: "",
-  });
+  const [editing, setEditing] = useState<FamilyMember | null>(null);
+  const [draft, setDraft] = useState({ name: "", email: "" });
+  /** Relationship text per older-adult id. A blank value means "not related". */
+  const [relationships, setRelationships] = useState<Record<number, string>>({});
   const [error, setError] = useState("");
-  const saveContact = useMutation({
+
+  function relationshipList() {
+    return olderAdults
+      .filter((person) => relationships[person.id]?.trim())
+      .map((person) => ({
+        older_adult_id: person.id,
+        relationship: relationships[person.id].trim(),
+      }));
+  }
+
+  const saveFamilyMember = useMutation({
     mutationFn: async () => {
       const body = {
         name: draft.name.trim(),
-        relationship: draft.relationship.trim(),
-        email: draft.email.trim() || null,
-        phone: draft.phone.trim() || null,
+        email: draft.email.trim().toLowerCase(),
+        relationships: relationshipList(),
       };
       const result = editing
-        ? await fetchClient.PATCH("/api/trusted-contacts/{contact_id}", {
-            params: { path: { contact_id: editing.id } },
+        ? await fetchClient.PATCH("/api/family-members/{family_member_id}", {
+            params: { path: { family_member_id: editing.id } },
             body,
           })
-        : await fetchClient.POST("/api/trusted-contacts", {
-            body: { older_adult_id: olderAdultId, ...body },
+        : await fetchClient.POST("/api/family-members", {
+            body: { family_id: familyId, ...body },
           });
       if (result.error) throw result.error;
       return result.data;
     },
   });
-  const removeContact = useMutation({
-    mutationFn: async (contactId: number) => {
+  const removeFamilyMember = useMutation({
+    mutationFn: async (familyMemberId: number) => {
       const { error: apiError } = await fetchClient.DELETE(
-        "/api/trusted-contacts/{contact_id}",
-        { params: { path: { contact_id: contactId } } },
+        "/api/family-members/{family_member_id}",
+        { params: { path: { family_member_id: familyMemberId } } },
       );
       if (apiError) throw apiError;
     },
   });
 
-  async function refreshContacts() {
+  async function refreshFamilyMembers() {
     await queryClient.invalidateQueries({
-      queryKey: trustedContactsQueryOptions(olderAdultId).queryKey,
+      queryKey: familyMembersQueryOptions(familyId).queryKey,
     });
+  }
+  function resetDraft() {
+    setEditing(null);
+    setDraft({ name: "", email: "" });
+    setRelationships({});
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    if (!draft.email.trim() && !draft.phone.trim()) {
+    if (relationshipList().length === 0) {
       setError(
-        "Add an email address or phone number so this person can be contacted.",
+        "Say how this person is related to at least one of your older adults.",
       );
       return;
     }
     try {
-      await saveContact.mutateAsync();
-      await refreshContacts();
-      setEditing(null);
-      setDraft({ name: "", relationship: "", email: "", phone: "" });
+      await saveFamilyMember.mutateAsync();
+      await refreshFamilyMembers();
+      resetDraft();
     } catch (caught) {
       setError(errorMessage(caught));
     }
   }
-  async function remove(contactId: number) {
-    if (!window.confirm("Remove this trusted contact?")) return;
+  async function remove(familyMemberId: number) {
+    if (!window.confirm("Remove this family member?")) return;
     try {
-      await removeContact.mutateAsync(contactId);
-      await refreshContacts();
+      await removeFamilyMember.mutateAsync(familyMemberId);
+      await refreshFamilyMembers();
     } catch (caught) {
       setError(errorMessage(caught));
     }
   }
-  function edit(contact: TrustedContact) {
-    setEditing(contact);
-    setDraft({
-      name: contact.name,
-      relationship: contact.relationship,
-      email: contact.email ?? "",
-      phone: contact.phone ?? "",
-    });
+  function edit(member: FamilyMember) {
+    setEditing(member);
+    setDraft({ name: member.name, email: member.email });
+    setRelationships(
+      Object.fromEntries(
+        member.relationships.map((link) => [
+          link.older_adult_id,
+          link.relationship,
+        ]),
+      ),
+    );
     setError("");
+  }
+
+  function describeRelationships(member: FamilyMember) {
+    return member.relationships
+      .map((link) => {
+        const person = olderAdults.find(
+          (candidate) => candidate.id === link.older_adult_id,
+        );
+        const name = person?.preferred_name || person?.name;
+        return name ? `${link.relationship} of ${name}` : link.relationship;
+      })
+      .join(" · ");
   }
 
   return (
     <div>
       <StepHeading
-        title="Build a trusted circle."
-        description="Add up to five people who may help with reminders, transport, booking, or company."
+        title="Who is in the family?"
+        description="Add the people who should receive the request when your older adult asks for support. Everyone is emailed, and the first person to answer decides."
       />
-      {contacts.length ? (
+      {familyMembers.length ? (
         <ul className="mb-8 divide-y divide-border border-y border-border">
-          {contacts.map((contact) => (
+          {familyMembers.map((member) => (
             <li
               className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-              key={contact.id}
+              key={member.id}
             >
               <div>
                 <strong className="text-lg text-foreground">
-                  {contact.name}
+                  {member.name}
                 </strong>
                 <p className="mt-1 text-base text-foreground">
-                  {contact.relationship} · {contact.email || contact.phone}
+                  {describeRelationships(member)} · {member.email}
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   className={secondaryButtonClass}
                   type="button"
-                  onClick={() => edit(contact)}
+                  onClick={() => edit(member)}
                 >
                   Edit
                 </button>
                 <button
                   className={secondaryButtonClass}
                   type="button"
-                  onClick={() => void remove(contact.id)}
+                  onClick={() => void remove(member.id)}
                 >
                   Remove
                 </button>
@@ -635,105 +664,100 @@ function TrustedCircleStep({
         </ul>
       ) : (
         <p className="mb-8 rounded-2xl bg-muted p-5 text-lg text-foreground">
-          No one has been added yet. Add at least one trusted contact to finish
+          No one has been added yet. Add at least one family member to finish
           setup.
         </p>
       )}
-      {contacts.length < 5 || editing ? (
-        <form
-          className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7"
-          onSubmit={submit}
-        >
-          <h2 className="text-2xl font-bold text-foreground">
-            {editing ? "Edit trusted contact" : "Add a trusted contact"}
-          </h2>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Field label="Name" required>
-              <input
-                className={fieldClass}
-                required
-                maxLength={120}
-                value={draft.name}
-                onChange={(event) =>
-                  setDraft({ ...draft, name: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Relationship" required>
-              <input
-                className={fieldClass}
-                required
-                maxLength={80}
-                value={draft.relationship}
-                onChange={(event) =>
-                  setDraft({ ...draft, relationship: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Email">
-              <input
-                className={fieldClass}
-                type="email"
-                maxLength={320}
-                value={draft.email}
-                onChange={(event) =>
-                  setDraft({ ...draft, email: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Phone">
-              <input
-                className={fieldClass}
-                type="tel"
-                maxLength={40}
-                value={draft.phone}
-                onChange={(event) =>
-                  setDraft({ ...draft, phone: event.target.value })
-                }
-              />
-            </Field>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {editing ? (
-              <button
-                className={secondaryButtonClass}
-                type="button"
-                onClick={() => {
-                  setEditing(null);
-                  setDraft({
-                    name: "",
-                    relationship: "",
-                    email: "",
-                    phone: "",
-                  });
-                }}
+      <form
+        className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7"
+        onSubmit={submit}
+      >
+        <h2 className="text-2xl font-bold text-foreground">
+          {editing ? "Edit family member" : "Add a family member"}
+        </h2>
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <Field label="Name" required>
+            <input
+              className={fieldClass}
+              required
+              maxLength={120}
+              value={draft.name}
+              onChange={(event) =>
+                setDraft({ ...draft, name: event.target.value })
+              }
+            />
+          </Field>
+          <Field label="Email" required>
+            <input
+              className={fieldClass}
+              type="email"
+              required
+              maxLength={320}
+              value={draft.email}
+              onChange={(event) =>
+                setDraft({ ...draft, email: event.target.value })
+              }
+            />
+          </Field>
+        </div>
+        <fieldset className="mt-6">
+          <legend className={labelClass}>
+            How are they related?
+          </legend>
+          <p className="mt-1 text-base leading-relaxed text-foreground">
+            Fill in a relationship for each older adult this person supports.
+            Leave a box empty if it does not apply.
+          </p>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            {olderAdults.map((person) => (
+              <Field
+                key={person.id}
+                label={`Relationship to ${person.preferred_name || person.name}`}
               >
-                Cancel edit
-              </button>
-            ) : null}
-            <button
-              className={primaryButtonClass}
-              disabled={saveContact.isPending}
-              type="submit"
-            >
-              {saveContact.isPending
-                ? "Saving…"
-                : editing
-                  ? "Save contact"
-                  : "Add contact"}
-            </button>
+                <input
+                  className={fieldClass}
+                  maxLength={80}
+                  placeholder="For example, Daughter"
+                  value={relationships[person.id] ?? ""}
+                  onChange={(event) =>
+                    setRelationships({
+                      ...relationships,
+                      [person.id]: event.target.value,
+                    })
+                  }
+                />
+              </Field>
+            ))}
           </div>
-          {error ? (
-            <p className="mt-4 font-bold text-foreground" role="alert">
-              {error}
-            </p>
+        </fieldset>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {editing ? (
+            <button
+              className={secondaryButtonClass}
+              type="button"
+              onClick={resetDraft}
+            >
+              Cancel edit
+            </button>
           ) : null}
-        </form>
-      ) : (
-        <p className="rounded-2xl bg-muted p-5 text-lg font-bold text-foreground">
-          Your trusted circle has five people, which is the limit for this demo.
-        </p>
-      )}
+          <button
+            className={primaryButtonClass}
+            disabled={saveFamilyMember.isPending}
+            type="submit"
+          >
+            {saveFamilyMember.isPending
+              ? "Saving\u2026"
+              : editing
+                ? "Save family member"
+                : "Add family member"}
+          </button>
+        </div>
+        {error ? (
+          <p className="mt-4 font-bold text-foreground" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </form>
       <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <button className={secondaryButtonClass} type="button" onClick={onBack}>
           Back
@@ -741,7 +765,7 @@ function TrustedCircleStep({
         <button
           className={primaryButtonClass}
           type="button"
-          disabled={!contacts.length}
+          disabled={!familyMembers.length}
           onClick={onFinish}
         >
           Finish setup

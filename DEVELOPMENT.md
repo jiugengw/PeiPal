@@ -31,7 +31,6 @@ Keep server secrets in the root `.env`:
 OPENAI_API_KEY=...
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
-PARALLEL_API_KEY=...
 RESEND_API_KEY=...
 EMAIL_FROM=...
 EMAIL_REPLY_TO=...
@@ -45,7 +44,7 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `PARALLEL_API_KEY`, or `RESEND_API_KEY` in the frontend environment file.
+Never put `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, or `RESEND_API_KEY` in the frontend environment file.
 Keep `VITE_API_BASE_URL` empty for normal local development so requests use the Vite proxy. If the browser calls FastAPI directly instead, set it to `http://127.0.0.1:8000` and include the frontend origin in the backend `CORS_ORIGINS` value.
 
 ## Email notifications
@@ -233,51 +232,19 @@ npm test
 npm run build
 ```
 
-The frontend currently uses Vitest and Testing Library. Browser-level Playwright coverage is intentionally deferred, so complete the manual judge walkthrough below before a demo.
+The frontend currently uses Vitest and Testing Library. Browser-level Playwright coverage is intentionally deferred, so complete the manual demo walkthrough below before a demo.
 
-## Refreshing activities with Parallel
+## Demo activities
 
-The backend can use Parallel Search and Extract to discover current activities and save them into Supabase:
-
-```bash
-python scripts/refresh_activities.py \
-  --area Bishan \
-  --start-date 2026-08-05 \
-  --end-date 2026-09-05 \
-  --timing Morning \
-  --preference Talk \
-  --mobility "Gentle, no steps"
-```
-
-The command searches official result pages, extracts event details, skips results without usable dates or times, upserts the remaining activities, and expires activities that have already started.
-
-For an offline fixture refresh:
+The catalog is populated by the idempotent Supabase migration
+`20260807190000_seed_demo_activities.sql`, which inserts 30 varied,
+future-dated activities for local demos.
 
 ```bash
-python scripts/refresh_activities.py --provider json --input data/sample_activities.json
+supabase db reset
 ```
 
-## Evaluating activity extraction
-
-Capture real search and extraction results without connecting to Supabase:
-
-```bash
-python scripts/capture_activity_eval.py \
-  --area Bishan \
-  --start-date 2026-08-05 \
-  --end-date 2026-09-05 \
-  --preference "fun and educational"
-```
-
-Compare reviewed labels with predictions:
-
-```bash
-python scripts/evaluate_activity_extraction.py \
-  --cases evals/activity_extraction/gold_cases.jsonl \
-  --predictions evals/activity_extraction/predictions.jsonl
-```
-
-## Judge walkthrough
+## Manual demo walkthrough
 
 Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 
@@ -320,7 +287,7 @@ Start FastAPI and Vite, then open `http://127.0.0.1:5173`.
 ## Current technical limitations
 
 - The family page is a same-account demo, not a separately authenticated trusted-contact portal.
-- Browser end-to-end automation is deferred; the complete judge path is verified manually.
+- Browser end-to-end automation is deferred; the complete demo path is verified manually.
 - The API does not yet arrange transport or complete bookings.
 - Plan completion tracking is not yet implemented.
 - Notification delivery requires Resend configuration.

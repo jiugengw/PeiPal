@@ -35,7 +35,7 @@ export function Navbar() {
           className="col-span-2 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1"
           aria-label="Primary navigation"
         >
-          <ul className="m-0 grid list-none grid-cols-3 gap-1 rounded-2xl bg-muted p-1 md:mx-auto md:flex md:w-fit">
+          <ul className="m-0 grid list-none grid-flow-col auto-cols-fr gap-1 rounded-2xl bg-muted p-1 md:mx-auto md:flex md:w-fit">
             {navigation.map((item) => (
               <li key={item.to}>
                 <Link

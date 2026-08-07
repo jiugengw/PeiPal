@@ -26,13 +26,6 @@ def supabase_service_key() -> str:
     return value
 
 
-def parallel_api_key() -> str:
-    value = os.getenv("PARALLEL_API_KEY")
-    if not value:
-        raise RuntimeError("PARALLEL_API_KEY is not configured.")
-    return value
-
-
 def openai_api_key() -> str:
     value = os.getenv("OPENAI_API_KEY")
     if not value:

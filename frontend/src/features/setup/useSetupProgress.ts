@@ -5,19 +5,19 @@ import {
   trustedContactsQueryOptions,
 } from "@/features/setup/api/setupQueries";
 
-export function useSetupProgress() {
-  const householdsQuery = useQuery(householdsQueryOptions());
-  const household = householdsQuery.data?.households?.[0];
+export function useSetupProgress(enabled: boolean = true) {
+  const householdsQuery = useQuery({ ...householdsQueryOptions(), enabled });
+  const household = householdsQuery.data?.households[0];
 
   const olderAdultsQuery = useQuery({
     ...olderAdultsQueryOptions(household?.id ?? 0),
-    enabled: Boolean(household),
+    enabled: enabled && Boolean(household),
   });
-  const olderAdult = olderAdultsQuery.data?.older_adults?.[0];
+  const olderAdult = olderAdultsQuery.data?.older_adults[0];
 
   const trustedContactsQuery = useQuery({
     ...trustedContactsQueryOptions(olderAdult?.id ?? 0),
-    enabled: Boolean(olderAdult),
+    enabled: enabled && Boolean(olderAdult),
   });
   const contacts = trustedContactsQuery.data?.trusted_contacts ?? [];
 

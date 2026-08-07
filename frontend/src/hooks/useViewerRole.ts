@@ -17,13 +17,13 @@ export type ViewerRole = "household" | "trusted_contact" | "unknown";
  * covers a brand-new account (no household yet) or an invite that has not
  * been accepted yet - both fall back to the existing /setup flow.
  */
-export function useViewerRole() {
-  const setup = useSetupProgress();
+export function useViewerRole(enabled: boolean = true) {
+  const setup = useSetupProgress(enabled);
   const hasHousehold = Boolean(setup.household);
 
   const linksQuery = useQuery({
     ...myTrustedContactLinksQueryOptions(),
-    enabled: !setup.isPending && !setup.isError && !hasHousehold,
+    enabled: enabled && !setup.isPending && !setup.isError && !hasHousehold,
   });
 
   const acceptedLinks: TrustedContactLink[] = (linksQuery.data?.trusted_contacts ?? []).filter(

@@ -29,6 +29,7 @@ The frontend should begin core REST work immediately, but full integration is re
   - `EMAIL_FROM`
   - Supabase credentials and allowed frontend CORS origin.
 - Add a reliable way to load an activity belonging to an existing plan. Preferred backend addition: `GET /api/activities/{activity_id}`. Current plan responses contain only `activity_id`, while activity listing may no longer return an expired activity.
+- Regenerate `src/generated/api.d.ts` from the rebased backend. The typed client is implemented, but the committed declarations predate the additional household, profile, trusted-contact, plan, and support-offer routes now on `main`.
 - Complete one live smoke test against Supabase, Resend, and OpenAI. Backend contract tests exist, but the full suite has not yet been run successfully in the current local environment.
 
 A separate trusted-contact login is explicitly out of scope. The family view uses the same signed-in demo account because trusted contacts are not currently linked to Supabase users or household memberships.
@@ -54,7 +55,7 @@ Use this authenticated route structure:
   - Plan review, approval, sharing, notifications, and status.
 - `/family`
   - Shared plans and support offers.
-  - Display “Demo family view” persistently so judges understand the same-account limitation.
+  - Display "Demo family view" persistently so judges understand the same-account limitation.
 - Unknown authenticated route
   - Friendly not-found page with links to discovery and family view.
 
@@ -67,44 +68,30 @@ Organize by product feature:
 - `plans`: creation, lifecycle, review, notification delivery.
 - `family`: shared-plan list and support offers.
 - `voice`: Realtime session, transcript, tools, microphone state, approval prompts.
-- `services`: typed API client and authentication-aware request helper.
+- `lib/fetchClient.ts`: generated OpenAPI client, TanStack Query helpers, and Supabase authentication middleware.
+- `generated/api.d.ts`: generated request, response, path, and parameter types from FastAPI.
 
 TanStack Query owns server state. Local component state should only hold temporary form input, selected activity, open dialogs, and voice connection state.
 
 ## API Client and Public Types
 
-### Shared request helper
+### Generated client foundation
 
-Replace one-off `fetch` calls with a shared request function that:
+The shared API foundation is implemented with `openapi-fetch` and `openapi-react-query`:
 
-- Reads the current Supabase access token.
-- Adds `Authorization: Bearer <token>` to protected requests.
-- Adds JSON headers only when a body exists.
-- Parses FastAPI `{detail: string}` errors.
-- Handles `204 No Content`.
-- Throws a typed `ApiError` containing `status`, `detail`, and optional validation fields.
-- Converts `401` into a sign-in recovery action.
-- Does not retry mutations automatically.
-- Allows one retry for safe GET requests after transient network or `502/503` failures.
+- `src/lib/fetchClient.ts` exports typed query and mutation helpers.
+- Supabase bearer tokens are attached through shared request middleware.
+- `src/generated/api.d.ts` is generated from FastAPI's `/openapi.json` contract.
+- Feature-specific query options and mutations belong in `features/<feature>/api/`.
+- After backend contract changes, run `npm.cmd run generate:api` while FastAPI is running.
 
-### Required types
+Do not add duplicate transport interfaces or one-off `fetch` wrappers. Error presentation, `401` recovery, and retry behavior still need to be implemented at the application/feature level.
 
-Define explicit frontend types for:
+### Generated and frontend-only types
 
-- `Household`
-- `OlderAdultProfile`
-- `SharingMode = 'direct' | 'family_approval'`
-- `TrustedContact`
-- `Activity`
-- `Plan`
-- `PlanStatus = 'draft' | 'awaiting_approval' | 'shared' | 'cancelled'`
-- `SupportOffer`
-- `SupportType`
-- `PlanNotification`
-- `NotificationDelivery`
-- `VoiceSessionCredential`
+Use generated OpenAPI types for backend resources, request bodies, responses, parameters, sharing modes, statuses, and support types. Do not manually redefine transport types such as `Household`, `OlderAdultProfile`, `TrustedContact`, `Plan`, or `SupportOffer`.
 
-Correct the activity mapping:
+Create a frontend-only view model only when the UI intentionally transforms generated API data. For activity presentation, preserve both the numeric database ID and deduplication key:
 
 ```ts
 interface Activity {
@@ -191,10 +178,10 @@ Action:
 Offer two plainly explained choices:
 
 - `family_approval`
-  - “A family member reviews the plan before it is shared.”
+  - "A family member reviews the plan before it is shared."
   - Recommended and selected by default.
 - `direct`
-  - “Plans are shared immediately after you confirm them.”
+  - "Plans are shared immediately after you confirm them."
 
 The selection is submitted as part of the older-adult profile. If edited later, use `PATCH /api/older-adults/{id}`.
 
@@ -217,7 +204,7 @@ Actions:
 - Edit: `PATCH /api/trusted-contacts/{id}`
 - Remove: `DELETE /api/trusted-contacts/{id}` after confirmation.
 
-Finish with a review summary and “Start discovering activities.”
+Finish with a review summary and "Start discovering activities."
 
 ### 3. Activity discovery
 
@@ -236,15 +223,15 @@ Initial request:
 - `GET /api/activities?limit=6`
 - Optional location filter.
 - Show date, time, venue, cost, description, and relevant tags.
-- Use “Price unavailable” instead of treating missing cost as free.
-- Use “Time to be confirmed” when `start_at` is absent.
+- Use "Price unavailable" instead of treating missing cost as free.
+- Use "Time to be confirmed" when `start_at` is absent.
 - External information links open safely in a new tab.
 
 Activity actions:
 
-- “Tell me more” expands details without mutating state.
-- “Choose this activity” sets the shared selected activity.
-- “Make a plan” opens the confirmation stage.
+- "Tell me more" expands details without mutating state.
+- "Choose this activity" sets the shared selected activity.
+- "Make a plan" opens the confirmation stage.
 - Voice selection must update the same visible selection used by clicks.
 
 States:
@@ -290,14 +277,14 @@ draft → awaiting_approval → shared
 Flow:
 
 1. Plan creation returns `draft`.
-2. User chooses “Ask for family approval.”
+2. User chooses "Ask for family approval."
 3. Send `PATCH /api/plans/{id}` with `awaiting_approval`.
-4. Show the plan in the family view under “Needs approval.”
-5. In demo family view, show “Approve and share.”
+4. Show the plan in the family view under "Needs approval."
+5. In demo family view, show "Approve and share."
 6. After explicit approval, send `PATCH` with `shared`.
 7. Continue to notification recipient selection.
 
-Do not show a “Reject” action because rejection is not part of the agreed product model. Provide “Cancel plan,” which transitions the plan to `cancelled`.
+Do not show a "Reject" action because rejection is not part of the agreed product model. Provide "Cancel plan," which transitions the plan to `cancelled`.
 
 #### `direct`
 
@@ -313,10 +300,10 @@ Flow:
 
 Use human-facing labels:
 
-- `draft` → “Draft”
-- `awaiting_approval` → “Waiting for family approval”
-- `shared` → “Shared with your trusted circle”
-- `cancelled` → “Cancelled”
+- `draft` → "Draft"
+- `awaiting_approval` → "Waiting for family approval"
+- `shared` → "Shared with your trusted circle"
+- `cancelled` → "Cancelled"
 
 Never expose raw status constants in UI copy.
 
@@ -331,21 +318,21 @@ Flow:
 3. Disable contacts without email and explain why.
 4. Require at least one selected contact.
 5. Show a final confirmation such as:
-   - “Send this plan to Anna and David?”
+   - "Send this plan to Anna and David?"
 6. Call `POST /api/plans/{planId}/notifications` with `contact_ids`.
 7. Render delivery results individually:
-   - `sent` → “Email sent”
-   - `already_sent` → “Already sent”
-   - `failed` → “Could not send”
+   - `sent` → "Email sent"
+   - `already_sent` → "Already sent"
+   - `failed` → "Could not send"
 8. A failed delivery does not undo sharing.
-9. Offer “Retry failed emails,” submitting only failed contact IDs.
+9. Offer "Retry failed emails," submitting only failed contact IDs.
 10. Load persistent history from `GET /api/plans/{planId}/notifications`.
 
 Never show a global success message if some recipients failed.
 
 ### 6. Demo family view
 
-The `/family` route uses the same authenticated owner account and includes a visible “Demo family view” marker.
+The `/family` route uses the same authenticated owner account and includes a visible "Demo family view" marker.
 
 Sections:
 
@@ -355,7 +342,7 @@ Sections:
 
 Each plan row shows:
 
-- Older adult’s preferred name.
+- Older adult's preferred name.
 - Activity name and essential details.
 - Status in plain language.
 - Notification state.
@@ -364,11 +351,11 @@ Each plan row shows:
 
 Approval actions:
 
-- “Approve and share” for `awaiting_approval`.
-- “Cancel plan” as the alternative.
+- "Approve and share" for `awaiting_approval`.
+- "Cancel plan" as the alternative.
 - Require confirmation before either mutation.
 
-This view must not imply that an actual trusted contact has authenticated. Copy should use “Preview how family can respond” rather than claiming a specific recipient is logged in.
+This view must not imply that an actual trusted contact has authenticated. Copy should use "Preview how family can respond" rather than claiming a specific recipient is logged in.
 
 ### 7. Support offers
 
@@ -376,24 +363,24 @@ Support is available only on a shared plan.
 
 Offer choices:
 
-- `join` → “Go together”
-- `remind` → “Send a reminder”
-- `transport` → “Help with transport”
-- `alternative` → “Suggest another option”
-- `booking` → “Help with booking”
-- `encourage` → “Send encouragement”
+- `join` → "Go together"
+- `remind` → "Send a reminder"
+- `transport` → "Help with transport"
+- `alternative` → "Suggest another option"
+- `booking` → "Help with booking"
+- `encourage` → "Send encouragement"
 
 Interaction:
 
 1. Choose one support type.
 2. Add an optional note.
-3. Confirm with “Offer this help.”
+3. Confirm with "Offer this help."
 4. Submit `POST /api/plans/{id}/support-offers`.
-5. Refresh the plan’s offers.
+5. Refresh the plan's offers.
 6. Disable an offer type already offered by the current account.
-7. Allow withdrawal of the current account’s offer through `DELETE /api/support-offers/{offerId}` with confirmation.
+7. Allow withdrawal of the current account"s offer through `DELETE /api/support-offers/{offerId}` with confirmation.
 
-Because the demo has one authenticated identity, describe offers as “You offered…” and do not fabricate different supporter names.
+Because the demo has one authenticated identity, describe offers as "You offered"" and do not fabricate different supporter names.
 
 ## Browser Voice Experience
 
@@ -430,7 +417,7 @@ Exceptional states:
 
 Controls:
 
-- “Start voice”
+- "Start voice"
 - Mute/unmute microphone.
 - Interrupt/stop assistant speech.
 - End voice session.
@@ -472,7 +459,7 @@ Expose these tools:
   - Valid only in demo family view.
   - Requires human approval.
 
-Use SDK approval interruptions for every mutation that creates, shares, emails, cancels, or offers support. Display a large visual confirmation panel containing the exact proposed action. Approving resumes the tool call; rejecting returns a clear explanation to the agent. OpenAI’s SDK supports pausing function tools with `needsApproval` before execution. [OpenAI human-in-the-loop guidance](https://openai.github.io/openai-agents-js/guides/human-in-the-loop/).
+Use SDK approval interruptions for every mutation that creates, shares, emails, cancels, or offers support. Display a large visual confirmation panel containing the exact proposed action. Approving resumes the tool call; rejecting returns a clear explanation to the agent. OpenAI's SDK supports pausing function tools with `needsApproval` before execution. [OpenAI human-in-the-loop guidance](https://openai.github.io/openai-agents-js/guides/human-in-the-loop/).
 
 Read-only discovery and local selection do not require approval.
 
@@ -550,9 +537,9 @@ Do not let the voice layer directly manipulate unrelated components or duplicate
 
 Cover:
 
-- Bearer token injection.
-- FastAPI error parsing.
-- `204` handling.
+- Generated query and mutation configuration for each used endpoint.
+- Bearer token injection through the shared client middleware.
+- Regenerated contracts after backend route or schema changes.
 - Activity `databaseId` preservation.
 - Date and nullable-field mapping.
 - Sharing-mode and status label mapping.
@@ -615,13 +602,13 @@ Verify on desktop and mobile:
 
 ## Commit-by-Commit Delivery Plan
 
-1. `feat: add typed frontend api client`
-   - Authentication-aware request helper, DTOs, domain mappings, query keys, and activity ID correction.
+1. `feat: add typed frontend api client` — completed
+   - Generated OpenAPI declarations, authentication-aware client, and TanStack Query helpers.
 
-2. `test: cover frontend api contracts`
-   - Request headers, response mapping, error handling, and nullable data.
+2. `test: cover frontend api contracts` — completed
+   - Covers authentication middleware, typed query/path/body serialization, no-content and error responses, and activity query defaults.
 
-3. `feat: build household setup flow`
+3. `feat: build household setup flow` — completed
    - Household, profile, sharing mode, trusted contacts, review, and redirect logic.
 
 4. `test: cover household setup flow`

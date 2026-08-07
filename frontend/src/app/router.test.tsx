@@ -10,6 +10,24 @@ import { routeTree } from '@/routeTree.gen'
 import { AuthSessionContext } from '@/features/auth/AuthSessionContext'
 import { createQueryClient } from '@/lib/queryClient'
 
+const { useSetupProgress } = vi.hoisted(() => ({ useSetupProgress: vi.fn() }))
+
+vi.mock('@/features/setup/useSetupProgress', () => ({ useSetupProgress }))
+
+function setupProgress(complete = false) {
+  return {
+    household: complete ? { id: 1, name: 'Lim Family' } : undefined,
+    olderAdult: complete ? { id: 2, household_id: 1, name: 'Mary' } : undefined,
+    contacts: complete ? [{ id: 3, name: 'Anna' }] : [],
+    isPending: false,
+    isError: false,
+    isComplete: complete,
+    householdsQuery: { refetch: vi.fn() },
+    olderAdultsQuery: { refetch: vi.fn() },
+    trustedContactsQuery: { refetch: vi.fn() },
+  }
+}
+
 function renderRoute(path: string, authenticated = false) {
   const auth = {
     session: authenticated ? ({} as Session) : null,
@@ -31,13 +49,21 @@ function renderRoute(path: string, authenticated = false) {
 }
 
 describe('application routes', () => {
-  it('renders the home page for an authenticated user', async () => {
+  beforeEach(() => useSetupProgress.mockReturnValue(setupProgress()))
+
+  it('redirects an incomplete account to setup', async () => {
     renderRoute('/', true)
     expect(
       await screen.findByRole('heading', {
-        name: /find something worth looking forward to/i,
+        name: /who are we setting this up for/i,
       }),
     ).toBeVisible()
+  })
+
+  it('redirects a complete account to discovery', async () => {
+    useSetupProgress.mockReturnValue(setupProgress(true))
+    renderRoute('/', true)
+    expect(await screen.findByRole('heading', { name: /trusted circle is ready/i })).toBeVisible()
   })
 
   it('renders a helpful not-found page for an authenticated user', async () => {

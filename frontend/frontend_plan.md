@@ -25,12 +25,13 @@ The frontend should begin core REST work immediately, but full integration is re
   - `20260806120000_plan_notifications.sql`
 - Configure backend environment values:
   - `OPENAI_API_KEY`
-  - `RESEND_API_KEY`
-  - `EMAIL_FROM`
+  - `GMAIL_ADDRESS`
+  - `GMAIL_APP_PASSWORD`
+  - `GMAIL_FROM_NAME`
   - Supabase credentials and allowed frontend CORS origin.
 - Add a reliable way to load an activity belonging to an existing plan. Preferred backend addition: `GET /api/activities/{activity_id}`. Current plan responses contain only `activity_id`, while activity listing may no longer return an expired activity.
 - Regenerate `src/generated/api.d.ts` from the rebased backend. The typed client is implemented, but the committed declarations predate the additional household, profile, trusted-contact, plan, and support-offer routes now on `main`.
-- Complete one live smoke test against Supabase, Resend, and OpenAI. Backend contract tests exist, but the full suite has not yet been run successfully in the current local environment.
+- Complete one live smoke test against Supabase, Gmail SMTP, and OpenAI. Backend contract tests exist, but the full suite has not yet been run successfully in the current local environment.
 
 A separate trusted-contact login is explicitly out of scope. The family view uses the same signed-in demo account because trusted contacts are not currently linked to Supabase users or household memberships.
 

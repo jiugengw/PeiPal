@@ -1,11 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
+import { useViewer } from "@/hooks/useViewer";
 
-const navigation = [
+// The organizer's account exists to set the family up and keep it correct.
+// The older adult's account is the one that is actually used day to day.
+const organizerNavigation = [{ to: "/setup", label: "Setup" }] as const;
+
+const olderAdultNavigation = [
   { to: "/discover", label: "Discover" },
-  { to: "/setup", label: "Setup" },
-  { to: "/family", label: "Family view" },
+  { to: "/plans", label: "My activities" },
+  { to: "/family", label: "My family" },
 ] as const;
 
 const navLinkClass =
@@ -21,6 +26,9 @@ const gridColsClassByCount: Record<number, string> = {
 
 export function Navbar() {
   const { session, isLoading } = useAuthSession();
+  const { role } = useViewer();
+  const navigation =
+    role === "older_adult" ? olderAdultNavigation : organizerNavigation;
 
   return (
     <header className="flex-none border-b border-border bg-background">

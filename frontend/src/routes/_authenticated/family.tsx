@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FamilyView } from "@/features/family/FamilyView";
+import { FamilyPeople } from "@/features/family/FamilyPeople";
 
 export const Route = createFileRoute("/_authenticated/family")({
   component: FamilyPage,
 });
 
 function FamilyPage() {
-  return <FamilyView />;
+  return <FamilyPeople />;
 }

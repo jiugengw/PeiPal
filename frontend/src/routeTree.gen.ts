@@ -17,6 +17,7 @@ import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as CoordinateTokenRouteImport } from './routes/coordinate.$token'
+import { Route as AuthenticatedPlansIndexRouteImport } from './routes/_authenticated/plans/index'
 import { Route as AuthenticatedPlansPlanIdRouteImport } from './routes/_authenticated/plans/$planId'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -58,6 +59,11 @@ const CoordinateTokenRoute = CoordinateTokenRouteImport.update({
   path: '/coordinate/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPlansIndexRoute = AuthenticatedPlansIndexRouteImport.update({
+  id: '/plans/',
+  path: '/plans/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedPlansPlanIdRoute =
   AuthenticatedPlansPlanIdRouteImport.update({
     id: '/plans/$planId',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof AuthenticatedSetupRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/plans/': typeof AuthenticatedPlansIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/coordinate/$token': typeof CoordinateTokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/plans': typeof AuthenticatedPlansIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/coordinate/$token': typeof CoordinateTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
+  '/_authenticated/plans/': typeof AuthenticatedPlansIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/coordinate/$token'
     | '/plans/$planId'
+    | '/plans/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/coordinate/$token'
     | '/'
     | '/plans/$planId'
+    | '/plans'
   id:
     | '__root__'
     | '/_authenticated'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/coordinate/$token'
     | '/_authenticated/'
     | '/_authenticated/plans/$planId'
+    | '/_authenticated/plans/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -195,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoordinateTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/plans/': {
+      id: '/_authenticated/plans/'
+      path: '/plans'
+      fullPath: '/plans/'
+      preLoaderRoute: typeof AuthenticatedPlansIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/plans/$planId': {
       id: '/_authenticated/plans/$planId'
       path: '/plans/$planId'
@@ -212,6 +231,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPlansPlanIdRoute: typeof AuthenticatedPlansPlanIdRoute
+  AuthenticatedPlansIndexRoute: typeof AuthenticatedPlansIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -221,6 +241,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPlansPlanIdRoute: AuthenticatedPlansPlanIdRoute,
+  AuthenticatedPlansIndexRoute: AuthenticatedPlansIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

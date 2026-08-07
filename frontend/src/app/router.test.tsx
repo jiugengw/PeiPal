@@ -70,7 +70,7 @@ describe("application routes", () => {
     useViewer.mockReturnValue(viewer());
   });
 
-  it("redirects an incomplete account to setup", async () => {
+  it("sends the organizer to setup", async () => {
     const { router } = renderRoute("/", true);
     await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
     expect(
@@ -80,13 +80,15 @@ describe("application routes", () => {
     ).toBeVisible();
   });
 
-  it("redirects a complete account to discovery", async () => {
-    const complete = setupProgress(true);
-    useSetupProgress.mockReturnValue(complete);
-    const { router } = renderRoute("/", true);
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe("/discover"),
-    );
+  it("keeps the organizer out of the older adult's pages", async () => {
+    const { router } = renderRoute("/discover", true);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
+  });
+
+  it("keeps the older adult out of setup", async () => {
+    useViewer.mockReturnValue(viewer("older_adult"));
+    const { router } = renderRoute("/setup", true);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/discover"));
   });
 
   it("sends an older adult straight to discovery, never to setup", async () => {

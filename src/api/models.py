@@ -9,10 +9,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class FamilyCreate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family", "owner_email": "anna@example.com"}]})
+    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "Lim Family"}]})
 
     name: str = Field(min_length=1, max_length=120)
-    owner_email: EmailStr | None = None
 
 
 class FamilyUpdate(BaseModel):

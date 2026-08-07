@@ -574,15 +574,12 @@ export interface components {
         /**
          * FamilyCreate
          * @example {
-         *       "name": "Lim Family",
-         *       "owner_email": "anna@example.com"
+         *       "name": "Lim Family"
          *     }
          */
         FamilyCreate: {
             /** Name */
             name: string;
-            /** Owner Email */
-            owner_email?: string | null;
         };
         /** FamilyListResponse */
         FamilyListResponse: {
@@ -668,15 +665,12 @@ export interface components {
         /**
          * FamilyResponse
          * @example {
-         *       "name": "Lim Family",
-         *       "owner_email": "anna@example.com"
+         *       "name": "Lim Family"
          *     }
          */
         FamilyResponse: {
             /** Name */
             name: string;
-            /** Owner Email */
-            owner_email?: string | null;
             /** Id */
             id: number;
             /** Created By */

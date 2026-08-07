@@ -229,7 +229,10 @@ def test_a_relationship_to_another_familys_older_adult_is_refused(monkeypatch):
     assert not written(client, "family_members", "insert")
 
 
-def test_family_creation_accepts_an_owner_email():
-    payload = FamilyCreate(name="Lim Family", owner_email="anna@example.com")
+def test_a_family_needs_only_a_name():
+    """The organizer's address lives in their Supabase account, not here."""
 
-    assert payload.owner_email == "anna@example.com"
+    payload = FamilyCreate(name="Lim Family")
+
+    assert payload.name == "Lim Family"
+    assert not hasattr(payload, "owner_email")

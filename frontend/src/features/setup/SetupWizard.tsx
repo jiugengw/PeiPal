@@ -68,7 +68,6 @@ function SetupWizardForm({
     progress.olderAdult ? 2 : progress.family ? 1 : 0,
   );
   const [familyName, setFamilyName] = useState(progress.family?.name ?? "");
-  const [ownerEmail, setOwnerEmail] = useState(progress.family?.owner_email ?? "");
   const [profile, setProfile] = useState<OlderAdultDraft>({
     family_id: progress.family?.id ?? 0,
     name: progress.olderAdult?.name ?? "",
@@ -82,9 +81,9 @@ function SetupWizardForm({
   const [saveError, setSaveError] = useState("");
 
   const createFamily = useMutation({
-    mutationFn: async ({ name, email }: { name: string; email: string }) => {
+    mutationFn: async (name: string) => {
       const { data, error } = await fetchClient.POST("/api/families", {
-        body: { name, owner_email: email },
+        body: { name },
       });
       if (error) throw error;
       return data;
@@ -151,10 +150,7 @@ function SetupWizardForm({
         return;
       }
 
-      const saved = await createFamily.mutateAsync({
-        name: familyName.trim(),
-        email: ownerEmail.trim().toLowerCase(),
-      });
+      const saved = await createFamily.mutateAsync(familyName.trim());
       await queryClient.invalidateQueries({
         queryKey: familiesQueryOptions().queryKey,
       });
@@ -225,27 +221,6 @@ function SetupWizardForm({
                 onChange={(event) => setFamilyName(event.target.value)}
                 placeholder="For example, Lim Family"
               />
-              {!progress.family ? (
-                <>
-                  <label className={`${labelClass} mt-6`} htmlFor="owner-email">
-                    Your email address
-                  </label>
-                  <p className="mt-1 text-base leading-relaxed text-foreground">
-                    We send a short code here to confirm the address before your
-                    family is set up.
-                  </p>
-                  <input
-                    className={fieldClass}
-                    id="owner-email"
-                    type="email"
-                    maxLength={320}
-                    required
-                    value={ownerEmail}
-                    onChange={(event) => setOwnerEmail(event.target.value)}
-                    placeholder="you@example.com"
-                  />
-                </>
-              ) : null}
               <FormActions
                 error={saveError}
                 isSaving={isSaving}

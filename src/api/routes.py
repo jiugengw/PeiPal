@@ -223,10 +223,9 @@ def create_family(
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
     try:
-        owner_email = str(payload.owner_email).strip().lower() if payload.owner_email else None
         family = (
             client.table("families")
-            .insert({"name": payload.name, "created_by": user_id(user), "owner_email": owner_email})
+            .insert({"name": payload.name, "created_by": user_id(user)})
             .execute()
             .data[0]
         )

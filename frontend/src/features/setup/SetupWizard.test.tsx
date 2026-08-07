@@ -122,11 +122,10 @@ describe("SetupWizard", () => {
     renderWizard();
 
     await user.type(screen.getByLabelText(/family name/i), "Lim Family");
-    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
     await user.click(screen.getByRole("button", { name: /create family/i }));
 
     expect(fetchClient.POST).toHaveBeenCalledWith("/api/families", {
-      body: { name: "Lim Family", owner_email: "anna@example.com" },
+      body: { name: "Lim Family" },
     });
     expect(
       await screen.findByRole("heading", { name: /what makes support comfortable/i }),
@@ -154,7 +153,6 @@ describe("SetupWizard", () => {
 
     const familyName = screen.getByLabelText(/family name/i);
     await user.type(familyName, "Lim Family");
-    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
     await user.click(screen.getByRole("button", { name: /create family/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -176,8 +174,6 @@ describe("SetupWizard", () => {
         family: {
           id: 1,
           name: "Lim Family",
-          owner_email: "anna@example.com",
-          owner_email_verified_at: "2030-01-01T00:00:00Z",
         },
         olderAdult: {
           id: 2,

@@ -12,6 +12,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount
 
 from src.mcp.config import load_config, mcp_access_token
+from src.mcp.tools import register_tools
 
 
 load_config()
@@ -26,6 +27,7 @@ mcp = FastMCP(
     json_response=True,
     streamable_http_path="/",
 )
+register_tools(mcp)
 
 
 class MCPBearerMiddleware(BaseHTTPMiddleware):
@@ -44,5 +46,5 @@ class MCPBearerMiddleware(BaseHTTPMiddleware):
 _mcp_app = mcp.streamable_http_app()
 app = Starlette(
     routes=[Mount("/mcp", app=MCPBearerMiddleware(_mcp_app))],
-    lifespan=_mcp_app.lifespan,
+    lifespan=_mcp_app.router.lifespan_context,
 )

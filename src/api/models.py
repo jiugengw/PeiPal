@@ -232,6 +232,17 @@ class CoordinationLaunchResponse(BaseModel):
     message: str
 
 
+class SignInCodeRequest(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"examples": [{"email": "mary@example.com"}]})
+
+    email: EmailStr
+
+
+class SignInCodeResponse(BaseModel):
+    sent: bool
+    message: str
+
+
 class ViewerResponse(BaseModel):
     """Which kind of person is signed in, and what they may act on."""
 

@@ -430,7 +430,7 @@ describe("SetupWizard", () => {
     expect(
       await screen.findByRole("heading", { name: /your family is ready/i }),
     ).toBeVisible();
-    expect(screen.getByText(/Mary can sign in with the email you sent/i)).toBeVisible();
+    expect(screen.getByText(/Mary can sign in with the code you sent/i)).toBeVisible();
     // The organizer has no other page, so nothing navigates away.
     expect(navigate).not.toHaveBeenCalled();
   });

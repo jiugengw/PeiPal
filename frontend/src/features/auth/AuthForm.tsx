@@ -343,8 +343,12 @@ function MagicLinkPanel() {
       setSent(true);
       setError("");
     },
-    onError: () =>
-      setError("We could not send that email. Check the address and try again."),
+    onError: (caught) =>
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "We could not send that email. Check the address and try again.",
+      ),
   });
 
   const enterCode = useMutation({
@@ -360,8 +364,8 @@ function MagicLinkPanel() {
         Signing in without a password
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground">
-        If your family set this up for you, enter your email. We will send you a
-        link you can tap, and a code you can type in here instead.
+        If your family set this up for you, enter your email and we will send you
+        a six-digit code to type in here.
       </p>
 
       {!sent ? (
@@ -406,8 +410,7 @@ function MagicLinkPanel() {
             className="rounded-xl bg-muted p-[18px] leading-normal font-bold text-foreground"
             role="status"
           >
-            We sent an email to {email}. Tap the link inside it, or type the
-            six-digit code below.
+            We sent a six-digit code to {email}. Type it in below.
           </p>
           <label
             className="mt-5 block text-base font-extrabold text-foreground"

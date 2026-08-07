@@ -497,8 +497,8 @@ function OlderAdultAccessPanel({ olderAdults }: { olderAdults: OlderAdult[] }) {
     <section className="mb-8 rounded-2xl bg-muted p-5 sm:p-7">
       <h2 className="text-2xl font-bold text-foreground">Give them their own access</h2>
       <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">
-        Each older adult gets an email with a link to tap and a code to type.
-        Either one signs them in, and there is no password to remember.
+        Each older adult gets an email with a six-digit code. They type it into
+        the sign-in page, and never need a password.
       </p>
       <ul className="mt-5 divide-y divide-border border-y border-border">
         {withEmail.map((person) => (
@@ -523,7 +523,7 @@ function OlderAdultAccessPanel({ olderAdults }: { olderAdults: OlderAdult[] }) {
                 onClick={() => void send(person.email ?? "")}
                 type="button"
               >
-                {sendLink.isPending ? "Sending\u2026" : "Send sign-in email"}
+                {sendLink.isPending ? "Sending\u2026" : "Send sign-in code"}
               </button>
             )}
           </li>
@@ -558,7 +558,7 @@ function SetupComplete({
     <div>
       <StepHeading
         title="Your family is ready."
-        description={`${who} can sign in with the email you sent, and start looking for activities. Everyone you added will be asked whenever they need support.`}
+        description={`${who} can sign in with the code you sent, and start looking for activities. Everyone you added will be asked whenever they need support.`}
       />
       <div className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7">
         <h2 className="text-xl font-bold text-foreground">What happens next</h2>

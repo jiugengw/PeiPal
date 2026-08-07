@@ -1,20 +1,26 @@
-import { getSupabaseClient } from "@/lib/supabase";
+import { fetchClient } from "@/lib/fetchClient";
 
 /**
- * Send a magic sign-in link. Older adults never hold a password: their email
- * address is their login, and possession of the inbox is the proof.
+ * Ask PeiPal to email an older adult a sign-in code.
  *
- * `shouldCreateUser` is true so the very first link also creates their account.
- * The backend then matches that account to an older-adult profile by address.
+ * Supabase still owns the session, but it does not send the message: the code
+ * is generated through the admin API and delivered by PeiPal's own email, so
+ * every message comes from one address and Supabase's low mail rate limit never
+ * applies. Only an address already added as an older adult receives one.
  */
 export async function sendSignInLink(email: string): Promise<void> {
-  const supabase = await getSupabaseClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.trim().toLowerCase(),
-    options: {
-      shouldCreateUser: true,
-      emailRedirectTo: `${window.location.origin}/`,
-    },
+  const { error } = await fetchClient.POST("/api/auth/sign-in-code", {
+    body: { email: email.trim().toLowerCase() },
   });
-  if (error) throw error;
+  if (error) {
+    const detail =
+      error && typeof error === "object" && "detail" in error
+        ? (error as { detail?: unknown }).detail
+        : undefined;
+    throw new Error(
+      typeof detail === "string"
+        ? detail
+        : "We could not send that code. Check the address and try again.",
+    );
+  }
 }

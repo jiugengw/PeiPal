@@ -277,3 +277,37 @@ def test_user_cannot_withdraw_another_accounts_support(monkeypatch):
         )
 
     assert error.value.status_code == 403
+
+
+def test_no_trusted_contact_routes_remain():
+    paths = app.openapi()["paths"]
+
+    assert not [path for path in paths if "trusted" in path]
+    assert not [name for name in app.openapi()["components"]["schemas"] if "Trusted" in name]
+
+
+def test_family_decision_links_are_reachable_without_a_session():
+    """Family members are reached by email and may hold no account."""
+
+    for method, path in [("get", "/api/family-decisions/some-token"), ("post", "/api/family-decisions/some-token")]:
+        operation = app.openapi()["paths"]["/api/family-decisions/{token}"][method]
+
+        assert "security" not in operation
+
+
+@pytest.mark.parametrize(
+    "method,path",
+    [
+        ("get", "/api/families/1/family-members"),
+        ("post", "/api/family-members"),
+        ("patch", "/api/family-members/1"),
+        ("delete", "/api/family-members/1"),
+        ("post", "/api/families/1/verify-email"),
+        ("post", "/api/plans/1/decision-notifications"),
+        ("get", "/api/plans/1/decision-notifications"),
+    ],
+)
+def test_family_routes_require_authentication(method, path):
+    response = getattr(client, method)(path)
+
+    assert response.status_code == 401

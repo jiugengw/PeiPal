@@ -451,4 +451,127 @@ describe("SetupWizard", () => {
     await user.click(screen.getByRole("button", { name: /finish setup/i }));
     expect(navigate).toHaveBeenCalledWith({ to: "/discover" });
   });
+  it("verifies the emailed code before the family is used", async () => {
+    const user = userEvent.setup();
+    const post = vi
+      .spyOn(fetchClient, "POST")
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          name: "Lim Family",
+          owner_email: "anna@example.com",
+          owner_email_verified_at: null,
+          created_by: "user-1",
+          created_at: "2030-01-01T00:00:00Z",
+        },
+        response: new Response(null, { status: 201 }),
+      } as never)
+      .mockResolvedValueOnce({
+        data: { verified: true, message: "Family email verified." },
+        response: new Response(null, { status: 200 }),
+      } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
+
+    await user.type(await screen.findByLabelText(/six-digit code/i), "123456");
+    await user.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    expect(post).toHaveBeenLastCalledWith("/api/families/{family_id}/verify-email", {
+      params: { path: { family_id: 1 } },
+      body: { code: "123456" },
+    });
+    expect(
+      await screen.findByRole("heading", { name: /what makes support comfortable/i }),
+    ).toBeVisible();
+  });
+
+  it("keeps the person on the code step when the code is wrong", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "POST")
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          name: "Lim Family",
+          owner_email: "anna@example.com",
+          owner_email_verified_at: null,
+          created_by: "user-1",
+          created_at: "2030-01-01T00:00:00Z",
+        },
+        response: new Response(null, { status: 201 }),
+      } as never)
+      .mockResolvedValueOnce({
+        error: { detail: "That verification code is not valid." },
+        response: new Response(null, { status: 400 }),
+      } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
+
+    await user.type(await screen.findByLabelText(/six-digit code/i), "999999");
+    await user.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /verification code is not valid/i,
+    );
+    expect(screen.getByLabelText(/six-digit code/i)).toBeVisible();
+  });
+
+  it("says plainly when the verification email could not be sent", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "POST").mockResolvedValueOnce({
+      data: {
+        id: 1,
+        name: "Lim Family",
+        owner_email: "anna@example.com",
+        owner_email_verified_at: null,
+        verification_delivery_failed: true,
+        created_by: "user-1",
+        created_at: "2030-01-01T00:00:00Z",
+      },
+      response: new Response(null, { status: 201 }),
+    } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/family name/i), "Lim Family");
+    await user.type(screen.getByLabelText(/your email address/i), "anna@example.com");
+    await user.click(screen.getByRole("button", { name: /create family/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /could not send that email/i,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /invitations will not be delivered/i,
+    );
+  });
+
+  it("surfaces a duplicate family member from the API", async () => {
+    const user = userEvent.setup();
+    mockedProgress.mockReturnValue(
+      progress({
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
+        familyMembers: [familyMember()],
+      }) as never,
+    );
+    vi.spyOn(fetchClient, "POST").mockResolvedValue({
+      error: { detail: "This email address is already a family member." },
+      response: new Response(null, { status: 409 }),
+    } as never);
+    renderWizard();
+
+    await user.type(screen.getByLabelText(/^name/i), "Anna Again");
+    await user.type(screen.getByLabelText(/^email/i), "anna@example.com");
+    await user.type(screen.getByLabelText(/relationship to mary/i), "Daughter");
+    await user.click(screen.getByRole("button", { name: /add family member/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /already a family member/i,
+    );
+  });
 });

@@ -5,8 +5,8 @@ import type { ViewerRole } from "@/hooks/useViewer";
  * adult's account is the one used day to day. Keeping each to its own pages
  * stops either landing somewhere that assumes the other's data.
  */
-const ORGANIZER_PATHS = ["/setup"];
-const OLDER_ADULT_PATHS = ["/discover", "/plans", "/family"];
+const ORGANIZER_PATHS = ["/discover", "/plans"];
+const OLDER_ADULT_PATHS = ["/setup"];
 
 export function homePathFor(role: ViewerRole) {
   return role === "older_adult" ? "/discover" : "/setup";
@@ -28,6 +28,6 @@ export function canReach(role: ViewerRole, pathname: string) {
   // identify it; otherwise a fresh account could deep-link into older-adult
   // pages before it has been provisioned.
   if (role === "unknown") return pathname === "/setup" || pathname.startsWith("/setup/");
-  const forbidden = role === "older_adult" ? ORGANIZER_PATHS : OLDER_ADULT_PATHS;
+  const forbidden = role === "older_adult" ? OLDER_ADULT_PATHS : ORGANIZER_PATHS;
   return !matches(forbidden, pathname);
 }

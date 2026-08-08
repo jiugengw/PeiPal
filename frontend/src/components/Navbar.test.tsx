@@ -19,14 +19,14 @@ describe("Navbar", () => {
   beforeEach(() => vi.mocked(useViewer).mockReturnValue(viewer("organizer") as never));
   afterEach(() => vi.restoreAllMocks());
 
-  it("shows the organizer only their setup tab", () => {
+  it("shows the organizer setup and trusted-circle tabs", () => {
     vi.mocked(useAuthSession).mockReturnValue({ session: { user: { id: "user-1" } }, isLoading: false } as never);
 
     render(<Navbar />);
 
     expect(screen.getByRole("link", { name: "Setup" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Discover" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /my family/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Trusted circle" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Explore" })).not.toBeInTheDocument();
   });
 
   it("shows the older adult their own three tabs, and never setup", () => {
@@ -35,9 +35,9 @@ describe("Navbar", () => {
 
     render(<Navbar />);
 
-    expect(screen.getByRole("link", { name: "Discover" })).toBeVisible();
-    expect(screen.getByRole("link", { name: /my activities/i })).toBeVisible();
-    expect(screen.getByRole("link", { name: /my family/i })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Explore" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Plans" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "My support circle" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Setup" })).not.toBeInTheDocument();
   });
 

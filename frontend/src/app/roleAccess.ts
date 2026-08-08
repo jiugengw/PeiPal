@@ -19,12 +19,15 @@ function matches(paths: string[], pathname: string) {
 }
 
 /**
- * Only redirect away from a page that belongs to the *other* role. An unknown
- * path is left alone so the router can still show its not-found page, and an
- * unknown role is left alone so a redirect never races the check that decides it.
+ * Only redirect away from pages the signed-in role cannot use. An unresolved
+ * authenticated account is kept on setup until the backend identifies it.
  */
 export function canReach(role: ViewerRole, pathname: string) {
-  if (role === "unknown") return true;
+  // An authenticated account without a resolved role is still in the setup
+  // handoff. Keep it on the organizer-facing setup page until the backend can
+  // identify it; otherwise a fresh account could deep-link into older-adult
+  // pages before it has been provisioned.
+  if (role === "unknown") return pathname === "/setup" || pathname.startsWith("/setup/");
   const forbidden = role === "older_adult" ? ORGANIZER_PATHS : OLDER_ADULT_PATHS;
   return !matches(forbidden, pathname);
 }

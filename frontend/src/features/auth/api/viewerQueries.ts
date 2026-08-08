@@ -15,6 +15,7 @@ export function viewerQueryOptions() {
     queryKey: viewerQueryKey,
     queryFn: async () => {
       const { data, error } = await fetchClient.GET("/api/me");
+      console.log(data);
       if (error || !data) throw new Error("We could not identify your account.");
       return data;
     },

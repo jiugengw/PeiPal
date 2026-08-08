@@ -45,7 +45,7 @@ export function Navbar() {
             className="grid size-11 flex-none place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground"
             aria-hidden="true"
           >
-            CM
+            PP
           </span>
           <span className="truncate text-base sm:text-lg">PeiPal</span>
         </Link>

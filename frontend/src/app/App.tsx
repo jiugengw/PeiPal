@@ -29,7 +29,7 @@ export function App() {
           <main className={styles.clnMain} id="main-content">
             {isBlocked ? <RedirectingMessage /> : <Outlet />}
           </main>
-          <CompanionPanel />
+          {role === "older_adult" && <CompanionPanel />}
         </StagedIntentProvider>
       </ActivityWorkflowProvider>
     </div>

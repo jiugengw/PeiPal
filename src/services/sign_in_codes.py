@@ -1,4 +1,4 @@
-"""Sign-in codes for older adults, delivered through PeiPal's own email.
+"""Passwordless sign-in codes, delivered through PeiPal's own email.
 
 Supabase remains the authority on the session, but it does not have to send the
 message. Asking it to generate the code and sending that ourselves keeps every
@@ -16,7 +16,7 @@ from src.services.notifications import send_email
 
 
 def older_adult_for_email(client: Client, email: str) -> dict[str, Any] | None:
-    """Only someone already added as an older adult may request a code."""
+    """Return the older-adult profile for a known address, when one exists."""
 
     rows = (
         client.table("older_adult_profiles")
@@ -60,7 +60,9 @@ def build_message(person_name: str, code: str) -> tuple[str, str, str]:
     return subject, text, html
 
 
-def send_sign_in_code(client: Client, email: str, person_name: str) -> None:
+def send_sign_in_code(
+    client: Client, email: str, person_name: str = "there"
+) -> None:
     code = generate_code(client, email)
     subject, text, html = build_message(person_name, code)
     send_email(

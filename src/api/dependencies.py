@@ -75,6 +75,79 @@ def require_family_account(client: Client, family_id: int, user: Any) -> None:
         )
 
 
+def older_adult_profile_for_user(client: Client, user: Any) -> dict[str, Any] | None:
+    rows = (
+        client.table("older_adult_profiles")
+        .select("id, family_id, name, preferred_name, user_id")
+        .eq("user_id", user_id(user))
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    return rows[0] if rows else None
+
+
+def ensure_older_adult_membership(client: Client, profile: dict[str, Any], user: Any) -> None:
+    client.table("family_accounts").upsert(
+        {"family_id": profile["family_id"], "user_id": user_id(user), "role": "older_adult"},
+        on_conflict="family_id,user_id",
+    ).execute()
+
+
+def require_family_read_access(
+    client: Client, family_id: int, user: Any
+) -> dict[str, Any] | None:
+    profile = older_adult_profile_for_user(client, user)
+    if profile:
+        if int(profile["family_id"]) != int(family_id):
+            raise HTTPException(status_code=403, detail="You are not a member of this family.")
+        ensure_older_adult_membership(client, profile, user)
+        return profile
+    require_family_account(client, family_id, user)
+    return None
+
+
+def require_family_manager(client: Client, family_id: int, user: Any) -> None:
+    result = (
+        client.table("family_accounts")
+        .select("family_id")
+        .eq("family_id", family_id)
+        .eq("user_id", user_id(user))
+        .in_("role", ["owner", "caregiver"])
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=403, detail="Only the family organizer can manage this family.")
+
+
+def require_plan_read_access(client: Client, plan_id: int, user: Any) -> dict[str, Any] | None:
+    rows = (
+        client.table("plans")
+        .select("family_id, older_adult_id")
+        .eq("id", plan_id)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Plan not found.")
+    profile = require_family_read_access(client, int(rows[0]["family_id"]), user)
+    if profile and int(rows[0]["older_adult_id"]) != int(profile["id"]):
+        raise HTTPException(status_code=403, detail="You are not allowed to view this plan.")
+    return profile
+
+
+def require_plan_create_access(
+    client: Client, family_id: int, older_adult_id: int, user: Any
+) -> None:
+    profile = require_family_read_access(client, family_id, user)
+    if profile and int(profile["id"]) != int(older_adult_id):
+        raise HTTPException(status_code=403, detail="You can only create plans for your own profile.")
+
+
 def family_id_for_older_adult(client: Client, older_adult_id: int) -> int:
     result = (
         client.table("older_adult_profiles")

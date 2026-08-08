@@ -3,17 +3,18 @@ import { LogoutButton } from "@/features/auth/LogoutButton";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
 import { useViewer } from "@/hooks/useViewer";
 
-// The organizer's account exists to set the family up and keep it correct.
-// The older adult's account is the one that is actually used day to day.
+// Organizers maintain setup, review the trusted circle, and connect apps.
+// Older adults use the day-to-day activity and support experience.
 const organizerNavigation = [
   { to: "/setup", label: "Setup" },
+  { to: "/family", label: "Trusted circle" },
   { to: "/connect-apps", label: "Connect an app" },
 ] as const;
 
 const olderAdultNavigation = [
-  { to: "/discover", label: "Discover" },
-  { to: "/plans", label: "My activities" },
-  { to: "/family", label: "My family" },
+  { to: "/discover", label: "Explore" },
+  { to: "/plans", label: "Plans" },
+  { to: "/family", label: "My support circle" },
 ] as const;
 
 const navLinkClass =
@@ -45,7 +46,7 @@ export function Navbar() {
             className="grid size-11 flex-none place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground"
             aria-hidden="true"
           >
-            CM
+            PP
           </span>
           <span className="truncate text-base sm:text-lg">PeiPal</span>
         </Link>

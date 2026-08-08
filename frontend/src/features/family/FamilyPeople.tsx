@@ -6,7 +6,7 @@ import { useViewer } from "@/hooks/useViewer";
 const secondaryButtonClass =
   "inline-flex min-h-14 items-center justify-center rounded-xl border border-input bg-background px-6 font-extrabold text-foreground no-underline hover:bg-muted";
 
-/** Who the older adult can lean on, and how each person is related to them. */
+/** The trusted circle, shown to either the organizer or older adult. */
 export function FamilyPeople() {
   const viewer = useViewer();
   const membersQuery = useQuery({
@@ -22,6 +22,7 @@ export function FamilyPeople() {
   }
 
   const members = membersQuery.data?.family_members ?? [];
+  const isOrganizer = viewer.role === "organizer";
 
   function relationshipFor(relationships: { older_adult_id: number; relationship: string }[]) {
     const mine = relationships.find(
@@ -35,18 +36,20 @@ export function FamilyPeople() {
       <div className="mx-auto w-full max-w-[900px]">
         <header className="border-b border-border pb-8">
           <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
-            The people looking out for you.
+            {isOrganizer ? "Your trusted circle." : "Your support circle."}
           </h1>
           <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">
-            When you ask about an activity, everyone here is told at once. The
-            first person to answer decides, so nobody is put on the spot.
+            {isOrganizer
+              ? "These are the people PeiPal will contact when the older adult asks for support. You can update them in Setup."
+              : "When you ask about an activity, everyone here is told at once. The first person to answer decides, so nobody is put on the spot."}
           </p>
         </header>
 
         {members.length === 0 ? (
           <p className="mt-8 rounded-2xl bg-background p-6 text-lg text-foreground">
-            Nobody has been added yet. Whoever set this up for you can add your
-            family.
+            {isOrganizer
+              ? "Nobody has been added yet. Add trusted people in Setup so they can help with plans."
+              : "Nobody has been added yet. Whoever set this up for you can add your family."}
           </p>
         ) : (
           <ul className="mt-8 divide-y divide-border border-y border-border bg-background">
@@ -62,8 +65,8 @@ export function FamilyPeople() {
         )}
 
         <div className="mt-8">
-          <Link className={secondaryButtonClass} to="/discover">
-            Find something to do
+          <Link className={secondaryButtonClass} to={isOrganizer ? "/setup" : "/discover"}>
+            {isOrganizer ? "Manage trusted circle" : "Explore activities"}
           </Link>
         </div>
       </div>

@@ -30,7 +30,7 @@ export function ActivityDiscovery() {
           <header className="mb-6">
             <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
               {greetingName
-                ? `Something new for ${greetingName}?`
+                ? `Hello, ${greetingName}!`
                 : "Find something to look forward to."}
             </h1>
             <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">

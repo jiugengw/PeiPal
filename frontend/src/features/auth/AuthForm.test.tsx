@@ -7,6 +7,8 @@ import { signUp } from "@/features/auth/signUp";
 
 vi.mock("@/features/auth/signIn", () => ({ signIn: vi.fn() }));
 vi.mock("@/features/auth/signUp", () => ({ signUp: vi.fn() }));
+vi.mock("@/features/auth/sendSignInLink", () => ({ sendSignInLink: vi.fn() }));
+vi.mock("@/features/auth/signInWithCode", () => ({ signInWithCode: vi.fn() }));
 
 const signInMock = vi.mocked(signIn);
 const signUpMock = vi.mocked(signUp);
@@ -39,6 +41,7 @@ describe("AuthForm", () => {
   it("shows useful validation and focuses the first invalid field", async () => {
     const user = userEvent.setup();
     renderAuthForm();
+    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     await user.click(screen.getByRole("button", { name: /^log in$/i }));
     expect(screen.getByLabelText(/email address/i)).toHaveFocus();
     expect(screen.getByText(/enter your email address/i)).toBeVisible();
@@ -48,6 +51,7 @@ describe("AuthForm", () => {
   it("reveals and hides the password", async () => {
     const user = userEvent.setup();
     renderAuthForm();
+    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     const password = screen.getByLabelText(/^password$/i);
     expect(password).toHaveAttribute("type", "password");
     await user.click(screen.getByRole("button", { name: /show password/i }));
@@ -60,6 +64,7 @@ describe("AuthForm", () => {
     signInMock.mockResolvedValue();
     const user = userEvent.setup();
     renderAuthForm();
+    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     await user.type(
       screen.getByLabelText(/email address/i),
       "person@example.com",
@@ -79,6 +84,7 @@ describe("AuthForm", () => {
     signInMock.mockResolvedValue();
     const user = userEvent.setup();
     renderAuthForm();
+    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     await user.type(
       screen.getByLabelText(/email address/i),
       "person@example.com",

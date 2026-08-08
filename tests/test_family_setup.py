@@ -146,7 +146,7 @@ def test_a_family_member_needs_a_valid_email_address():
 
 
 def test_adding_a_member_stores_each_relationship(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
+    monkeypatch.setattr(routes, "require_family_manager", lambda *_args: None)
     client = FakeClient({
         "older_adult_profiles": [[{"id": 1}, {"id": 2}]],
         "family_members": [
@@ -187,7 +187,7 @@ def test_adding_a_member_stores_each_relationship(monkeypatch):
 
 
 def test_a_duplicate_family_member_email_is_refused(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
+    monkeypatch.setattr(routes, "require_family_manager", lambda *_args: None)
     client = FakeClient({
         "older_adult_profiles": [[{"id": 1}]],
         "family_members": [[{"id": 3}]],
@@ -210,7 +210,7 @@ def test_a_duplicate_family_member_email_is_refused(monkeypatch):
 
 
 def test_a_relationship_to_another_familys_older_adult_is_refused(monkeypatch):
-    monkeypatch.setattr(routes, "require_family_account", lambda *_args: None)
+    monkeypatch.setattr(routes, "require_family_manager", lambda *_args: None)
     client = FakeClient({"older_adult_profiles": [[]]})
 
     with pytest.raises(HTTPException) as error:

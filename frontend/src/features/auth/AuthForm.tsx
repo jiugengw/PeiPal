@@ -24,6 +24,7 @@ export function AuthForm() {
   const [values, setValues] = useState<FormValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
@@ -72,6 +73,7 @@ export function AuthForm() {
     setValues(emptyValues);
     setErrors({});
     setShowPassword(false);
+    setShowPasswordLogin(false);
     setSuccessMessage("");
     setSubmissionError("");
     signInMutation.reset();
@@ -93,7 +95,8 @@ export function AuthForm() {
     else if (!emailPattern.test(values.email))
       nextErrors.email =
         "Enter an email address in the format name@example.com.";
-    if (!values.password) nextErrors.password = "Enter your password.";
+    if ((mode === "signup" || showPasswordLogin) && !values.password)
+      nextErrors.password = "Enter your password.";
     else if (mode === "signup" && values.password.length < 8)
       nextErrors.password = "Use at least 8 characters for your password.";
     return nextErrors;
@@ -107,7 +110,9 @@ export function AuthForm() {
     setSubmissionError("");
 
     const firstInvalidField = (
-      mode === "signup" ? ["name", "email", "password"] : ["email", "password"]
+      mode === "signup" || showPasswordLogin
+        ? ["name", "email", "password"]
+        : ["email"]
     ).find((field) => nextErrors[field as FieldName]) as FieldName | undefined;
     if (firstInvalidField) {
       const refs = { name: nameRef, email: emailRef, password: passwordRef };
@@ -115,7 +120,7 @@ export function AuthForm() {
       return;
     }
 
-    if (mode === "login") {
+    if (mode === "login" && showPasswordLogin) {
       signInMutation.mutate({
         email: values.email.trim(),
         password: values.password,
@@ -165,17 +170,33 @@ export function AuthForm() {
         </button>
       </div>
 
-      <div id="auth-form-panel" role="tabpanel" className="pt-4">
+      <div id="auth-form-panel" role="tabpanel" className="pt-4 overflow-auto">
         <h1 className="m-0 max-w-[18ch] text-[clamp(2rem,6vw,2.75rem)] leading-none font-bold tracking-[-0.03em] text-balance text-foreground">
           {mode === "login" ? "Welcome back." : "Create your account."}
         </h1>
         <p className="mt-2 max-w-[52ch] text-[0.95rem] leading-normal">
           {mode === "login"
-            ? "Enter your details to continue with PeiPal."
+            ? "The easiest way in is with a one-time code sent to your email."
             : "Start with the essentials. You can add support preferences later."}
         </p>
 
-        <form className="mt-3 grid gap-3" noValidate onSubmit={handleSubmit}>
+        {mode === "login" && !showPasswordLogin ? <MagicLinkPanel /> : null}
+
+        {mode === "login" && !showPasswordLogin ? (
+          <button
+            className="mt-5 min-h-12 w-full cursor-pointer rounded-xl border-2 border-input bg-background px-4 text-base font-extrabold text-foreground hover:bg-muted"
+            type="button"
+            onClick={() => {
+              setShowPasswordLogin(true);
+              setSuccessMessage("");
+              setSubmissionError("");
+            }}
+          >
+            Use a password instead
+          </button>
+        ) : null}
+
+        {mode === "signup" || showPasswordLogin ? <form className="mt-3 grid gap-3" noValidate onSubmit={handleSubmit}>
           {mode === "signup" ? (
             <div className="grid gap-1">
               <label className="text-base font-extrabold" htmlFor="auth-name">
@@ -183,7 +204,7 @@ export function AuthForm() {
               </label>
               <input
                 disabled={isSubmitting}
-                className="min-h-12 w-full rounded-xl border-2 border-input bg-background px-4 text-base text-foreground hover:border-primary disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-foreground aria-invalid:bg-muted"
+                className="min-h-12 w-full rounded-xl border-2 border-input bg-background px-4 text-base text-foreground outline-none hover:border-primary focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-foreground aria-invalid:bg-muted"
                 ref={nameRef}
                 id="auth-name"
                 name="name"
@@ -211,7 +232,7 @@ export function AuthForm() {
             </label>
             <input
               disabled={isSubmitting}
-              className="min-h-12 w-full rounded-xl border-2 border-input bg-background px-4 text-base text-foreground hover:border-primary disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-foreground aria-invalid:bg-muted"
+              className="min-h-12 w-full rounded-xl border-2 border-input bg-background px-4 text-base text-foreground outline-none hover:border-primary focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-foreground aria-invalid:bg-muted"
               ref={emailRef}
               id="auth-email"
               name="email"
@@ -240,7 +261,7 @@ export function AuthForm() {
             <div className="relative">
               <input
                 disabled={isSubmitting}
-                className="min-h-12 w-full rounded-xl border-2 border-input bg-background pr-[84px] pl-4 text-base text-foreground hover:border-primary disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-foreground aria-invalid:bg-muted"
+                className="min-h-12 w-full rounded-xl border-2 border-input bg-background pr-[84px] pl-4 text-base text-foreground outline-none hover:border-primary focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-foreground aria-invalid:bg-muted"
                 ref={passwordRef}
                 id="auth-password"
                 name="password"
@@ -319,16 +340,29 @@ export function AuthForm() {
               {successMessage}
             </p>
           ) : null}
-        </form>
-        <MagicLinkPanel />
+          {mode === "login" && showPasswordLogin ? (
+            <button
+              className="min-h-11 text-base font-bold text-foreground underline"
+              type="button"
+              onClick={() => {
+                setShowPasswordLogin(false);
+                setValues(emptyValues);
+                setErrors({});
+                setSubmissionError("");
+              }}
+            >
+              Use an email code instead
+            </button>
+          ) : null}
+        </form> : null}
       </div>
     </div>
   );
 }
 
 /**
- * The way in for an older adult. Their email is their login, so they receive a
- * link and a code rather than typing a password they would have to remember.
+ * The primary way into PeiPal. A one-time code avoids asking older adults to
+ * remember a password, while still working for every registered account.
  */
 function MagicLinkPanel() {
   const [email, setEmail] = useState("");
@@ -364,13 +398,12 @@ function MagicLinkPanel() {
         Signing in without a password
       </h2>
       <p className="mt-2 text-base leading-relaxed text-foreground">
-        If your family set this up for you, enter your email and we will send you
-        a six-digit code to type in here.
+        Enter your email and we will send you a six-digit code to type in here.
       </p>
 
       {!sent ? (
         <form
-          className="mt-4 flex flex-col gap-3 sm:flex-row"
+          className="mt-4 flex flex-col gap-3"
           onSubmit={(event) => {
             event.preventDefault();
             setError("");
@@ -381,7 +414,7 @@ function MagicLinkPanel() {
             Email me a sign-in link
           </label>
           <input
-            className="min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-lg text-foreground"
+            className="min-h-14 w-full rounded-xl border-2 border-input bg-background px-4 py-3 text-lg text-foreground outline-none hover:border-primary focus-visible:border-primary focus-visible:outline-none"
             id="magic-link-email"
             type="email"
             required
@@ -390,7 +423,7 @@ function MagicLinkPanel() {
             placeholder="you@example.com"
           />
           <button
-            className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-xl border border-input bg-background px-6 font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
+            className="inline-flex min-h-14 w-full items-center justify-center rounded-xl border border-input bg-background px-6 font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
             disabled={sendLink.isPending}
             type="submit"
           >
@@ -418,9 +451,9 @@ function MagicLinkPanel() {
           >
             Six-digit code
           </label>
-          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-2 flex flex-col gap-3">
             <input
-              className="min-h-14 w-full rounded-xl border border-input bg-background px-4 py-3 text-2xl tracking-[0.3em] text-foreground"
+              className="min-h-14 w-full rounded-xl border-2 border-input bg-background px-4 py-3 text-2xl tracking-[0.3em] text-foreground outline-none hover:border-primary focus-visible:border-primary focus-visible:outline-none"
               id="sign-in-code"
               inputMode="numeric"
               autoComplete="one-time-code"
@@ -431,24 +464,38 @@ function MagicLinkPanel() {
               placeholder="123456"
             />
             <button
-              className="inline-flex min-h-14 shrink-0 items-center justify-center rounded-xl bg-primary px-6 font-extrabold text-primary-foreground hover:bg-foreground disabled:opacity-50"
+              className="inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-primary px-6 font-extrabold text-primary-foreground hover:bg-foreground disabled:opacity-50"
               disabled={enterCode.isPending}
               type="submit"
             >
               {enterCode.isPending ? "Checking\u2026" : "Sign me in"}
             </button>
           </div>
-          <button
-            className="mt-4 min-h-11 text-base font-bold text-foreground underline"
-            onClick={() => {
-              setSent(false);
-              setCode("");
-              setError("");
-            }}
-            type="button"
-          >
-            Use a different email address
-          </button>
+          <div className="mt-4 grid gap-2 border-t border-border pt-3">
+            <button
+              className="min-h-11 w-fit text-left text-base font-bold text-foreground underline"
+              onClick={() => {
+                setSent(false);
+                setCode("");
+                setError("");
+              }}
+              type="button"
+            >
+              Use a different email address
+            </button>
+            <button
+              className="min-h-11 w-fit text-left text-base font-bold text-foreground underline"
+              disabled={enterCode.isPending || sendLink.isPending}
+              onClick={() => {
+                setSent(false);
+                setCode("");
+                setError("");
+              }}
+              type="button"
+            >
+              Send a new code
+            </button>
+          </div>
         </form>
       )}
 

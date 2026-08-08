@@ -147,12 +147,6 @@ export function PlanDetail({ planId }: { planId: number }) {
               <p className="mt-4 font-bold text-foreground" role="alert">{updateMutation.error.message}</p>
             ) : null}
 
-
-
-            {plan.status === "coordinating" || plan.status === "ready" || plan.status === "rejected" ? (
-              <Link className={`${secondaryButtonClass} mt-6 w-full no-underline`} to="/family">Open the family view</Link>
-            ) : null}
-
             {isActive && !confirmingStatus ? (
               <button className={`${secondaryButtonClass} mt-3 w-full`} disabled={updateMutation.isPending} onClick={() => setConfirmingStatus("cancelled")} type="button">Cancel plan</button>
             ) : null}

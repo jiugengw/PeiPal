@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Mic, MicOff, MessageSquare, Pause, Send, Square, X } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { useStagedIntentContext } from "@/hooks/useStagedIntent";
 import { ApprovalPanel } from "@/features/companion/ApprovalPanel";
 import { SpeechToggle } from "@/features/companion/SpeechToggle";
@@ -14,6 +15,7 @@ export function CompanionPanel() {
   useStagedIntentContext();
   const [isOpen, setIsOpen] = useState(false);
   const [typedMessage, setTypedMessage] = useState("");
+  const reduceMotion = useReducedMotion();
 
   function open() {
     setIsOpen(true);
@@ -21,7 +23,6 @@ export function CompanionPanel() {
   }
 
   function close() {
-    if (companion.isConnected) companion.end();
     setIsOpen(false);
   }
 
@@ -33,6 +34,8 @@ export function CompanionPanel() {
   }
 
   const recipientNames: string[] = [];
+  const hasConversation = companion.transcript.length > 0 || companion.isConnected;
+  const shouldPulse = hasConversation && companion.isConnected && !reduceMotion;
 
   return (
     <aside
@@ -40,15 +43,35 @@ export function CompanionPanel() {
       aria-label="PeiPal companion"
     >
       {!isOpen ? (
-        <button
+        <motion.button
           className="ml-auto flex min-h-14 items-center gap-3 rounded-xl bg-primary px-5 font-bold text-primary-foreground shadow-[0_14px_34px_rgb(37_44_64_/_0.22)] hover:bg-foreground"
           onClick={open}
           type="button"
+          animate={
+            shouldPulse
+              ? {
+                  boxShadow: [
+                    "0 14px 34px rgb(37 44 64 / 0.22), 0 0 0 0 rgb(61 82 160 / 0.65)",
+                    "0 14px 34px rgb(37 44 64 / 0.22), 0 0 0 16px rgb(61 82 160 / 0)",
+                  ],
+                  scale: [1, 1.03],
+                }
+              : undefined
+          }
+          transition={
+            shouldPulse
+              ? { duration: 1.4, repeat: Infinity, ease: "easeOut" }
+              : undefined
+          }
+          aria-label={
+            hasConversation ? "Reopen conversation (Ask or type)" : undefined
+          }
         >
-          <MessageSquare aria-hidden="true" size={22} /> Ask or type
-        </button>
+          <MessageSquare aria-hidden="true" size={22} />
+          {hasConversation ? "Reopen conversation" : "Ask or type"}
+        </motion.button>
       ) : (
-        <div className="rounded-2xl bg-background p-5 shadow-[0_22px_55px_rgb(37_44_64_/_0.22)]">
+        <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-background p-5 shadow-[0_22px_55px_rgb(37_44_64_/_0.22)]">
           <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">Companion</h2>
@@ -64,7 +87,8 @@ export function CompanionPanel() {
               className="grid min-h-12 min-w-12 place-items-center rounded-xl text-foreground hover:bg-muted"
               onClick={close}
               type="button"
-              aria-label="Close companion"
+              aria-label="Minimize companion"
+              title="Minimize companion"
             >
               <X aria-hidden="true" />
             </button>
@@ -162,14 +186,23 @@ export function CompanionPanel() {
               </form>
 
               {companion.mode === "text" ? (
-                <button
-                  className="mt-3 flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border border-input bg-background px-5 font-bold text-foreground hover:bg-muted"
-                  onClick={() => void companion.startVoice()}
-                  type="button"
-                >
-                  <Mic aria-hidden="true" size={20} />
-                  Start voice
-                </button>
+                <div className="mt-3 grid gap-2">
+                  <button
+                    className="flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border border-input bg-background px-5 font-bold text-foreground hover:bg-muted"
+                    onClick={() => void companion.startVoice()}
+                    type="button"
+                  >
+                    <Mic aria-hidden="true" size={20} />
+                    Start voice
+                  </button>
+                  <button
+                    className="min-h-11 text-base font-bold text-foreground underline"
+                    onClick={companion.end}
+                    type="button"
+                  >
+                    End conversation
+                  </button>
+                </div>
               ) : (
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   <button

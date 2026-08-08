@@ -702,7 +702,7 @@ export interface components {
              * Email
              * Format: email
              */
-            email: string;
+            email?: string | null;
             /** Relationships */
             relationships: components["schemas"]["FamilyMemberRelationship"][];
             /**

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion, useReducedMotion } from "motion/react";
 import { describeTask } from "@/features/coordination/describeTask";
 import {
   askTheFamily,
@@ -17,6 +18,12 @@ const TASK_LABELS = {
   approval: "Approval",
   registration: "Signing up",
   transport: "Getting there",
+} as const;
+
+const TASK_COMPLETE = {
+  approval: (status: string) => status === "approved",
+  registration: (status: string) => status === "done" || status === "not_needed",
+  transport: (status: string) => status === "done" || status === "not_needed",
 } as const;
 
 /** What the older adult sees after asking: who did what, and what is left. */
@@ -119,6 +126,10 @@ export function CoordinationProgress({
         </div>
       ) : (
         <>
+          <ProgressSummary
+            planStatus={planStatus}
+            tasks={stateQuery.data.tasks ?? []}
+          />
           <ul className="mt-4 divide-y divide-border border-y border-border">
             {(stateQuery.data.tasks ?? []).map((task) => (
               <li
@@ -180,5 +191,93 @@ export function CoordinationProgress({
         </>
       )}
     </section>
+  );
+}
+
+function ProgressSummary({
+  planStatus,
+  tasks,
+}: {
+  planStatus: string;
+  tasks: Array<{ task_type: keyof typeof TASK_LABELS; status: string }>;
+}) {
+  const reduceMotion = useReducedMotion();
+  const steps = (Object.keys(TASK_LABELS) as Array<keyof typeof TASK_LABELS>).map(
+    (taskType) => {
+      const task = tasks.find((item) => item.task_type === taskType);
+      const status = task?.status ?? "open";
+      const complete = TASK_COMPLETE[taskType](status);
+      return { taskType, status, complete };
+    },
+  );
+  const completedCount = steps.filter((step) => step.complete).length;
+  const isTerminal = planStatus === "cancelled" || planStatus === "rejected";
+  const isComplete = planStatus === "completed" || completedCount === steps.length;
+  const value = isComplete ? steps.length : completedCount;
+
+  if (isTerminal) {
+    return (
+      <div className="mt-6 rounded-2xl border border-border bg-muted p-5">
+        <p className="text-lg font-bold text-foreground">
+          {planStatus === "cancelled"
+            ? "This plan was cancelled."
+            : "Your family decided not to continue with this plan."}
+        </p>
+        <p className="mt-1 text-base leading-relaxed text-foreground">
+          No more steps are needed.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-border bg-background p-5 sm:p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="text-xl font-bold text-foreground">Your progress</h3>
+        <p className="text-base font-bold text-foreground" aria-live="polite">
+          {isComplete ? "Everything is complete" : `${completedCount} of ${steps.length} complete`}
+        </p>
+      </div>
+
+      <div
+        className="mt-5 h-3 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+        aria-label="Family coordination progress"
+        aria-valuemin={0}
+        aria-valuemax={steps.length}
+        aria-valuenow={value}
+        aria-valuetext={`${value} of ${steps.length} coordination steps complete`}
+      >
+        <motion.div
+          className="h-full rounded-full bg-primary"
+          initial={reduceMotion ? false : { width: 0 }}
+          animate={{ width: `${(value / steps.length) * 100}%` }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+        />
+      </div>
+
+      <ol className="mt-6 grid grid-cols-3 gap-3" aria-label="Coordination steps">
+        {steps.map((step) => (
+          <li className="min-w-0" key={step.taskType}>
+            <div
+              className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-base font-extrabold ${step.complete ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-foreground"}`}
+              aria-hidden="true"
+            >
+              {step.complete ? "✓" : ""}
+            </div>
+            <p className="mt-2 text-sm font-extrabold leading-tight text-foreground sm:text-base">
+              {TASK_LABELS[step.taskType]}
+            </p>
+            <p className="mt-1 text-sm leading-tight text-foreground">
+              {step.complete
+                ? step.status === "not_needed"
+                  ? "Not needed"
+                  : "Complete"
+                : "Still needed"}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

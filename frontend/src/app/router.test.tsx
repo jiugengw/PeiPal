@@ -85,6 +85,17 @@ describe("application routes", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
   });
 
+  it("lets the organizer review the trusted circle", async () => {
+    const { router } = renderRoute("/family", true);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/family"));
+  });
+
+  it("keeps an unresolved account on setup", async () => {
+    useViewer.mockReturnValue(viewer("unknown"));
+    const { router } = renderRoute("/discover", true);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
+  });
+
   it("keeps the older adult out of setup", async () => {
     useViewer.mockReturnValue(viewer("older_adult"));
     const { router } = renderRoute("/setup", true);

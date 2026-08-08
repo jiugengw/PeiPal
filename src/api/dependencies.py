@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from types import SimpleNamespace
 from typing import Any
 
 from fastapi import Depends, Header, HTTPException, status
 from supabase import Client, create_client
 
 from src.api.config import supabase_service_key, supabase_url
+from src.services.workbuddy_tokens import resolve_token
 
 
 @lru_cache(maxsize=1)
@@ -29,6 +31,13 @@ def require_user(
         )
 
     token = authorization.removeprefix("Bearer ").strip()
+    # A WorkBuddy/ChatGPT-style client presents its own personal access
+    # token here instead of a Supabase JWT; resolve it directly to a user,
+    # no Supabase call needed. Falls through to a normal browser session.
+    workbuddy_user_id = resolve_token(client, token)
+    if workbuddy_user_id is not None:
+        return SimpleNamespace(id=workbuddy_user_id)
+
     try:
         response = client.auth.get_user(token)
         user = response.user

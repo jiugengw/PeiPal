@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from src.mcp.config import peipal_api_token, peipal_api_url
+from src.mcp.config import peipal_api_url
 
 
 class PeiPalApiError(RuntimeError):
@@ -25,13 +25,14 @@ class PeiPalApi:
         method: str,
         path: str,
         *,
+        token: str | None = None,
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> Any:
         owns_client = self._client is None
         client = self._client or httpx.AsyncClient(
             base_url=peipal_api_url(),
-            headers={"Authorization": f"Bearer {peipal_api_token()}"},
+            headers={"Authorization": f"Bearer {token}"} if token else {},
             timeout=15,
         )
         try:

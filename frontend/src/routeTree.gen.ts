@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedSplatRouteImport } from './routes/_authenticated/$'
+import { Route as AuthenticatedConnectAppsRouteImport } from './routes/_authenticated/connect-apps'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
@@ -39,6 +40,12 @@ const AuthenticatedSplatRoute = AuthenticatedSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedConnectAppsRoute =
+  AuthenticatedConnectAppsRouteImport.update({
+    id: '/connect-apps',
+    path: '/connect-apps',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDiscoverRoute = AuthenticatedDiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/$': typeof AuthenticatedSplatRoute
+  '/connect-apps': typeof AuthenticatedConnectAppsRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -85,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/$': typeof AuthenticatedSplatRoute
+  '/connect-apps': typeof AuthenticatedConnectAppsRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -98,6 +107,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/$': typeof AuthenticatedSplatRoute
+  '/_authenticated/connect-apps': typeof AuthenticatedConnectAppsRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/$'
+    | '/connect-apps'
     | '/discover'
     | '/family'
     | '/setup'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/$'
+    | '/connect-apps'
     | '/discover'
     | '/family'
     | '/setup'
@@ -134,6 +146,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/$'
+    | '/_authenticated/connect-apps'
     | '/_authenticated/discover'
     | '/_authenticated/family'
     | '/_authenticated/setup'
@@ -177,6 +190,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof AuthenticatedSplatRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/connect-apps': {
+      id: '/_authenticated/connect-apps'
+      path: '/connect-apps'
+      fullPath: '/connect-apps'
+      preLoaderRoute: typeof AuthenticatedConnectAppsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/discover': {
@@ -226,6 +246,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedSplatRoute: typeof AuthenticatedSplatRoute
+  AuthenticatedConnectAppsRoute: typeof AuthenticatedConnectAppsRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedFamilyRoute: typeof AuthenticatedFamilyRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
@@ -236,6 +257,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSplatRoute: AuthenticatedSplatRoute,
+  AuthenticatedConnectAppsRoute: AuthenticatedConnectAppsRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedFamilyRoute: AuthenticatedFamilyRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,

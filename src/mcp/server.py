@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
-
-from mcp.server.fastmcp import FastMCP
 from starlette.applications import Starlette
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount
 
-from src.mcp.config import load_config, mcp_access_token
+from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
+
+from src.mcp.config import load_config
 from src.mcp.context import register_context
 from src.mcp.tools import register_tools
 
@@ -21,32 +18,29 @@ load_config()
 mcp = FastMCP(
     "PeiPal",
     instructions=(
-        "Use PeiPal tools to find activities and create plans for older adults. "
-        "Never invent activity, family, older-adult, or plan IDs. Confirm before writes."
+        "Every tool call needs a caregiver's personal access token, generated once on "
+        "the real PeiPal website (Connect an app) and configured as this connection's "
+        "own bearer token — never ask a caregiver for it in chat, and never invent one. "
+        "Use PeiPal tools to find activities and create plans for older adults. Never "
+        "invent activity, family, older-adult, or plan IDs. Confirm before writes."
     ),
     stateless_http=True,
     json_response=True,
     streamable_http_path="/",
+    # This server is reached both locally (WorkBuddy) and remotely, behind a
+    # tunnel or real deployment (ChatGPT). FastMCP auto-enables Host-header
+    # checking restricted to 127.0.0.1/localhost unless told otherwise, which
+    # would reject every remote caller's real Host header. Access is already
+    # gated per-call by each caregiver's personal access token, so that
+    # host-based check is both redundant here and actively breaks remote use.
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
 )
 register_tools(mcp)
 register_context(mcp)
 
 
-class MCPBearerMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable[[Request], Awaitable[Response]],
-    ) -> Response:
-        authorization = request.headers.get("authorization", "")
-        expected = f"Bearer {mcp_access_token()}"
-        if authorization != expected:
-            return JSONResponse({"error": "Invalid MCP bearer token."}, status_code=401)
-        return await call_next(request)
-
-
 _mcp_app = mcp.streamable_http_app()
 app = Starlette(
-    routes=[Mount("/mcp", app=MCPBearerMiddleware(_mcp_app))],
+    routes=[Mount("/mcp", app=_mcp_app)],
     lifespan=_mcp_app.router.lifespan_context,
 )

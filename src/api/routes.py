@@ -46,6 +46,9 @@ from src.api.models import (
     SignInCodeResponse,
     ViewerResponse,
     VoiceSessionResponse,
+    WorkBuddyTokenCreate,
+    WorkBuddyTokenListResponse,
+    WorkBuddyTokenResponse,
 )
 from src.services.family_email import digest, expires_in
 from src.services.coordination import apply_action, ensure_coordination, load_state
@@ -53,6 +56,7 @@ from src.services.coordination_email import send_coordination_emails
 from src.services.sign_in_codes import older_adult_for_email, send_sign_in_code
 from src.services.realtime import create_realtime_client_secret
 from src.services.recommendations import recommend_activities
+from src.services.workbuddy_tokens import create_token, list_tokens, revoke_token
 
 
 router = APIRouter(prefix="/api")
@@ -178,6 +182,53 @@ def request_sign_in_code(
             detail="We could not send the code just now. Please try again in a moment.",
         ) from error
     return {"sent": True, "message": f"We sent a code to {email}."}
+
+
+@router.post(
+    "/workbuddy/tokens",
+    response_model=WorkBuddyTokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["WorkBuddy"],
+    summary="Create a personal access token for a WorkBuddy/ChatGPT-style client",
+    description=(
+        "The raw token is returned exactly once, here. Paste it into the "
+        "client's own connector config as its bearer token — it is never "
+        "something the client's model has to see, carry, or retype."
+    ),
+)
+def create_workbuddy_token(
+    payload: WorkBuddyTokenCreate,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    return create_token(client, user_id(user), payload.name)
+
+
+@router.get(
+    "/workbuddy/tokens",
+    response_model=WorkBuddyTokenListResponse,
+    tags=["WorkBuddy"],
+    summary="List my WorkBuddy/ChatGPT-style access tokens",
+)
+def list_workbuddy_tokens(
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> dict[str, Any]:
+    return {"tokens": list_tokens(client, user_id(user))}
+
+
+@router.delete(
+    "/workbuddy/tokens/{token_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["WorkBuddy"],
+    summary="Revoke a WorkBuddy/ChatGPT-style access token",
+)
+def delete_workbuddy_token(
+    token_id: int,
+    user: Any = Depends(require_user),
+    client: Client = Depends(get_supabase_client),
+) -> None:
+    revoke_token(client, user_id(user), token_id)
 
 
 @router.get(

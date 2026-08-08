@@ -44,6 +44,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workbuddy/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my WorkBuddy/ChatGPT-style access tokens */
+        get: operations["list_workbuddy_tokens_api_workbuddy_tokens_get"];
+        put?: never;
+        /**
+         * Create a personal access token for a WorkBuddy/ChatGPT-style client
+         * @description The raw token is returned exactly once, here. Paste it into the client's own connector config as its bearer token — it is never something the client's model has to see, carry, or retype.
+         */
+        post: operations["create_workbuddy_token_api_workbuddy_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workbuddy/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a WorkBuddy/ChatGPT-style access token */
+        delete: operations["delete_workbuddy_token_api_workbuddy_tokens__token_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -949,6 +987,49 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /**
+         * WorkBuddyTokenCreate
+         * @example {
+         *       "name": "WorkBuddy"
+         *     }
+         */
+        WorkBuddyTokenCreate: {
+            /** Name */
+            name: string;
+        };
+        /** WorkBuddyTokenListResponse */
+        WorkBuddyTokenListResponse: {
+            /** Tokens */
+            tokens: components["schemas"]["WorkBuddyTokenSummary"][];
+        };
+        /** WorkBuddyTokenResponse */
+        WorkBuddyTokenResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Token */
+            token: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** WorkBuddyTokenSummary */
+        WorkBuddyTokenSummary: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Revoked At */
+            revoked_at?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -1010,6 +1091,103 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SignInCodeResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workbuddy_tokens_api_workbuddy_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkBuddyTokenListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_workbuddy_token_api_workbuddy_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkBuddyTokenCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkBuddyTokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_workbuddy_token_api_workbuddy_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                token_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

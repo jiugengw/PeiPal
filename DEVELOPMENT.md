@@ -367,21 +367,35 @@ uvicorn src.api.main:app --reload --port 8000
 uvicorn src.mcp.server:app --host 0.0.0.0 --port 8001
 ```
 
-Configure `PEIPAL_API_URL`, `MCP_ACCESS_TOKEN`, and `PEIPAL_API_TOKEN` in the
-server environment. Connect WorkBuddy to:
+Configure `PEIPAL_API_URL` in the server environment. Connect WorkBuddy
+(or any MCP client, including ChatGPT) to:
 
 ```text
 http://127.0.0.1:8001/mcp
 ```
 
-The server exposes activity search, family and older-adult lookup, plan
-creation, plan retrieval, and plan status updates. It cannot approve or reject a
-plan: that belongs to the family member holding the emailed link. For a hosted WorkBuddy
-demo, deploy the MCP server behind HTTPS and provide the HTTPS `/mcp` URL.
+A caregiver never types their password into WorkBuddy, and no tool call
+ever carries a credential either. Instead, the caregiver signs into the
+real PeiPal website and generates a personal access token on the
+"Connect an app" page, then pastes that token into the client's own
+connector config as its bearer token — a one-time setup step outside any
+chat. Every tool call is authenticated straight from that connection's
+own `Authorization` header; families and older adults created this way
+belong to that caregiver's own account, not a shared demo account.
+
+For ChatGPT specifically: it runs in the cloud, so `127.0.0.1` is not
+reachable from it — the MCP server needs a public HTTPS URL (a tunnel
+like ngrok while testing, or a real deployment). WorkBuddy may run
+locally alongside you, in which case the loopback URL above is fine.
+
+The server exposes activity search, family/older-adult setup and lookup,
+plan creation, plan retrieval, and plan status updates. It cannot approve
+or reject a plan: that belongs to the family member holding the emailed
+link.
 
 Suggested demo request:
 
-> Find a gentle social activity under $10 for Mary, then prepare it for family approval.
+> Find a gentle social activity under $10 for Mary, and prepare it for family approval.
 
 ## Manual demo walkthrough
 

@@ -5,7 +5,10 @@ import { useViewer } from "@/hooks/useViewer";
 
 // The organizer's account exists to set the family up and keep it correct.
 // The older adult's account is the one that is actually used day to day.
-const organizerNavigation = [{ to: "/setup", label: "Setup" }] as const;
+const organizerNavigation = [
+  { to: "/setup", label: "Setup" },
+  { to: "/connect-apps", label: "Connect an app" },
+] as const;
 
 const olderAdultNavigation = [
   { to: "/discover", label: "Discover" },

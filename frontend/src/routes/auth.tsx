@@ -64,19 +64,19 @@ function AuthPage() {
               duration={2}
               once
             >
-              A comfortable way to plan with people you trust.
+              Support your loved ones. Be there when it matters.
             </TextAnimate>
             <TextAnimate
               animation="fadeIn"
-              delay={1.8}
-              className="mt-6 max-w-[34ch] text-lg leading-relaxed"
+              delay={2}
+              className="mt-8 max-w-[34ch] border-t border-input pt-5 text-base leading-relaxed font-extrabold"
             >
-              yeah ignore the text they hella ass
+              Pei Pal is here to help
             </TextAnimate>
-            <p></p>
+            {/* <p></p>
             <p className="mt-8 max-w-[34ch] border-t border-input pt-5 text-base leading-relaxed font-extrabold">
-              Your plans stay private until you choose to share them.
-            </p>
+              
+            </p> */}
           </div>
         </section>
         <div className="flex min-h-full items-start justify-center px-4 py-8 sm:px-8 sm:py-10 lg:items-center lg:px-12 lg:py-12">

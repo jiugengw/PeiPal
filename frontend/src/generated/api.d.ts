@@ -710,6 +710,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Is Account Owner */
+            is_account_owner?: boolean;
         };
         /** FamilyMemberUpdate */
         FamilyMemberUpdate: {

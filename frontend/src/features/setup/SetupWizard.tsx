@@ -178,6 +178,9 @@ function SetupWizardForm({
         await queryClient.invalidateQueries({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
         });
+        await queryClient.invalidateQueries({
+          queryKey: familyMembersQueryOptions(saved.family_id).queryKey,
+        });
       }
       setCurrentStep(2);
     } catch (error) {
@@ -721,26 +724,31 @@ function FamilyMembersStep({
               <div>
                 <strong className="text-lg text-foreground">
                   {member.name}
+                  {member.is_account_owner ? " (you)" : ""}
                 </strong>
                 <p className="mt-1 text-base text-foreground">
                   {describeRelationships(member)} · {member.email}
                 </p>
               </div>
               <div className="flex gap-2">
-                <button
-                  className={secondaryButtonClass}
-                  type="button"
-                  onClick={() => edit(member)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={secondaryButtonClass}
-                  type="button"
-                  onClick={() => void remove(member.id)}
-                >
-                  Remove
-                </button>
+                {!member.is_account_owner ? (
+                  <>
+                    <button
+                      className={secondaryButtonClass}
+                      type="button"
+                      onClick={() => edit(member)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={secondaryButtonClass}
+                      type="button"
+                      onClick={() => void remove(member.id)}
+                    >
+                      Remove
+                    </button>
+                  </>
+                ) : null}
               </div>
             </li>
           ))}

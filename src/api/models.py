@@ -301,6 +301,7 @@ class FamilyMemberResponse(BaseModel):
     email: EmailStr | None = None
     relationships: list[FamilyMemberRelationship]
     created_at: datetime
+    is_account_owner: bool = False
 
 
 class ActivityResponse(BaseModel):

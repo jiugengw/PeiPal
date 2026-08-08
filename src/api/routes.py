@@ -69,15 +69,127 @@ router = APIRouter(prefix="/api")
 FAMILY_MEMBER_SELECT = "*, family_member_older_adults(older_adult_id, relationship)"
 
 
-def _shape_family_member(row: dict[str, Any]) -> dict[str, Any]:
+def _shape_family_member(
+    row: dict[str, Any], viewer_id: str | None = None
+) -> dict[str, Any]:
     """Flatten the embedded join rows into the `relationships` field."""
 
     links = row.pop("family_member_older_adults", None) or []
+    account_user_id = row.pop("account_user_id", None)
     row["relationships"] = [
         {"older_adult_id": link["older_adult_id"], "relationship": link["relationship"]}
         for link in links
     ]
+    row["is_account_owner"] = bool(
+        viewer_id and account_user_id and str(account_user_id) == str(viewer_id)
+    )
     return row
+
+
+def _ensure_account_owner_member(
+    client: Client,
+    family_id: int,
+    user: Any,
+    older_adult_ids: list[int] | None = None,
+) -> None:
+    """Ensure the family creator is also a trusted-circle contact."""
+
+    uid = user_id(user)
+    family_rows = (
+        client.table("families")
+        .select("id, created_by")
+        .eq("id", family_id)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if not family_rows or str(family_rows[0]["created_by"]) != uid:
+        return
+
+    email = (getattr(user, "email", None) or "").strip().lower()
+    if not email:
+        return
+    metadata = getattr(user, "user_metadata", None) or {}
+    name = str(metadata.get("full_name") or email.split("@", 1)[0]).strip()
+    if not name:
+        name = email
+
+    owner_rows = (
+        client.table("family_members")
+        .select("id")
+        .eq("family_id", family_id)
+        .eq("account_user_id", uid)
+        .limit(1)
+        .execute()
+        .data
+        or []
+    )
+    if owner_rows:
+        owner_id = owner_rows[0]["id"]
+    else:
+        matching_rows = (
+            client.table("family_members")
+            .select("id")
+            .eq("family_id", family_id)
+            .ilike("email", email)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if matching_rows:
+            owner_id = matching_rows[0]["id"]
+            client.table("family_members").update({"account_user_id": uid}).eq(
+                "id", owner_id
+            ).execute()
+        else:
+            owner_id = (
+                client.table("family_members")
+                .insert({
+                    "family_id": family_id,
+                    "name": name,
+                    "email": email,
+                    "account_user_id": uid,
+                })
+                .execute()
+                .data[0]["id"]
+            )
+
+    if older_adult_ids is None:
+        older_adult_ids = [
+            int(row["id"])
+            for row in (
+                client.table("older_adult_profiles")
+                .select("id")
+                .eq("family_id", family_id)
+                .execute()
+                .data
+                or []
+            )
+        ]
+    if not older_adult_ids:
+        return
+    existing_links = (
+        client.table("family_member_older_adults")
+        .select("older_adult_id")
+        .eq("family_member_id", owner_id)
+        .execute()
+        .data
+        or []
+    )
+    existing_ids = {int(link["older_adult_id"]) for link in existing_links}
+    missing_links = [
+        {
+            "family_member_id": owner_id,
+            "older_adult_id": older_adult_id,
+            "relationship": "Organizer",
+        }
+        for older_adult_id in older_adult_ids
+        if int(older_adult_id) not in existing_ids
+    ]
+    if missing_links:
+        client.table("family_member_older_adults").insert(missing_links).execute()
 
 
 def _validate_older_adults_in_family(
@@ -120,7 +232,9 @@ def _replace_relationships(
     ]).execute()
 
 
-def _load_family_member(client: Client, family_member_id: int) -> dict[str, Any]:
+def _load_family_member(
+    client: Client, family_member_id: int, viewer_id: str | None = None
+) -> dict[str, Any]:
     rows = (
         client.table("family_members")
         .select(FAMILY_MEMBER_SELECT)
@@ -131,7 +245,7 @@ def _load_family_member(client: Client, family_member_id: int) -> dict[str, Any]
     )
     if not rows:
         raise HTTPException(status_code=404, detail="Family member not found.")
-    return _shape_family_member(rows[0])
+    return _shape_family_member(rows[0], viewer_id)
 
 
 @router.post(
@@ -400,7 +514,9 @@ def create_older_adult(
     values = payload.model_dump(exclude_none=True)
     values["created_by"] = user_id(user)
     try:
-        return client.table("older_adult_profiles").insert(values).execute().data[0]
+        created = client.table("older_adult_profiles").insert(values).execute().data[0]
+        _ensure_account_owner_member(client, payload.family_id, user, [int(created["id"])])
+        return created
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not create older-adult profile.") from error
 
@@ -476,6 +592,7 @@ def list_family_members(
 ) -> dict[str, Any]:
     older_adult = require_family_read_access(client, family_id, user)
     try:
+        _ensure_account_owner_member(client, family_id, user)
         result = (
             client.table("family_members")
             .select(FAMILY_MEMBER_SELECT)
@@ -490,7 +607,7 @@ def list_family_members(
                 links = row.get("family_member_older_adults") or []
                 if not any(int(link["older_adult_id"]) == int(older_adult["id"]) for link in links):
                     continue
-                shaped = _shape_family_member(row)
+                shaped = _shape_family_member(row, user_id(user))
                 shaped["relationships"] = [
                     link for link in shaped["relationships"]
                     if int(link["older_adult_id"]) == int(older_adult["id"])
@@ -498,7 +615,7 @@ def list_family_members(
                 shaped["email"] = None
                 visible.append(shaped)
             return {"family_members": visible}
-        return {"family_members": [_shape_family_member(row) for row in rows]}
+        return {"family_members": [_shape_family_member(row, user_id(user)) for row in rows]}
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not load family members.") from error
 
@@ -549,7 +666,7 @@ def create_family_member(
         _replace_relationships(client, created["id"], payload.relationships)
         # No invitation is sent here. A family member only ever hears from
         # PeiPal when there is an actual request to answer.
-        return _load_family_member(client, created["id"])
+        return _load_family_member(client, created["id"], user_id(user))
     except HTTPException:
         raise
     except Exception as error:
@@ -574,6 +691,20 @@ def update_family_member(
     family_id = family_id_for_family_member(client, family_member_id)
     require_family_manager(client, family_id, user)
     try:
+        owner = (
+            client.table("family_members")
+            .select("account_user_id")
+            .eq("id", family_member_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if owner and owner[0].get("account_user_id"):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The account owner is managed by their PeiPal account and cannot be edited here.",
+            )
         if payload.relationships is not None:
             _validate_older_adults_in_family(
                 client, family_id, [item.older_adult_id for item in payload.relationships]
@@ -600,7 +731,7 @@ def update_family_member(
             client.table("family_members").update(columns).eq("id", family_member_id).execute()
         if payload.relationships is not None:
             _replace_relationships(client, family_member_id, payload.relationships)
-        return _load_family_member(client, family_member_id)
+        return _load_family_member(client, family_member_id, user_id(user))
     except HTTPException:
         raise
     except Exception as error:
@@ -621,6 +752,20 @@ def delete_family_member(
     family_id = family_id_for_family_member(client, family_member_id)
     require_family_manager(client, family_id, user)
     try:
+        owner = (
+            client.table("family_members")
+            .select("account_user_id")
+            .eq("id", family_member_id)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if owner and owner[0].get("account_user_id"):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The account owner is part of this family and cannot be removed.",
+            )
         client.table("family_members").delete().eq("id", family_member_id).execute()
     except HTTPException:
         raise

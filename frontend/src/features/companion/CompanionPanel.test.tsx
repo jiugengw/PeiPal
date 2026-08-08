@@ -189,6 +189,28 @@ describe("CompanionPanel", () => {
     expect(screen.getByLabelText(/type a message/i)).toBeEnabled();
   });
 
+  it("minimizes without ending or forgetting the conversation", async () => {
+    const user = userEvent.setup();
+    const session = await openCompanion(user);
+    session.emit("history_updated", [
+      {
+        type: "message",
+        role: "user",
+        itemId: "remember-me",
+        content: [{ type: "input_text", text: "remember this" }],
+      },
+    ]);
+
+    expect(await screen.findByText(/remember this/i)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /minimize companion/i }));
+
+    expect(session.close).not.toHaveBeenCalled();
+    await user.click(
+      screen.getByRole("button", { name: /reopen conversation/i }),
+    );
+    expect(screen.getByText(/remember this/i)).toBeVisible();
+  });
+
   it("answers a typed message in text only, without changing the session default", async () => {
     const user = userEvent.setup();
     const session = await openCompanion(user);

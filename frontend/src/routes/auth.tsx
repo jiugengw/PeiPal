@@ -50,12 +50,12 @@ function AuthPage() {
   }, [navigate, router.history, search.redirect, session]);
 
   return (
-    <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="flex min-h-dvh w-full flex-col overflow-y-auto bg-background text-foreground">
       <main
-        className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[minmax(420px,1fr)_minmax(420px,1fr)]"
+        className="grid min-h-dvh flex-1 overflow-visible lg:grid-cols-[minmax(420px,1fr)_minmax(420px,1fr)]"
         id="auth-content"
       >
-        <section className="hidden min-w-0 items-center bg-[linear-gradient(105deg,var(--accent)_0%,var(--muted)_100%)] px-[clamp(40px,6vw,88px)] py-12 lg:flex">
+        <section className="hidden min-h-full min-w-0 items-center bg-[linear-gradient(105deg,var(--accent)_0%,var(--muted)_100%)] px-[clamp(40px,6vw,88px)] py-12 lg:flex">
           <div className="w-full max-w-[34rem]">
             <TextAnimate
               animation="blurIn"
@@ -79,7 +79,7 @@ function AuthPage() {
             </p>
           </div>
         </section>
-        <div className="grid min-h-0 place-items-center px-4 py-4 sm:px-8 lg:px-12">
+        <div className="flex min-h-full items-start justify-center px-4 py-8 sm:px-8 sm:py-10 lg:items-center lg:px-12 lg:py-12">
           <div className="w-full max-w-[420px]">
             <AuthForm />
           </div>

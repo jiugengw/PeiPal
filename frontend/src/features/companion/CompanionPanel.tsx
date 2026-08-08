@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Mic, MicOff, MessageSquare, Pause, Send, Square, X } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { useStagedIntentContext } from "@/hooks/useStagedIntent";
 import { ApprovalPanel } from "@/features/companion/ApprovalPanel";
 import { SpeechToggle } from "@/features/companion/SpeechToggle";
@@ -14,6 +15,7 @@ export function CompanionPanel() {
   useStagedIntentContext();
   const [isOpen, setIsOpen] = useState(false);
   const [typedMessage, setTypedMessage] = useState("");
+  const reduceMotion = useReducedMotion();
 
   function open() {
     setIsOpen(true);
@@ -32,6 +34,8 @@ export function CompanionPanel() {
   }
 
   const recipientNames: string[] = [];
+  const hasConversation = companion.transcript.length > 0 || companion.isConnected;
+  const shouldPulse = hasConversation && companion.isConnected && !reduceMotion;
 
   return (
     <aside
@@ -39,21 +43,33 @@ export function CompanionPanel() {
       aria-label="PeiPal companion"
     >
       {!isOpen ? (
-        <button
+        <motion.button
           className="ml-auto flex min-h-14 items-center gap-3 rounded-xl bg-primary px-5 font-bold text-primary-foreground shadow-[0_14px_34px_rgb(37_44_64_/_0.22)] hover:bg-foreground"
           onClick={open}
           type="button"
-          aria-label={
-            companion.transcript.length > 0 || companion.isConnected
-              ? "Reopen conversation (Ask or type)"
+          animate={
+            shouldPulse
+              ? {
+                  boxShadow: [
+                    "0 14px 34px rgb(37 44 64 / 0.22), 0 0 0 0 rgb(61 82 160 / 0.65)",
+                    "0 14px 34px rgb(37 44 64 / 0.22), 0 0 0 16px rgb(61 82 160 / 0)",
+                  ],
+                  scale: [1, 1.03],
+                }
               : undefined
+          }
+          transition={
+            shouldPulse
+              ? { duration: 1.4, repeat: Infinity, ease: "easeOut" }
+              : undefined
+          }
+          aria-label={
+            hasConversation ? "Reopen conversation (Ask or type)" : undefined
           }
         >
           <MessageSquare aria-hidden="true" size={22} />
-          {companion.transcript.length > 0 || companion.isConnected
-            ? "Reopen conversation"
-            : "Ask or type"}
-        </button>
+          {hasConversation ? "Reopen conversation" : "Ask or type"}
+        </motion.button>
       ) : (
         <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-background p-5 shadow-[0_22px_55px_rgb(37_44_64_/_0.22)]">
           <div className="flex items-start justify-between gap-4 border-b border-border pb-4">

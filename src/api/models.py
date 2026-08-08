@@ -298,7 +298,7 @@ class FamilyMemberResponse(BaseModel):
     id: int
     family_id: int
     name: str
-    email: EmailStr
+    email: EmailStr | None = None
     relationships: list[FamilyMemberRelationship]
     created_at: datetime
 

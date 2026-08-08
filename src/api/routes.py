@@ -9,13 +9,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
 from src.api.dependencies import (
+    ensure_older_adult_membership,
+    family_id_for_family_member,
     family_id_for_older_adult,
     get_supabase_client,
     require_family_account,
-    require_family_member_access,
+    require_family_manager,
+    require_family_read_access,
     require_family_owner,
     require_older_adult_access,
     require_plan_access,
+    require_plan_create_access,
+    require_plan_read_access,
     require_user,
     user_id,
 )
@@ -293,6 +298,7 @@ def get_viewer(
             linked = match
 
         profile = linked[0]
+        ensure_older_adult_membership(client, profile, user)
         return {
             "role": "older_adult",
             "family_id": profile["family_id"],
@@ -352,7 +358,7 @@ def get_family(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, family_id, user)
+    require_family_read_access(client, family_id, user)
     try:
         result = client.table("families").select("*").eq("id", family_id).limit(1).execute().data
         if not result:
@@ -371,7 +377,7 @@ def update_family(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, family_id, user)
+    require_family_manager(client, family_id, user)
     try:
         result = client.table("families").update(payload.model_dump()).eq("id", family_id).execute().data
         if not result:
@@ -389,7 +395,7 @@ def create_older_adult(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, payload.family_id, user)
+    require_family_manager(client, payload.family_id, user)
     values = payload.model_dump(exclude_none=True)
     values["created_by"] = user_id(user)
     try:
@@ -404,9 +410,12 @@ def list_older_adults(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, family_id, user)
+    older_adult = require_family_read_access(client, family_id, user)
     try:
-        result = client.table("older_adult_profiles").select("*").eq("family_id", family_id).execute()
+        query = client.table("older_adult_profiles").select("*").eq("family_id", family_id)
+        if older_adult:
+            query = query.eq("id", older_adult["id"])
+        result = query.execute()
         return {"older_adults": result.data or []}
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not load older-adult profiles.") from error
@@ -418,7 +427,8 @@ def get_older_adult(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_older_adult_access(client, older_adult_id, user)
+    family_id = family_id_for_older_adult(client, older_adult_id)
+    require_family_manager(client, family_id, user)
     try:
         result = client.table("older_adult_profiles").select("*").eq("id", older_adult_id).limit(1).execute().data
         if not result:
@@ -463,7 +473,7 @@ def list_family_members(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, family_id, user)
+    older_adult = require_family_read_access(client, family_id, user)
     try:
         result = (
             client.table("family_members")
@@ -472,7 +482,22 @@ def list_family_members(
             .order("created_at")
             .execute()
         )
-        return {"family_members": [_shape_family_member(row) for row in result.data or []]}
+        rows = result.data or []
+        if older_adult:
+            visible = []
+            for row in rows:
+                links = row.get("family_member_older_adults") or []
+                if not any(int(link["older_adult_id"]) == int(older_adult["id"]) for link in links):
+                    continue
+                shaped = _shape_family_member(row)
+                shaped["relationships"] = [
+                    link for link in shaped["relationships"]
+                    if int(link["older_adult_id"]) == int(older_adult["id"])
+                ]
+                shaped["email"] = None
+                visible.append(shaped)
+            return {"family_members": visible}
+        return {"family_members": [_shape_family_member(row) for row in rows]}
     except Exception as error:
         raise HTTPException(status_code=502, detail="Could not load family members.") from error
 
@@ -494,7 +519,7 @@ def create_family_member(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, payload.family_id, user)
+    require_family_manager(client, payload.family_id, user)
     _validate_older_adults_in_family(
         client, payload.family_id, [item.older_adult_id for item in payload.relationships]
     )
@@ -545,7 +570,8 @@ def update_family_member(
     values = payload.model_dump(exclude_unset=True, mode="json")
     if not values:
         raise HTTPException(status_code=422, detail="At least one field is required.")
-    family_id = require_family_member_access(client, family_member_id, user)
+    family_id = family_id_for_family_member(client, family_member_id)
+    require_family_manager(client, family_id, user)
     try:
         if payload.relationships is not None:
             _validate_older_adults_in_family(
@@ -591,7 +617,8 @@ def delete_family_member(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> None:
-    require_family_member_access(client, family_member_id, user)
+    family_id = family_id_for_family_member(client, family_member_id)
+    require_family_manager(client, family_id, user)
     try:
         client.table("family_members").delete().eq("id", family_member_id).execute()
     except HTTPException:
@@ -872,7 +899,7 @@ def create_plan(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, payload.family_id, user)
+    require_plan_create_access(client, payload.family_id, payload.older_adult_id, user)
     older_adult_family_id = family_id_for_older_adult(client, payload.older_adult_id)
     if older_adult_family_id != payload.family_id:
         raise HTTPException(
@@ -934,8 +961,10 @@ def list_plans(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_family_account(client, family_id, user)
+    older_adult = require_family_read_access(client, family_id, user)
     query = client.table("plans").select("*").eq("family_id", family_id).order("created_at", desc=True)
+    if older_adult:
+        query = query.eq("older_adult_id", older_adult["id"])
     if status_filter:
         query = query.eq("status", status_filter)
     try:
@@ -950,7 +979,7 @@ def get_plan(
     user: Any = Depends(require_user),
     client: Client = Depends(get_supabase_client),
 ) -> dict[str, Any]:
-    require_plan_access(client, plan_id, user)
+    require_plan_read_access(client, plan_id, user)
     try:
         result = client.table("plans").select("*").eq("id", plan_id).limit(1).execute().data
         if not result:

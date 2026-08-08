@@ -681,7 +681,7 @@ function FamilyMembersStep({
   }
   function edit(member: FamilyMember) {
     setEditing(member);
-    setDraft({ name: member.name, email: member.email });
+    setDraft({ name: member.name, email: member.email ?? "" });
     setRelationships(
       Object.fromEntries(
         member.relationships.map((link) => [

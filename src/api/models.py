@@ -75,7 +75,7 @@ class FamilyMemberCreate(BaseModel):
 
     family_id: int
     name: str = Field(min_length=1, max_length=120)
-    email: EmailStr
+    email: EmailStr | None = None
     relationships: list[FamilyMemberRelationship] = Field(min_length=1, max_length=20)
 
 

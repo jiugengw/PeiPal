@@ -113,8 +113,20 @@ describe("CoordinationPage", () => {
     await user.click(screen.getByRole("button", { name: /i have done this/i }));
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(2));
-    expect(post.mock.calls[0][1]?.body).toMatchObject({ action: "claim", expected_version: 1 });
-    expect(post.mock.calls[1][1]?.body).toMatchObject({ action: "complete", expected_version: 2 });
+    expect(post).toHaveBeenNthCalledWith(
+      1,
+      "/api/coordination/{token}/tasks/{task_type}",
+      expect.objectContaining({
+        body: expect.objectContaining({ action: "claim", expected_version: 1 }),
+      }),
+    );
+    expect(post).toHaveBeenNthCalledWith(
+      2,
+      "/api/coordination/{token}/tasks/{task_type}",
+      expect.objectContaining({
+        body: expect.objectContaining({ action: "complete", expected_version: 2 }),
+      }),
+    );
     expect(await screen.findByText(/anna has done this/i)).toBeVisible();
   });
 

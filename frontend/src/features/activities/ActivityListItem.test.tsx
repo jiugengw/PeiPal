@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ActivityListItem } from "@/features/activities/ActivityListItem";
 import type { Activity } from "@/features/activities/types";
@@ -79,6 +79,25 @@ describe("ActivityListItem", () => {
 
     expect(screen.getAllByText("Selected")).toHaveLength(2);
     expect(screen.getByRole("button", { name: /^selected$/i })).toBeDisabled();
+  });
+
+  it("renders selected content inside the selected activity row", () => {
+    render(
+      <ActivityListItem
+        activity={activity()}
+        isSelected
+        onSelect={vi.fn()}
+        selectedContent={<p>Planning controls</p>}
+      />,
+    );
+
+    const row = screen.getByText("Planning controls").closest("li");
+    expect(row).not.toBeNull();
+    expect(
+      within(row as HTMLElement).queryByRole("button", {
+        name: /tell me more/i,
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the info link safely in a new tab", async () => {

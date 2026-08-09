@@ -1,4 +1,5 @@
 import type { UseQueryResult } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import type { components } from "@/generated/api";
 import type { Activity } from "@/features/activities/types";
 import { ActivityListItem } from "@/features/activities/ActivityListItem";
@@ -14,6 +15,7 @@ interface ActivityResultsListProps {
   activities: Activity[];
   locationFilter: string;
   selectedDedupeKey: string | null;
+  selectedContent?: ReactNode;
   onSelect: (activity: Activity) => void;
   onClearLocation: () => void;
 }
@@ -23,6 +25,7 @@ export function ActivityResultsList({
   activities,
   locationFilter,
   selectedDedupeKey,
+  selectedContent,
   onSelect,
   onClearLocation,
 }: ActivityResultsListProps) {
@@ -88,6 +91,11 @@ export function ActivityResultsList({
           isSelected={activity.dedupeKey === selectedDedupeKey}
           key={activity.dedupeKey}
           onSelect={onSelect}
+          selectedContent={
+            activity.dedupeKey === selectedDedupeKey
+              ? selectedContent
+              : undefined
+          }
         />
       ))}
     </ul>

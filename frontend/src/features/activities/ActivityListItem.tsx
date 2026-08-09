@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Activity } from "@/features/activities/types";
 import {
   formatActivityCost,
@@ -13,12 +13,14 @@ interface ActivityListItemProps {
   activity: Activity;
   isSelected: boolean;
   onSelect: (activity: Activity) => void;
+  selectedContent?: ReactNode;
 }
 
 export function ActivityListItem({
   activity,
   isSelected,
   onSelect,
+  selectedContent,
 }: ActivityListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -55,7 +57,7 @@ export function ActivityListItem({
             </ul>
           ) : null}
 
-          {isExpanded ? (
+          {isExpanded && !isSelected ? (
             <div className="mt-4 max-w-[65ch] text-base leading-relaxed text-foreground">
               <p>
                 {activity.description ||
@@ -78,14 +80,16 @@ export function ActivityListItem({
         </div>
 
         <div className="flex flex-none flex-wrap gap-3">
-          <button
-            aria-expanded={isExpanded}
-            className={compactButtonClass}
-            onClick={() => setIsExpanded((value) => !value)}
-            type="button"
-          >
-            {isExpanded ? "Show less" : "Tell me more"}
-          </button>
+          {!isSelected ? (
+            <button
+              aria-expanded={isExpanded}
+              className={compactButtonClass}
+              onClick={() => setIsExpanded((value) => !value)}
+              type="button"
+            >
+              {isExpanded ? "Show less" : "Tell me more"}
+            </button>
+          ) : null}
           <button
             className={compactPrimaryButtonClass}
             disabled={isSelected}
@@ -96,6 +100,7 @@ export function ActivityListItem({
           </button>
         </div>
       </div>
+      {isSelected && selectedContent ? selectedContent : null}
     </li>
   );
 }

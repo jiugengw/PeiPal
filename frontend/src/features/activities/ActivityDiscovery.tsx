@@ -30,7 +30,7 @@ export function ActivityDiscovery() {
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-      <div className="mx-auto w-full max-w-[1180px]">
+      <div className="mx-auto w-full max-w-[1100px]">
         <header className="mb-6">
           <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
             {greetingName
@@ -42,38 +42,6 @@ export function ActivityDiscovery() {
             down. Choose one to see the full details.
           </p>
         </header>
-
-        <div className="mb-8">
-          {isReviewingPlan &&
-          selectedActivity &&
-          viewer.familyId &&
-          viewer.olderAdultId ? (
-            <PlanConfirmationPanel
-              activity={selectedActivity}
-              family={{ id: viewer.familyId }}
-              olderAdult={{
-                id: viewer.olderAdultId,
-                name: viewer.displayName ?? "",
-                preferred_name: viewer.displayName ?? null,
-              }}
-              onBack={() => setIsReviewingPlan(false)}
-              onUnavailable={markSelectionUnavailable}
-            />
-          ) : selectedActivity ? (
-            <SelectedActivityPanel
-              activity={selectedActivity}
-              canMakePlan={canMakePlan}
-              onClear={clearSelection}
-              onMakePlan={() => setIsReviewingPlan(true)}
-            />
-          ) : null}
-
-          {!selectedActivity ? (
-            <p className="rounded-xl border border-border bg-background px-5 py-4 text-base text-foreground">
-              Choose an activity below to see its details here.
-            </p>
-          ) : null}
-        </div>
 
         <LocationSearchForm
           key={location}
@@ -98,6 +66,31 @@ export function ActivityDiscovery() {
             onSelect={selectActivity}
             query={activitiesQuery}
             selectedDedupeKey={selectedActivity?.dedupeKey ?? null}
+            selectedContent={
+              selectedActivity ? (
+                isReviewingPlan && viewer.familyId && viewer.olderAdultId ? (
+                  <PlanConfirmationPanel
+                    activity={selectedActivity}
+                    family={{ id: viewer.familyId }}
+                    olderAdult={{
+                      id: viewer.olderAdultId,
+                      name: viewer.displayName ?? "",
+                      preferred_name: viewer.displayName ?? null,
+                    }}
+                    onBack={() => setIsReviewingPlan(false)}
+                    onUnavailable={markSelectionUnavailable}
+                    variant="inline"
+                  />
+                ) : (
+                  <SelectedActivityPanel
+                    activity={selectedActivity}
+                    canMakePlan={canMakePlan}
+                    onClear={clearSelection}
+                    onMakePlan={() => setIsReviewingPlan(true)}
+                  />
+                )
+              ) : undefined
+            }
           />
         </div>
       </div>

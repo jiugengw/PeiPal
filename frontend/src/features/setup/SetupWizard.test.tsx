@@ -435,7 +435,7 @@ describe("SetupWizard", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it("sends the organizer to their trusted circle from the completion screen", async () => {
+  it("sends the organizer to their family from the completion screen", async () => {
     const user = userEvent.setup();
     mockedProgress.mockReturnValue(
       progress({
@@ -450,7 +450,7 @@ describe("SetupWizard", () => {
 
     await user.click(screen.getByRole("button", { name: /finish setup/i }));
     await user.click(
-      await screen.findByRole("button", { name: /go to your trusted circle/i }),
+      await screen.findByRole("button", { name: /go to your family/i }),
     );
 
     expect(navigate).toHaveBeenCalledWith({ to: "/family" });

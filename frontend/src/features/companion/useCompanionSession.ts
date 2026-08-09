@@ -10,6 +10,7 @@ import {
   createVoiceSession,
   VoiceSessionError,
 } from "@/features/companion/api/voiceApi";
+import { stayOnTopicGuardrail } from "@/features/companion/guardrails";
 import { agentInstructions } from "@/features/companion/instructions";
 import { createCompanionTools } from "@/features/companion/tools";
 import {
@@ -135,12 +136,18 @@ export function useCompanionSession() {
         model: MODEL,
         transport: nextMode === "voice" ? "webrtc" : "websocket",
         toolExecution: { preApprovalInputGuardrails: true },
+        outputGuardrails: [stayOnTopicGuardrail],
         workflowName: "PeiPal browser companion",
         config:
           nextMode === "voice"
             ? {
                 outputModalities:
                   speechModeRef.current === "never" ? ["text"] : ["audio"],
+                // The realtime model understands raw audio directly and
+                // does not need this; it is only for what the transcript
+                // shows on screen, so use the more accurate transcription
+                // model rather than the SDK's mini default.
+                audio: { input: { transcription: { model: "gpt-4o-transcribe" } } },
               }
             : // Text mode has no microphone, so nothing should listen for turns.
               {

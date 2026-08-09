@@ -2,27 +2,6 @@
 
 This document contains local setup, backend, frontend, API, migration, testing, activity-ingestion, and troubleshooting instructions. The product overview for judges and collaborators is in [README.md](README.md).
 
-## Terminal voice demo
-
-The voice prototype runs locally from the terminal. It uses the computer's default microphone and speakers and does not save transcripts.
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env and add the required keys.
-python -m src.demo.voice_cli
-```
-
-To use the same agent and tools as typed chat:
-
-```bash
-python -m src.demo.chat_cli
-```
-
-Type `/exit` to stop chat mode. On macOS, grant the terminal microphone permission when prompted. Press `Ctrl+C` to stop the voice demo.
-
 ## Environment files
 
 Keep server secrets in the root `.env`:

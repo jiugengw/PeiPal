@@ -46,7 +46,6 @@ The current prototype is a family-assisted setup flow followed by a voice- or ch
 
 - Existing family-assisted setup prototype: `index.html`, `styles.css`, and `script.js`.
 - Product concept, workflows, MVP scope, and demo scenario: `plan.md`.
-- Local voice and typed-chat demos: `src/demo/voice_cli.py` and `src/demo/chat_cli.py`.
 - No production customer evidence, testimonials, or live integrations are available; future work must not fabricate them.
 
 ## Product Principles

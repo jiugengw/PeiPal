@@ -44,7 +44,7 @@ export function FamilyPeople() {
       <div className="mx-auto w-full max-w-[900px]">
         <header className="border-b border-border pb-8">
           <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
-            {isOrganizer ? "Your trusted circle." : "Your support circle."}
+            Your family
           </h1>
           <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">
             {isOrganizer

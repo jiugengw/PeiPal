@@ -408,7 +408,7 @@ function familyPlanCard() {
         <span class="avatar medium" aria-hidden="true">ML</span>
       </div>
       <p>Mary is interested in this for ${escapeHtml(activity.timing.toLowerCase())}.</p>
-      <p class="plan-status-copy">${pending ? "Approve sharing it with the trusted circle, or choose another option together." : "The trusted circle can now offer practical support."}</p>
+      <p class="plan-status-copy">${pending ? "Approve sharing it with the family, or choose another option together." : "The trusted circle can now offer practical support."}</p>
       <div class="plan-actions">
         ${pending ? `<button class="primary" type="button" data-action="approve-plan">Approve and share</button>` : `<span class="status-pill status-shared">Approved and shared</span>`}
         <button class="secondary" type="button" data-action="change-activity">Review activity</button>
@@ -511,7 +511,7 @@ function renderFamilyHome() {
         </dl>
       </article>
       <article class="detail-panel">
-        <p class="section-label">Trusted circle</p>
+        <p class="section-label">Family</p>
         <h3>People who can help</h3>
         <ul class="trusted-list">
           ${visibleContacts.map((contact) => `<li><span class="mini-avatar">${escapeHtml(contact.name.slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(contact.name)}</strong><small>${escapeHtml(contact.role)}</small></span></li>`).join("")}

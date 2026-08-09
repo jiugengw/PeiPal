@@ -43,7 +43,7 @@ describe("Navbar", () => {
     render(<Navbar />);
 
     expect(screen.getByRole("link", { name: "Setup" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Trusted circle" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Family" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Connect an app" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Explore" })).not.toBeInTheDocument();
   });

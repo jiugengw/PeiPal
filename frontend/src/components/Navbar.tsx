@@ -12,7 +12,7 @@ import { useViewer } from "@/hooks/useViewer";
 // until then, regardless of what the URL happens to be.
 const organizerPageTitles: { path: string; label: string }[] = [
   { path: "/setup", label: "Setup" },
-  { path: "/family", label: "Trusted circle" },
+  { path: "/family", label: "Family" },
   { path: "/connect-apps", label: "Connect an app" },
 ];
 
@@ -27,7 +27,7 @@ function organizerPageTitle(pathname: string, isSetupComplete: boolean): string 
 const olderAdultNavigation = [
   { to: "/discover", label: "Explore" },
   { to: "/plans", label: "Plans" },
-  { to: "/family", label: "My support circle" },
+  { to: "/family", label: "My family" },
 ] as const;
 
 const navLinkClass =

@@ -38,6 +38,7 @@ class ClientRegistration(BaseModel):
 
 @router.get("/.well-known/oauth-authorization-server")
 @router.get("/mcp/.well-known/oauth-authorization-server")
+@router.get("/.well-known/oauth-authorization-server/api/mcp")
 def oauth_metadata(request: Request) -> dict[str, Any]:
     base = str(request.base_url).rstrip("/")
     return {
@@ -55,10 +56,17 @@ def oauth_metadata(request: Request) -> dict[str, Any]:
 
 @router.get("/.well-known/oauth-protected-resource")
 @router.get("/mcp/.well-known/oauth-protected-resource")
+@router.get("/.well-known/oauth-protected-resource/api/mcp")
 def protected_resource_metadata(request: Request) -> dict[str, Any]:
     base = str(request.base_url).rstrip("/")
+    # On Vercel the function's own root_path already ends in "/mcp" (see
+    # api/mcp.py), so base_url already points at the transport itself. Locally
+    # the transport is mounted at a literal "/mcp" below an unprefixed root,
+    # so it still needs to be appended.
+    root_path = request.scope.get("root_path", "")
+    resource = base if root_path.endswith("/mcp") else f"{base}/mcp"
     return {
-        "resource": f"{base}/mcp",
+        "resource": resource,
         "authorization_servers": [base],
         "scopes_supported": DEFAULT_SCOPE.split(),
     }

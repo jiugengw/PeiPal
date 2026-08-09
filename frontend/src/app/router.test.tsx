@@ -173,6 +173,25 @@ describe("application routes", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("sends WorkBuddy authorization to guardian sign in and preserves the OAuth request", async () => {
+    const oauthRequest =
+      "/oauth/authorize?client_id=peipal_test&redirect_uri=http%3A%2F%2F127.0.0.1%3A49155%2Foauth%2Fcallback&response_type=code&code_challenge=test-challenge&state=test-state";
+    const { router } = renderRoute(oauthRequest);
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/auth/creator"),
+    );
+    expect(
+      router.state.location.search.redirect.startsWith(oauthRequest),
+    ).toBe(true);
+    expect(router.state.location.search.redirect).toContain(
+      "scope=activities%3Aread+plans%3Aread+plans%3Awrite",
+    );
+    expect(
+      await screen.findByRole("heading", { name: /welcome back/i }),
+    ).toBeVisible();
+  });
+
   it("lets creator users return to email-code authentication", async () => {
     const user = userEvent.setup();
     const { router } = renderRoute("/auth/creator?redirect=%2Ffamily");

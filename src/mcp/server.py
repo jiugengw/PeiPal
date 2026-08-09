@@ -68,7 +68,8 @@ class _McpNoSlash:
         if scope.get("method") in {"GET", "POST", "DELETE"} and b"authorization" not in headers:
             host = headers.get(b"host", b"127.0.0.1:8001").decode("latin-1")
             scheme = headers.get(b"x-forwarded-proto", b"http").decode("latin-1")
-            metadata = f"{scheme}://{host}/.well-known/oauth-protected-resource"
+            root_path = scope.get("root_path", "").rstrip("/")
+            metadata = f"{scheme}://{host}{root_path}/.well-known/oauth-protected-resource"
             await send({
                 "type": "http.response.start",
                 "status": 401,

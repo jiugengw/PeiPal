@@ -26,12 +26,14 @@ const TASK_DESCRIPTIONS: Record<CoordinationTask["task_type"], string> = {
 export function TaskCard({
   task,
   respondingAs,
+  isApproved,
   isBusy,
   isSettled,
   onAct,
 }: {
   task: CoordinationTask;
   respondingAs?: string | null;
+  isApproved: boolean;
   isBusy: boolean;
   isSettled: boolean;
   onAct: (action: CoordinationAction, reason?: string) => void;
@@ -116,6 +118,11 @@ export function TaskCard({
             </button>
           </div>
         )
+      ) : !isApproved ? (
+        <p className="mt-4 text-base font-bold text-foreground">
+          Waiting for the family to approve this activity before anyone can
+          take this on.
+        </p>
       ) : (
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {mine ? (

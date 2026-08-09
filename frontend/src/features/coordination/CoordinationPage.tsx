@@ -67,6 +67,11 @@ export function CoordinationPage({ token }: { token: string }) {
   const settled = SETTLED.includes(state.plan_status);
   const conflict =
     act.error instanceof CoordinationError && act.error.status === 409;
+  // Registration and transport are only meaningful once the family has said
+  // yes - claiming a role for an activity nobody has approved yet would let
+  // someone act ahead of that decision.
+  const approvalTask = state.tasks.find((task) => task.task_type === "approval");
+  const isApproved = approvalTask?.status === "approved";
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:py-12">
@@ -126,6 +131,7 @@ export function CoordinationPage({ token }: { token: string }) {
               key={task.task_type}
               task={task}
               respondingAs={state.responding_as}
+              isApproved={isApproved}
               isBusy={act.isPending}
               isSettled={settled}
               onAct={(action, reason) =>

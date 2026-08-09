@@ -3,10 +3,15 @@ import { LocationSearchForm } from "@/features/activities/LocationSearchForm";
 import { ActivityResultsList } from "@/features/activities/ActivityResultsList";
 import { SelectedActivityPanel } from "@/features/activities/SelectedActivityPanel";
 import { PlanConfirmationPanel } from "@/features/plans/PlanConfirmationPanel";
-import { useSetupProgress } from "@/features/setup/useSetupProgress";
+import { useViewer } from "@/hooks/useViewer";
 
 export function ActivityDiscovery() {
-  const { family, olderAdult } = useSetupProgress();
+  // This page is reachable by older-adult accounts only (see roleAccess.ts) -
+  // useSetupProgress is the organizer's own view of a family it owns, which
+  // is always empty for the older adult signed in here. useViewer resolves
+  // whoever is actually signed in, regardless of role.
+  const viewer = useViewer();
+  const canMakePlan = Boolean(viewer.familyId && viewer.olderAdultId);
   const {
     location,
     activities,
@@ -21,7 +26,7 @@ export function ActivityDiscovery() {
     markSelectionUnavailable,
   } = useActivityWorkflow();
 
-  const greetingName = olderAdult?.preferred_name || olderAdult?.name;
+  const greetingName = viewer.displayName;
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -67,18 +72,25 @@ export function ActivityDiscovery() {
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
-          {isReviewingPlan && selectedActivity && family && olderAdult ? (
+          {isReviewingPlan &&
+          selectedActivity &&
+          viewer.familyId &&
+          viewer.olderAdultId ? (
             <PlanConfirmationPanel
               activity={selectedActivity}
-              family={family}
-              olderAdult={olderAdult}
+              family={{ id: viewer.familyId }}
+              olderAdult={{
+                id: viewer.olderAdultId,
+                name: viewer.displayName ?? "",
+                preferred_name: viewer.displayName ?? null,
+              }}
               onBack={() => setIsReviewingPlan(false)}
               onUnavailable={markSelectionUnavailable}
             />
           ) : (
             <SelectedActivityPanel
               activity={selectedActivity}
-              canMakePlan={Boolean(family && olderAdult)}
+              canMakePlan={canMakePlan}
               onClear={clearSelection}
               onMakePlan={() => setIsReviewingPlan(true)}
             />

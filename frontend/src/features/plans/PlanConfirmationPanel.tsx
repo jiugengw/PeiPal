@@ -16,8 +16,11 @@ import { useStagedCommit, useStagedIntent } from "@/hooks/useStagedIntent";
 
 interface PlanConfirmationPanelProps {
   activity: Activity;
-  family: components["schemas"]["FamilyResponse"];
-  olderAdult: components["schemas"]["OlderAdultResponse"];
+  family: Pick<components["schemas"]["FamilyResponse"], "id">;
+  olderAdult: Pick<
+    components["schemas"]["OlderAdultResponse"],
+    "id" | "name" | "preferred_name"
+  >;
   onBack: () => void;
   onUnavailable: () => void;
 }

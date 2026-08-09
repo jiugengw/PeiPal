@@ -54,14 +54,16 @@ export function SetupWizard({ familyId = null }: { familyId?: number | null } = 
     );
   }
 
-  return <SetupWizardForm progress={progress} />;
+  return <SetupWizardForm familyId={familyId} />;
 }
 
-function SetupWizardForm({
-  progress,
-}: {
-  progress: ReturnType<typeof useSetupProgress>;
-}) {
+function SetupWizardForm({ familyId }: { familyId: number | null }) {
+  // Starts wherever the caller pointed (an existing family, or null to start
+  // fresh), then follows the family this wizard actually creates - otherwise
+  // progress would stay pinned to "no family yet" for the rest of the wizard,
+  // and every step past family creation would find nothing to show.
+  const [activeFamilyId, setActiveFamilyId] = useState(familyId);
+  const progress = useSetupProgress(activeFamilyId);
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(
     progress.olderAdult ? 2 : progress.family ? 1 : 0,
@@ -155,6 +157,7 @@ function SetupWizardForm({
       });
       if (saved) {
         setProfile((value) => ({ ...value, family_id: saved.id }));
+        setActiveFamilyId(saved.id);
       }
       setCurrentStep(1);
     } catch (error) {
@@ -178,6 +181,10 @@ function SetupWizardForm({
       if (saved) {
         await queryClient.invalidateQueries({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
+        });
+        // Saving the older adult also creates the organizer's own "Organizer" relationship.
+        await queryClient.invalidateQueries({
+          queryKey: familyMembersQueryOptions(saved.family_id).queryKey,
         });
       }
       setCurrentStep(2);

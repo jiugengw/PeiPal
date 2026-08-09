@@ -1,4 +1,5 @@
 .env
+.env.production
 contacts.json
 .venv/
 __pycache__/

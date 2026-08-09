@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from types import SimpleNamespace
 from typing import Any
@@ -11,6 +12,8 @@ from supabase import Client, create_client
 
 from src.api.config import supabase_service_key, supabase_url
 from src.services.oauth import resolve_access_token
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -40,12 +43,14 @@ def require_user(
         response = client.auth.get_user(token)
         user = response.user
     except Exception as error:  # Provider-specific SDK errors vary by version.
+        logger.warning("Supabase get_user rejected bearer token: %s", error)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The Supabase session is invalid or expired.",
         ) from error
 
     if user is None:
+        logger.warning("Supabase get_user returned no user for the given bearer token.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The Supabase session is invalid or expired.",

@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { useActivityWorkflow } from "@/features/activities/activityWorkflowContext";
 import { LocationSearchForm } from "@/features/activities/LocationSearchForm";
 import { ActivityResultsList } from "@/features/activities/ActivityResultsList";
@@ -28,19 +27,6 @@ export function ActivityDiscovery() {
   } = useActivityWorkflow();
 
   const greetingName = viewer.displayName;
-  const reviewPanelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isReviewingPlan) return;
-
-    const reducedMotion = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    reviewPanelRef.current?.scrollIntoView?.({
-      behavior: reducedMotion ? "auto" : "smooth",
-      block: "start",
-    });
-  }, [isReviewingPlan]);
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -56,25 +42,6 @@ export function ActivityDiscovery() {
             down. Choose one to see the full details.
           </p>
         </header>
-
-        {isReviewingPlan &&
-        selectedActivity &&
-        viewer.familyId &&
-        viewer.olderAdultId ? (
-          <div className="mb-8 scroll-mt-6" ref={reviewPanelRef}>
-            <PlanConfirmationPanel
-              activity={selectedActivity}
-              family={{ id: viewer.familyId }}
-              olderAdult={{
-                id: viewer.olderAdultId,
-                name: viewer.displayName ?? "",
-                preferred_name: viewer.displayName ?? null,
-              }}
-              onBack={() => setIsReviewingPlan(false)}
-              onUnavailable={markSelectionUnavailable}
-            />
-          </div>
-        ) : null}
 
         <LocationSearchForm
           key={location}
@@ -100,13 +67,28 @@ export function ActivityDiscovery() {
             query={activitiesQuery}
             selectedDedupeKey={selectedActivity?.dedupeKey ?? null}
             selectedContent={
-              selectedActivity && !isReviewingPlan ? (
-                <SelectedActivityPanel
-                  activity={selectedActivity}
-                  canMakePlan={canMakePlan}
-                  onClear={clearSelection}
-                  onMakePlan={() => setIsReviewingPlan(true)}
-                />
+              selectedActivity ? (
+                isReviewingPlan && viewer.familyId && viewer.olderAdultId ? (
+                  <PlanConfirmationPanel
+                    activity={selectedActivity}
+                    family={{ id: viewer.familyId }}
+                    olderAdult={{
+                      id: viewer.olderAdultId,
+                      name: viewer.displayName ?? "",
+                      preferred_name: viewer.displayName ?? null,
+                    }}
+                    onBack={() => setIsReviewingPlan(false)}
+                    onUnavailable={markSelectionUnavailable}
+                    variant="inline"
+                  />
+                ) : (
+                  <SelectedActivityPanel
+                    activity={selectedActivity}
+                    canMakePlan={canMakePlan}
+                    onClear={clearSelection}
+                    onMakePlan={() => setIsReviewingPlan(true)}
+                  />
+                )
               ) : undefined
             }
           />

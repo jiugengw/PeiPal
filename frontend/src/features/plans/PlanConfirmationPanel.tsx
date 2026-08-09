@@ -23,6 +23,7 @@ interface PlanConfirmationPanelProps {
   >;
   onBack: () => void;
   onUnavailable: () => void;
+  variant?: "standalone" | "inline";
 }
 
 export function PlanConfirmationPanel({
@@ -31,6 +32,7 @@ export function PlanConfirmationPanel({
   olderAdult,
   onBack,
   onUnavailable,
+  variant = "standalone",
 }: PlanConfirmationPanelProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -65,7 +67,13 @@ export function PlanConfirmationPanel({
     "Everyone in your family will be emailed and asked. The first person to answer decides, so nobody is put on the spot.";
 
   return (
-    <div className="rounded-2xl bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
+    <div
+      className={
+        variant === "inline"
+          ? "mt-5 rounded-[16px] bg-muted p-5 sm:p-6"
+          : "rounded-[16px] bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]"
+      }
+    >
       <h2 className="text-2xl font-bold text-foreground">Review this plan</h2>
       <p className="mt-2 text-base leading-relaxed text-foreground">
         Check the details. When you confirm, your family will be asked.
@@ -78,7 +86,9 @@ export function PlanConfirmationPanel({
         <PlanDetail label="Where" value={activity.venue} />
       </dl>
 
-      <div className="mt-5 rounded-xl bg-muted p-4">
+      <div
+        className={`mt-5 rounded-xl p-4 ${variant === "inline" ? "bg-background" : "bg-muted"}`}
+      >
         <h3 className="font-bold text-foreground">What happens next</h3>
         <p className="mt-1 text-base leading-relaxed text-foreground">
           {sharingDescription}
@@ -90,7 +100,7 @@ export function PlanConfirmationPanel({
           <p className="font-bold text-foreground">{error.message}</p>
           {unavailable ? (
             <button
-              className={`${secondaryButtonClass} mt-3 w-full`}
+              className={`${secondaryButtonClass} mt-3 w-full sm:w-auto`}
               onClick={onUnavailable}
               type="button"
             >

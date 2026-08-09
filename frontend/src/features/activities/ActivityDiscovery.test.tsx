@@ -245,13 +245,8 @@ describe("ActivityDiscovery", () => {
     });
   });
 
-  it("moves plan review above search, scrolls to it, and restores inline details on back", async () => {
+  it("replaces inline planning controls with review and restores them on back", async () => {
     const user = userEvent.setup();
-    const scrollIntoView = vi.fn();
-    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
-      configurable: true,
-      value: scrollIntoView,
-    });
     vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
       data: { activities: [activityResponse()] },
       response: new Response(null, { status: 200 }),
@@ -266,17 +261,15 @@ describe("ActivityDiscovery", () => {
     const reviewHeading = screen.getByRole("heading", {
       name: /review this plan/i,
     });
-    const searchForm = screen
-      .getByLabelText(/search by neighborhood or venue/i)
-      .closest("form");
+    const selectedRow = screen
+      .getByRole("button", { name: /^selected$/i })
+      .closest("li");
+    expect(selectedRow).not.toBeNull();
     expect(
-      reviewHeading.compareDocumentPosition(searchForm as HTMLElement) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(scrollIntoView).toHaveBeenCalledWith({
-      behavior: "smooth",
-      block: "start",
-    });
+      within(selectedRow as HTMLElement).getByRole("heading", {
+        name: /review this plan/i,
+      }),
+    ).toBe(reviewHeading);
     expect(
       screen.queryByRole("button", { name: /choose a different activity/i }),
     ).not.toBeInTheDocument();

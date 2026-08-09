@@ -13,7 +13,7 @@ from src.api.models import (
     FamilyMemberRelationship,
     OlderAdultCreate,
 )
-from src.api.routes import create_family_member
+from src.api.routes import _ensure_account_owner_member, create_family_member
 from src.services.family_email import digest, generate_token
 
 
@@ -236,3 +236,30 @@ def test_a_family_needs_only_a_name():
 
     assert payload.name == "Lim Family"
     assert not hasattr(payload, "owner_email")
+
+
+def test_account_creator_is_provisioned_as_a_trusted_contact():
+    owner = SimpleNamespace(
+        id="user-1",
+        email="owner@example.com",
+        user_metadata={"full_name": "Owner Lim"},
+    )
+    client = FakeClient({
+        "families": [[{"id": 1, "created_by": "user-1"}]],
+        "family_members": [[], [], [{"id": 8}]],
+        "family_member_older_adults": [[]],
+    })
+
+    _ensure_account_owner_member(client, 1, owner, [2])
+
+    assert written(client, "family_members", "insert") == [{
+        "family_id": 1,
+        "name": "Owner Lim",
+        "email": "owner@example.com",
+        "account_user_id": "user-1",
+    }]
+    assert written(client, "family_member_older_adults", "insert") == [[{
+        "family_member_id": 8,
+        "older_adult_id": 2,
+        "relationship": "Organizer",
+    }]]

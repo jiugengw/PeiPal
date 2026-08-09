@@ -1,5 +1,7 @@
 """Configuration for the local PeiPal Realtime companion."""
 
+from agents import GuardrailFunctionOutput, RunContextWrapper
+from agents.guardrail import output_guardrail
 from agents.realtime import RealtimeAgent, RealtimeRunner
 
 from src.agents.email_tools import EMAIL_TOOLS
@@ -40,7 +42,54 @@ unless its tool reports success.
 Do not ask for passwords, payment details, or other sensitive information. If a
 user describes an urgent medical or safety emergency, encourage them to contact
 local emergency services or a trusted person immediately.
+
+You only discuss finding activities, the user's mobility or companionship
+needs, and sending the invitation email. If asked about anything else (news,
+politics, other products, general trivia, coding, etc.), gently decline and
+steer back, for example: "I'm just here to help you find something fun to do
+- would you like to look at activities?"
 """.strip()
+
+
+# Off-topic categories PeiPal should never linger on. This is a stable,
+# swappable placeholder for a real classifier - keep the keywords broad
+# rather than trying to enumerate every possible off-topic phrase.
+OFF_TOPIC_KEYWORDS = (
+    "stock market",
+    "share price",
+    "cryptocurrency",
+    "bitcoin",
+    "election",
+    "politic",
+    "football score",
+    "write me code",
+    "programming language",
+    "homework",
+    "math problem",
+    "recipe for",
+)
+
+
+def _mentions_off_topic_keyword(text: str) -> bool:
+    lowered = text.lower()
+    return any(keyword in lowered for keyword in OFF_TOPIC_KEYWORDS)
+
+
+@output_guardrail
+async def stay_on_topic_guardrail(
+    context: RunContextWrapper, agent: RealtimeAgent, agent_output: str
+) -> GuardrailFunctionOutput:
+    """Interrupt responses that drift into topics unrelated to PeiPal's job.
+
+    Backstops the prompt instruction: even if the model is talked into
+    replying about an unrelated topic, this cuts the response instead of
+    letting it continue.
+    """
+
+    return GuardrailFunctionOutput(
+        output_info={"text": agent_output},
+        tripwire_triggered=_mentions_off_topic_keyword(agent_output),
+    )
 
 
 def build_companion_agent() -> RealtimeAgent:
@@ -50,6 +99,7 @@ def build_companion_agent() -> RealtimeAgent:
         name="PeiPal Companion",
         instructions=VOICE_INSTRUCTIONS,
         tools=[recommend_activities_tool, *EMAIL_TOOLS],
+        output_guardrails=[stay_on_topic_guardrail],
     )
 
 

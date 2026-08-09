@@ -1,3 +1,7 @@
+import asyncio
+
+from agents import RunContextWrapper
+
 from src.agents.peipal_voice import (
     AUDIO_CHANNELS,
     AUDIO_DTYPE,
@@ -8,6 +12,7 @@ from src.agents.peipal_voice import (
     build_companion_agent,
     build_realtime_config,
     build_text_runner,
+    stay_on_topic_guardrail,
 )
 
 
@@ -89,3 +94,46 @@ def test_text_runner_uses_the_same_agent_with_text_output():
 def test_prompt_requires_preview_and_separate_confirmation():
     assert "read the recipient names, subject, and full message" in VOICE_INSTRUCTIONS
     assert "new, explicit confirmation" in VOICE_INSTRUCTIONS
+
+
+def test_prompt_scopes_conversation_to_activities_and_email():
+    """Keep the demo from wandering into unrelated topics."""
+
+    assert "You only discuss finding activities" in VOICE_INSTRUCTIONS
+    assert "gently decline and" in VOICE_INSTRUCTIONS
+
+
+def test_agent_has_stay_on_topic_guardrail():
+    """Ensure both voice and text sessions get the off-topic backstop."""
+
+    agent = build_companion_agent()
+
+    assert agent.output_guardrails == [stay_on_topic_guardrail]
+
+
+def test_stay_on_topic_guardrail_flags_off_topic_reply():
+    agent = build_companion_agent()
+
+    result = asyncio.run(
+        stay_on_topic_guardrail.run(
+            RunContextWrapper(None),
+            agent,
+            "Let me tell you about the stock market today.",
+        )
+    )
+
+    assert result.output.tripwire_triggered is True
+
+
+def test_stay_on_topic_guardrail_allows_on_topic_reply():
+    agent = build_companion_agent()
+
+    result = asyncio.run(
+        stay_on_topic_guardrail.run(
+            RunContextWrapper(None),
+            agent,
+            "Would you like to join the garden walk on Sunday morning?",
+        )
+    )
+
+    assert result.output.tripwire_triggered is False

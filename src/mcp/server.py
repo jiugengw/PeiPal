@@ -14,7 +14,6 @@ from src.mcp.config import load_config
 from src.mcp.context import register_context
 from src.mcp.tools import register_tools
 from src.api.oauth import router as oauth_router
-from src.api.config import cors_origins
 
 
 load_config()
@@ -47,8 +46,14 @@ _mcp_app = mcp.streamable_http_app()
 _oauth_app = FastAPI(title="PeiPal MCP OAuth")
 _oauth_app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins(),
-    allow_credentials=True,
+    # These are public OAuth discovery/registration endpoints meant to be
+    # reachable by any MCP client per spec, not just PeiPal's own frontend.
+    # The real protection is PKCE, redirect_uri matching, and bearer tokens -
+    # restricting CORS here only breaks legitimate clients, not attackers
+    # (who are not bound by CORS anyway). No cookies are used, so this is
+    # safe without allow_credentials.
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )

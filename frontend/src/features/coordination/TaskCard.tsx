@@ -22,6 +22,8 @@ const TASK_DESCRIPTIONS: Record<CoordinationTask["task_type"], string> = {
   transport: "Someone can arrange a way to get there and back.",
 };
 
+// Signing up has no separate "offer" step; the page turns this into a claim + complete.
+export type TaskCardAction = CoordinationAction | "sign_up_done";
 
 export function TaskCard({
   task,
@@ -36,7 +38,7 @@ export function TaskCard({
   isApproved: boolean;
   isBusy: boolean;
   isSettled: boolean;
-  onAct: (action: CoordinationAction, reason?: string) => void;
+  onAct: (action: TaskCardAction, reason?: string) => void;
 }) {
   const [confirmingTakeover, setConfirmingTakeover] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -182,6 +184,25 @@ export function TaskCard({
                 Take this over
               </button>
             )
+          ) : task.task_type === "registration" ? (
+            <>
+              <button
+                className={primaryButtonClass}
+                disabled={isBusy}
+                onClick={() => onAct("sign_up_done")}
+                type="button"
+              >
+                I have done this
+              </button>
+              <button
+                className={secondaryButtonClass}
+                disabled={isBusy}
+                onClick={() => onAct("not_needed")}
+                type="button"
+              >
+                Not needed
+              </button>
+            </>
           ) : (
             <>
               <button

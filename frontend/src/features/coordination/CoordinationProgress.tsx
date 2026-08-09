@@ -149,7 +149,7 @@ export function CoordinationProgress({
           {planStatus === "ready" ? (
             <div className="mt-6 rounded-2xl bg-muted p-5">
               <p className="text-lg font-bold text-foreground">
-                Everything is arranged. Enjoy it.
+                Everything has arranged the plan. Enjoy it!
               </p>
               <button
                 className={`${primaryButtonClass} mt-4`}
@@ -157,7 +157,7 @@ export function CoordinationProgress({
                 onClick={() => markDone.mutate()}
                 type="button"
               >
-                {markDone.isPending ? "Saving…" : "I went to this"}
+                {markDone.isPending ? "Saving…" : "I have went and completed the activity"}
               </button>
             </div>
           ) : null}

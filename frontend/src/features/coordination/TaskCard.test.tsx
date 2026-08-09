@@ -46,25 +46,42 @@ describe("TaskCard", () => {
     },
   );
 
-  it.each(["registration", "transport"] as const)(
-    "allows claiming a %s task once the plan is approved",
-    async (taskType) => {
-      const onAct = vi.fn();
-      const user = userEvent.setup();
-      renderCard({
-        isApproved: true,
-        onAct,
-        task: task({ task_type: taskType }),
-      });
+  it("allows claiming a transport task once the plan is approved", async () => {
+    const onAct = vi.fn();
+    const user = userEvent.setup();
+    renderCard({
+      isApproved: true,
+      onAct,
+      task: task({ task_type: "transport" }),
+    });
 
-      expect(
-        screen.queryByText(/waiting for the family to approve/i),
-      ).not.toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: /i can do this/i }));
+    expect(
+      screen.queryByText(/waiting for the family to approve/i),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /i can do this/i }));
 
-      expect(onAct).toHaveBeenCalledWith("claim");
-    },
-  );
+    expect(onAct).toHaveBeenCalledWith("claim");
+  });
+
+  it("signing up an unclaimed registration task goes straight to done, with no offer step", async () => {
+    const onAct = vi.fn();
+    const user = userEvent.setup();
+    renderCard({
+      isApproved: true,
+      onAct,
+      task: task({ task_type: "registration" }),
+    });
+
+    expect(
+      screen.queryByText(/waiting for the family to approve/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /i can do this/i }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /i have done this/i }));
+
+    expect(onAct).toHaveBeenCalledWith("sign_up_done");
+  });
 
   it("lets someone give up a role they claimed, via the Cancel role button", async () => {
     const onAct = vi.fn();

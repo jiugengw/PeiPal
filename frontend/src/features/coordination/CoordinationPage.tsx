@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TaskCard } from "@/features/coordination/TaskCard";
 import {
@@ -6,6 +7,7 @@ import {
   coordinationQueryOptions,
   CoordinationError,
   type CoordinationAction,
+  type CoordinationTask,
   type TaskType,
 } from "@/features/coordination/api/coordinationQueries";
 import { formatDecisionWhen } from "@/features/coordination/format";
@@ -51,6 +53,35 @@ export function CoordinationPage({ token }: { token: string }) {
         queryKey: coordinationQueryKey(token),
       }),
   });
+
+  // Runs a claim immediately followed by a complete, so signing up has no separate "offer" step.
+  const [signingUpTaskType, setSigningUpTaskType] = useState<TaskType | null>(
+    null,
+  );
+  const completeSignUp = async (task: CoordinationTask) => {
+    setSigningUpTaskType(task.task_type);
+    try {
+      const claimed = await act.mutateAsync({
+        taskType: task.task_type,
+        action: "claim",
+        version: task.version,
+      });
+      const updated = claimed.tasks.find(
+        (item) => item.task_type === task.task_type,
+      );
+      if (updated) {
+        await act.mutateAsync({
+          taskType: task.task_type,
+          action: "complete",
+          version: updated.version,
+        });
+      }
+    } catch {
+      // act's onError already refreshed the page state.
+    } finally {
+      setSigningUpTaskType(null);
+    }
+  };
 
   if (stateQuery.isPending) {
     return <Message title="Opening this request…" status />;
@@ -142,16 +173,20 @@ export function CoordinationPage({ token }: { token: string }) {
               task={task}
               respondingAs={state.responding_as}
               isApproved={isApproved}
-              isBusy={act.isPending}
+              isBusy={act.isPending || signingUpTaskType === task.task_type}
               isSettled={settled}
-              onAct={(action, reason) =>
+              onAct={(action, reason) => {
+                if (action === "sign_up_done") {
+                  void completeSignUp(task);
+                  return;
+                }
                 act.mutate({
                   taskType: task.task_type,
                   action,
                   version: task.version,
                   reason,
-                })
-              }
+                });
+              }}
             />
           ))}
         </div>

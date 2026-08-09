@@ -4,9 +4,11 @@ import { useAuthSession } from "@/features/auth/AuthSessionContext";
 import { useViewer } from "@/hooks/useViewer";
 
 const olderAdultNavigation = [
-  { to: "/discover", label: "Explore" },
-  { to: "/plans", label: "Plans" },
-  { to: "/family", label: "My family" },
+  { to: "/discover", label: "Explore", exact: true },
+  // Not exact: a plan's own detail page (/plans/$planId) should still
+  // highlight "Plans" as the current section.
+  { to: "/plans", label: "Plans", exact: false },
+  { to: "/family", label: "My family", exact: true },
 ] as const;
 
 const navLinkClass =
@@ -54,7 +56,7 @@ export function Navbar() {
                 <li key={item.to}>
                   <Link
                     className={navLinkClass}
-                    activeOptions={{ exact: true }}
+                    activeOptions={{ exact: item.exact }}
                     activeProps={{
                       className:
                         "bg-background text-primary underline decoration-2 underline-offset-4 shadow-[0_5px_16px_rgb(37_44_64_/_0.10)]",

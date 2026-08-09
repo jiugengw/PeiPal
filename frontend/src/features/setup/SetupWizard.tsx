@@ -1,7 +1,9 @@
 import type { components } from "@/generated/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { SetupProgress } from "@/features/setup/SetupProgress";
+import { WhatHappensNext } from "@/features/setup/WhatHappensNext";
 import {
   familiesQueryOptions,
   olderAdultsQueryOptions,
@@ -177,9 +179,6 @@ function SetupWizardForm({
       if (saved) {
         await queryClient.invalidateQueries({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: familyMembersQueryOptions(saved.family_id).queryKey,
         });
       }
       setCurrentStep(2);
@@ -357,7 +356,6 @@ function SetupWizardForm({
 
           {currentStep === 2 && progress.family ? (
             <>
-              <OlderAdultAccessPanel olderAdults={progress.olderAdults} />
               <FamilyMembersStep
               familyMembers={progress.familyMembers}
               familyId={progress.family.id}
@@ -473,75 +471,6 @@ function SetupStatus({
 }
 
 /**
- * Hands each older adult their own way in. They sign in with a link to their
- * email rather than a password, so no credential is ever shared with them.
- */
-function OlderAdultAccessPanel({ olderAdults }: { olderAdults: OlderAdult[] }) {
-  const [sentTo, setSentTo] = useState<string[]>([]);
-  const [error, setError] = useState("");
-  const sendLink = useMutation({
-    mutationFn: (email: string) => sendSignInLink(email),
-  });
-
-  const withEmail = olderAdults.filter((person) => person.email);
-  if (withEmail.length === 0) return null;
-
-  async function send(email: string) {
-    setError("");
-    try {
-      await sendLink.mutateAsync(email);
-      setSentTo((current) => [...current, email]);
-    } catch (caught) {
-      setError(errorMessage(caught));
-    }
-  }
-
-  return (
-    <section className="mb-8 rounded-2xl bg-muted p-5 sm:p-7">
-      <h2 className="text-2xl font-bold text-foreground">Give them their own access</h2>
-      <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">
-        Each older adult gets an email with a six-digit code. They type it into
-        the sign-in page, and never need a password.
-      </p>
-      <ul className="mt-5 divide-y divide-border border-y border-border">
-        {withEmail.map((person) => (
-          <li
-            className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-            key={person.id}
-          >
-            <div>
-              <strong className="text-lg text-foreground">
-                {person.preferred_name || person.name}
-              </strong>
-              <p className="mt-1 text-base text-foreground">{person.email}</p>
-            </div>
-            {sentTo.includes(person.email ?? "") ? (
-              <p className="text-base font-bold text-foreground" role="status">
-                Link sent
-              </p>
-            ) : (
-              <button
-                className={secondaryButtonClass}
-                disabled={sendLink.isPending}
-                onClick={() => void send(person.email ?? "")}
-                type="button"
-              >
-                {sendLink.isPending ? "Sending\u2026" : "Send sign-in code"}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {error ? (
-        <p className="mt-4 font-bold text-foreground" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
-/**
  * The organizer's account exists to set the family up, so there is nowhere for
  * them to go afterwards. Say so plainly, and point at the handover instead.
  */
@@ -552,6 +481,7 @@ function SetupComplete({
   olderAdults: OlderAdult[];
   onReview: () => void;
 }) {
+  const navigate = useNavigate();
   const names = olderAdults.map(
     (person) => person.preferred_name || person.name,
   );
@@ -565,22 +495,20 @@ function SetupComplete({
       />
       <div className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7">
         <h2 className="text-xl font-bold text-foreground">What happens next</h2>
-        <ol className="mt-4 list-decimal space-y-3 pl-6 text-lg leading-relaxed text-foreground">
-          <li>{who} opens the sign-in link on their own device.</li>
-          <li>They find an activity and ask the family about it.</li>
-          <li>
-            Everyone you added is emailed at once. The first person to answer
-            decides, and anyone can offer to help.
-          </li>
-        </ol>
-        <p className="mt-5 text-base leading-relaxed text-foreground">
-          You can come back to this page at any time to change who is in the
-          family.
-        </p>
+        <div className="mt-4">
+          <WhatHappensNext olderAdults={olderAdults} />
+        </div>
       </div>
-      <div className="mt-8">
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button className={secondaryButtonClass} type="button" onClick={onReview}>
           Change the family
+        </button>
+        <button
+          className={primaryButtonClass}
+          type="button"
+          onClick={() => void navigate({ to: "/family" })}
+        >
+          Go to your trusted circle
         </button>
       </div>
     </div>
@@ -724,31 +652,26 @@ function FamilyMembersStep({
               <div>
                 <strong className="text-lg text-foreground">
                   {member.name}
-                  {member.is_account_owner ? " (you)" : ""}
                 </strong>
                 <p className="mt-1 text-base text-foreground">
                   {describeRelationships(member)} · {member.email}
                 </p>
               </div>
               <div className="flex gap-2">
-                {!member.is_account_owner ? (
-                  <>
-                    <button
-                      className={secondaryButtonClass}
-                      type="button"
-                      onClick={() => edit(member)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={secondaryButtonClass}
-                      type="button"
-                      onClick={() => void remove(member.id)}
-                    >
-                      Remove
-                    </button>
-                  </>
-                ) : null}
+                <button
+                  className={secondaryButtonClass}
+                  type="button"
+                  onClick={() => edit(member)}
+                >
+                  Edit
+                </button>
+                <button
+                  className={secondaryButtonClass}
+                  type="button"
+                  onClick={() => void remove(member.id)}
+                >
+                  Remove
+                </button>
               </div>
             </li>
           ))}

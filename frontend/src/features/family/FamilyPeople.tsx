@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { familyMembersQueryOptions } from "@/features/setup/api/setupQueries";
+import { familyMembersQueryOptions, olderAdultsQueryOptions } from "@/features/setup/api/setupQueries";
+import { WhatHappensNext } from "@/features/setup/WhatHappensNext";
 import { useViewer } from "@/hooks/useViewer";
 
 const secondaryButtonClass =
@@ -9,9 +10,16 @@ const secondaryButtonClass =
 /** The trusted circle, shown to either the organizer or older adult. */
 export function FamilyPeople() {
   const viewer = useViewer();
+  const isOrganizer = viewer.role === "organizer";
   const membersQuery = useQuery({
     ...familyMembersQueryOptions(viewer.familyId ?? 0),
     enabled: Boolean(viewer.familyId),
+  });
+  // Only the organizer sees "what happens next" below, so this is skipped
+  // entirely for the older adult's view of the same page.
+  const olderAdultsQuery = useQuery({
+    ...olderAdultsQueryOptions(viewer.familyId ?? 0),
+    enabled: isOrganizer && Boolean(viewer.familyId),
   });
 
   if (viewer.isPending || membersQuery.isPending) {
@@ -22,7 +30,7 @@ export function FamilyPeople() {
   }
 
   const members = membersQuery.data?.family_members ?? [];
-  const isOrganizer = viewer.role === "organizer";
+  const olderAdults = olderAdultsQuery.data?.older_adults ?? [];
 
   function relationshipFor(relationships: { older_adult_id: number; relationship: string }[]) {
     const mine = relationships.find(
@@ -36,7 +44,7 @@ export function FamilyPeople() {
       <div className="mx-auto w-full max-w-[900px]">
         <header className="border-b border-border pb-8">
           <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
-            {isOrganizer ? "Your trusted circle." : "Your support circle."}
+            Your family
           </h1>
           <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">
             {isOrganizer
@@ -63,6 +71,17 @@ export function FamilyPeople() {
             ))}
           </ul>
         )}
+
+        {isOrganizer ? (
+          <details className="mt-8 rounded-2xl bg-background p-5 sm:p-7">
+            <summary className="cursor-pointer text-lg font-bold text-foreground">
+              What happens for future plans
+            </summary>
+            <div className="mt-4">
+              <WhatHappensNext olderAdults={olderAdults} />
+            </div>
+          </details>
+        ) : null}
 
         <div className="mt-8">
           <Link className={secondaryButtonClass} to={isOrganizer ? "/setup" : "/discover"}>

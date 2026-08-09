@@ -12,6 +12,16 @@ import { formatDecisionWhen } from "@/features/coordination/format";
 
 const SETTLED = ["ready", "completed", "rejected", "cancelled"];
 
+// Cards are always shown in this order, regardless of the order the backend
+// returns tasks in or how their statuses change after an action. Without
+// this, acting on a task (e.g. approving) could reshuffle the list and make
+// the card someone just used jump to a different position.
+const TASK_ORDER: TaskType[] = ["approval", "registration", "transport"];
+
+function byTaskOrder(a: { task_type: TaskType }, b: { task_type: TaskType }) {
+  return TASK_ORDER.indexOf(a.task_type) - TASK_ORDER.indexOf(b.task_type);
+}
+
 /**
  * The page a family member opens from their email. Public on purpose: they hold
  * no account, so the token in the link is what identifies them. The same link
@@ -67,6 +77,11 @@ export function CoordinationPage({ token }: { token: string }) {
   const settled = SETTLED.includes(state.plan_status);
   const conflict =
     act.error instanceof CoordinationError && act.error.status === 409;
+  // Registration and transport are only meaningful once the family has said
+  // yes - claiming a role for an activity nobody has approved yet would let
+  // someone act ahead of that decision.
+  const approvalTask = state.tasks.find((task) => task.task_type === "approval");
+  const isApproved = approvalTask?.status === "approved";
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:py-12">
@@ -121,11 +136,12 @@ export function CoordinationPage({ token }: { token: string }) {
         ) : null}
 
         <div className="mt-6 grid gap-4">
-          {state.tasks.map((task) => (
+          {state.tasks.slice().sort(byTaskOrder).map((task) => (
             <TaskCard
               key={task.task_type}
               task={task}
               respondingAs={state.responding_as}
+              isApproved={isApproved}
               isBusy={act.isPending}
               isSettled={settled}
               onAct={(action, reason) =>

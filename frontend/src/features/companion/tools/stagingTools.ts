@@ -44,7 +44,7 @@ export function createStagingTools({
         workflowRef.current.setIsReviewingPlan(true);
         intentRef.current.stage({ kind: "review_plan" }, "/discover");
         return {
-          display: `The review panel for ${activity.title} is on screen with a "Confirm and create plan" button. Nothing is created until it is pressed.`,
+          display: `The review panel for ${activity.title} is on screen with a "Share the plan" button. Pressing it will send emails to the trusted family members. Nothing is sent until the person presses it.`,
         };
       },
     }),

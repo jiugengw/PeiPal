@@ -59,7 +59,7 @@ export function createActivityTools({
             "That activity is not in the visible results. Find activities again first.",
           );
         return {
-          display: `${activity.title} is selected and shown in the panel beside the list.`,
+          display: `${activity.title} is selected and shown above the search bar. Nothing has been shared yet. Use the visible Share the plan button when the person is ready to email the trusted family members.`,
           activityId,
           title: activity.title,
         };

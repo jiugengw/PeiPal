@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ActivityDiscovery } from "@/features/activities/ActivityDiscovery";
 import { ActivityWorkflowProvider } from "@/features/activities/ActivityWorkflowProvider";
-import { useSetupProgress } from "@/features/setup/useSetupProgress";
+import { useViewer } from "@/hooks/useViewer";
 import { fetchClient } from "@/lib/fetchClient";
 import { createQueryClient } from "@/lib/queryClient";
 
@@ -14,11 +14,11 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
   useNavigate: () => navigate,
 }));
 
-vi.mock("@/features/setup/useSetupProgress", () => ({
-  useSetupProgress: vi.fn(),
+vi.mock("@/hooks/useViewer", () => ({
+  useViewer: vi.fn(),
 }));
 
-const mockedProgress = vi.mocked(useSetupProgress);
+const mockedViewer = vi.mocked(useViewer);
 
 function activityResponse(overrides: Record<string, unknown> = {}) {
   return {
@@ -52,25 +52,18 @@ function renderPage() {
 describe("ActivityDiscovery", () => {
   beforeEach(() => {
     navigate.mockReset();
-    mockedProgress.mockReturnValue({
-      family: {
-        id: 1,
-        name: "Lim Family",
-        created_by: "user-1",
-        created_at: "2030-01-01T00:00:00Z",
-      },
-      olderAdult: {
-        id: 2,
-        family_id: 1,
-        name: "Mary Lim",
-        preferred_name: "Mary",
-        created_by: "user-1",
-        created_at: "2030-01-01T00:00:00Z",
-      },
+    mockedViewer.mockReturnValue({
+      role: "older_adult",
+      familyId: 1,
+      olderAdultId: 2,
+      displayName: "Mary",
+      isPending: false,
+      isError: false,
+      query: { refetch: vi.fn() },
     } as never);
   });
 
-  it("greets the older adult by preferred name and lists activities", async () => {
+  it("greets the older adult by their display name and lists activities", async () => {
     vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
       data: { activities: [activityResponse()] },
       response: new Response(null, { status: 200 }),
@@ -79,9 +72,24 @@ describe("ActivityDiscovery", () => {
     renderPage();
 
     expect(
-      await screen.findByRole("heading", { name: /something new for mary/i }),
+      await screen.findByRole("heading", { name: /hello, mary/i }),
     ).toBeVisible();
     expect(await screen.findByText("Senior Yoga")).toBeVisible();
+  });
+
+  it("enables Make a plan for a signed-in older adult, even though they own no organizer-side family", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
+      data: { activities: [activityResponse()] },
+      response: new Response(null, { status: 200 }),
+    } as never);
+
+    renderPage();
+    await user.click(
+      await screen.findByRole("button", { name: /choose this activity/i }),
+    );
+
+    expect(screen.getByRole("button", { name: /make a plan/i })).toBeEnabled();
   });
 
   it("selecting an activity shows it in the detail panel and disables re-choosing it", async () => {
@@ -138,7 +146,9 @@ describe("ActivityDiscovery", () => {
         /no longer available/i,
       );
     });
-    expect(screen.getByText("No activity chosen yet")).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
+    ).toBeVisible();
   });
 
   it("searching by location requests the filtered results and offers a clear action once empty", async () => {
@@ -221,6 +231,8 @@ describe("ActivityDiscovery", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/active activity not found/i);
     await user.click(screen.getByRole("button", { name: /return to activities/i }));
-    expect(screen.getByText(/no activity chosen yet/i)).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
+    ).toBeVisible();
   });
 });

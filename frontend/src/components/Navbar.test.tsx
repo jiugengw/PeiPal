@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { Navbar } from "@/components/Navbar";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
+import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { useViewer } from "@/hooks/useViewer";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -9,28 +10,45 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/features/auth/AuthSessionContext", () => ({ useAuthSession: vi.fn() }));
 vi.mock("@/hooks/useViewer", () => ({ useViewer: vi.fn() }));
+vi.mock("@/features/setup/useSetupProgress", () => ({ useSetupProgress: vi.fn() }));
 vi.mock("@/features/auth/LogoutButton", () => ({ LogoutButton: () => <button type="button">Log out</button> }));
 
 function viewer(role: "organizer" | "older_adult" | "unknown") {
   return { role, isPending: false, isError: false, query: { refetch: vi.fn() } };
 }
 
+function setupProgress(isComplete: boolean) {
+  return { isComplete, isPending: false, isError: false };
+}
+
 describe("Navbar", () => {
-  beforeEach(() => vi.mocked(useViewer).mockReturnValue(viewer("organizer") as never));
+  beforeEach(() => {
+    vi.mocked(useViewer).mockReturnValue(viewer("organizer") as never);
+    vi.mocked(useSetupProgress).mockReturnValue(setupProgress(false) as never);
+    vi.mocked(useAuthSession).mockReturnValue({ session: { user: { id: "user-1" } }, isLoading: false } as never);
+  });
   afterEach(() => vi.restoreAllMocks());
 
-  it("shows the organizer setup and trusted-circle tabs", () => {
-    vi.mocked(useAuthSession).mockReturnValue({ session: { user: { id: "user-1" } }, isLoading: false } as never);
+  it("only shows Setup for an organizer who hasn't finished setup yet", () => {
+    render(<Navbar />);
+
+    expect(screen.getByRole("link", { name: "Setup" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Trusted circle" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Connect an app" })).not.toBeInTheDocument();
+  });
+
+  it("shows the trusted circle and connect-an-app tabs once setup is complete", () => {
+    vi.mocked(useSetupProgress).mockReturnValue(setupProgress(true) as never);
 
     render(<Navbar />);
 
     expect(screen.getByRole("link", { name: "Setup" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Trusted circle" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Family" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Connect an app" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Explore" })).not.toBeInTheDocument();
   });
 
-  it("shows the older adult their own three tabs, and never setup", () => {
-    vi.mocked(useAuthSession).mockReturnValue({ session: { user: { id: "user-1" } }, isLoading: false } as never);
+  it("shows the older adult their own three tabs, and never setup, regardless of setup progress", () => {
     vi.mocked(useViewer).mockReturnValue(viewer("older_adult") as never);
 
     render(<Navbar />);

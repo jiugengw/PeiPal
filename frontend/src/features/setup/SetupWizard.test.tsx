@@ -435,6 +435,27 @@ describe("SetupWizard", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("sends the organizer to their trusted circle from the completion screen", async () => {
+    const user = userEvent.setup();
+    mockedProgress.mockReturnValue(
+      progress({
+        family: { id: 1, name: "Lim Family" },
+        olderAdult: OLDER_ADULT,
+        olderAdults: [OLDER_ADULT],
+        familyMembers: [familyMember()],
+        isComplete: true,
+      }) as never,
+    );
+    renderWizard();
+
+    await user.click(screen.getByRole("button", { name: /finish setup/i }));
+    await user.click(
+      await screen.findByRole("button", { name: /go to your trusted circle/i }),
+    );
+
+    expect(navigate).toHaveBeenCalledWith({ to: "/family" });
+  });
+
 
 
   it("surfaces a duplicate family member from the API", async () => {

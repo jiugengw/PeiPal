@@ -1,7 +1,9 @@
 import type { components } from "@/generated/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { SetupProgress } from "@/features/setup/SetupProgress";
+import { WhatHappensNext } from "@/features/setup/WhatHappensNext";
 import {
   familiesQueryOptions,
   olderAdultsQueryOptions,
@@ -177,9 +179,6 @@ function SetupWizardForm({
       if (saved) {
         await queryClient.invalidateQueries({
           queryKey: olderAdultsQueryOptions(saved.family_id).queryKey,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: familyMembersQueryOptions(saved.family_id).queryKey,
         });
       }
       setCurrentStep(2);
@@ -552,6 +551,7 @@ function SetupComplete({
   olderAdults: OlderAdult[];
   onReview: () => void;
 }) {
+  const navigate = useNavigate();
   const names = olderAdults.map(
     (person) => person.preferred_name || person.name,
   );
@@ -565,22 +565,20 @@ function SetupComplete({
       />
       <div className="rounded-2xl bg-background p-5 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)] sm:p-7">
         <h2 className="text-xl font-bold text-foreground">What happens next</h2>
-        <ol className="mt-4 list-decimal space-y-3 pl-6 text-lg leading-relaxed text-foreground">
-          <li>{who} opens the sign-in link on their own device.</li>
-          <li>They find an activity and ask the family about it.</li>
-          <li>
-            Everyone you added is emailed at once. The first person to answer
-            decides, and anyone can offer to help.
-          </li>
-        </ol>
-        <p className="mt-5 text-base leading-relaxed text-foreground">
-          You can come back to this page at any time to change who is in the
-          family.
-        </p>
+        <div className="mt-4">
+          <WhatHappensNext olderAdults={olderAdults} />
+        </div>
       </div>
-      <div className="mt-8">
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button className={secondaryButtonClass} type="button" onClick={onReview}>
           Change the family
+        </button>
+        <button
+          className={primaryButtonClass}
+          type="button"
+          onClick={() => void navigate({ to: "/family" })}
+        >
+          Go to your trusted circle
         </button>
       </div>
     </div>
@@ -724,31 +722,26 @@ function FamilyMembersStep({
               <div>
                 <strong className="text-lg text-foreground">
                   {member.name}
-                  {member.is_account_owner ? " (you)" : ""}
                 </strong>
                 <p className="mt-1 text-base text-foreground">
                   {describeRelationships(member)} · {member.email}
                 </p>
               </div>
               <div className="flex gap-2">
-                {!member.is_account_owner ? (
-                  <>
-                    <button
-                      className={secondaryButtonClass}
-                      type="button"
-                      onClick={() => edit(member)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={secondaryButtonClass}
-                      type="button"
-                      onClick={() => void remove(member.id)}
-                    >
-                      Remove
-                    </button>
-                  </>
-                ) : null}
+                <button
+                  className={secondaryButtonClass}
+                  type="button"
+                  onClick={() => edit(member)}
+                >
+                  Edit
+                </button>
+                <button
+                  className={secondaryButtonClass}
+                  type="button"
+                  onClick={() => void remove(member.id)}
+                >
+                  Remove
+                </button>
               </div>
             </li>
           ))}

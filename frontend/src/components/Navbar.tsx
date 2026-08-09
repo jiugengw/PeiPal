@@ -1,15 +1,28 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
+import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { useViewer } from "@/hooks/useViewer";
 
-// Organizers maintain setup, review the trusted circle, and connect apps.
-// Older adults use the day-to-day activity and support experience.
-const organizerNavigation = [
-  { to: "/setup", label: "Setup" },
-  { to: "/family", label: "Trusted circle" },
-  { to: "/connect-apps", label: "Connect an app" },
-] as const;
+// Organizers move through a guided setup-then-trusted-circle flow rather
+// than jumping between tabs, so their nav slot shows the current page's
+// name as plain text instead of clickable links. The trusted circle and
+// connected apps don't exist as usable concepts until setup (family, older
+// adult, at least one family member) is done, so the title stays "Setup"
+// until then, regardless of what the URL happens to be.
+const organizerPageTitles: { path: string; label: string }[] = [
+  { path: "/setup", label: "Setup" },
+  { path: "/family", label: "Trusted circle" },
+  { path: "/connect-apps", label: "Connect an app" },
+];
+
+function organizerPageTitle(pathname: string, isSetupComplete: boolean): string {
+  if (!isSetupComplete) return "Setup";
+  const match = organizerPageTitles.find(
+    (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
+  );
+  return match?.label ?? "Setup";
+}
 
 const olderAdultNavigation = [
   { to: "/discover", label: "Explore" },
@@ -31,8 +44,10 @@ const gridColsClassByCount: Record<number, string> = {
 export function Navbar() {
   const { session, isLoading } = useAuthSession();
   const { role } = useViewer();
-  const navigation =
-    role === "older_adult" ? olderAdultNavigation : organizerNavigation;
+  const location = useLocation();
+  const isOlderAdult = role === "older_adult";
+  const isOrganizer = role === "organizer";
+  const setup = useSetupProgress(Boolean(session) && isOrganizer);
 
   return (
     <header className="flex-none border-b border-border bg-background">
@@ -51,30 +66,39 @@ export function Navbar() {
           <span className="truncate text-base sm:text-lg">PeiPal</span>
         </Link>
 
-        <nav
-          className="col-span-2 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1"
-          aria-label="Primary navigation"
-        >
-          <ul
-            className={`m-0 grid list-none ${gridColsClassByCount[navigation.length] ?? "grid-cols-1"} gap-1 rounded-2xl bg-muted p-1 md:mx-auto md:flex md:w-fit`}
+        {isOlderAdult ? (
+          <nav
+            className="col-span-2 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1"
+            aria-label="Primary navigation"
           >
-            {navigation.map((item) => (
-              <li key={item.to}>
-                <Link
-                  className={navLinkClass}
-                  activeOptions={{ exact: true }}
-                  activeProps={{
-                    className:
-                      "bg-background text-primary underline decoration-2 underline-offset-4 shadow-[0_5px_16px_rgb(37_44_64_/_0.10)]",
-                  }}
-                  to={item.to}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+            <ul
+              className={`m-0 grid list-none ${gridColsClassByCount[olderAdultNavigation.length] ?? "grid-cols-1"} gap-1 rounded-2xl bg-muted p-1 md:mx-auto md:flex md:w-fit`}
+            >
+              {olderAdultNavigation.map((item) => (
+                <li key={item.to}>
+                  <Link
+                    className={navLinkClass}
+                    activeOptions={{ exact: true }}
+                    activeProps={{
+                      className:
+                        "bg-background text-primary underline decoration-2 underline-offset-4 shadow-[0_5px_16px_rgb(37_44_64_/_0.10)]",
+                    }}
+                    to={item.to}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ) : (
+          // Not a <nav> landmark: this is a static label, not a set of
+          // navigation links, for organizers (and the brief "unknown" role
+          // window before an account's role is resolved).
+          <p className="col-span-2 row-start-2 text-center text-lg font-extrabold text-foreground md:col-span-1 md:col-start-2 md:row-start-1">
+            {organizerPageTitle(location.pathname, setup.isComplete)}
+          </p>
+        )}
 
         <div className="col-start-2 row-start-1 justify-self-end">
           {isLoading ? (

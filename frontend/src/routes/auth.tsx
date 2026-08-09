@@ -5,7 +5,7 @@ import {
   useNavigate,
   useRouter,
 } from "@tanstack/react-router";
-import { TextAnimate } from "@/components/ui/text-animate";
+import familySignInHero from "@/assets/family-sign-in-hero.png";
 import { AuthForm } from "@/features/auth/AuthForm";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
 
@@ -50,37 +50,28 @@ function AuthPage() {
   }, [navigate, router.history, search.redirect, session]);
 
   return (
-    <div className="flex min-h-dvh w-full flex-col overflow-y-auto bg-background text-foreground">
+    <div className="min-h-dvh w-full bg-background text-foreground">
       <main
-        className="grid min-h-dvh flex-1 overflow-visible lg:grid-cols-[minmax(420px,1fr)_minmax(420px,1fr)]"
+        className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-8 sm:px-8 sm:py-12"
         id="auth-content"
       >
-        <section className="hidden min-h-full min-w-0 items-center bg-[linear-gradient(105deg,var(--accent)_0%,var(--muted)_100%)] px-[clamp(40px,6vw,88px)] py-12 lg:flex">
-          <div className="w-full max-w-[34rem]">
-            <TextAnimate
-              animation="blurIn"
-              as="h2"
-              className="m-0 max-w-[14ch] text-[clamp(2.5rem,4vw,3.75rem)] leading-[1.02] font-bold tracking-[-0.035em] text-balance"
-              duration={2}
-              once
-            >
-              Support your loved ones. Be there when it matters.
-            </TextAnimate>
-            <TextAnimate
-              animation="fadeIn"
-              delay={2}
-              className="mt-8 max-w-[34ch] border-t border-input pt-5 text-base leading-relaxed font-extrabold"
-            >
-              Pei Pal is here to help
-            </TextAnimate>
-            {/* <p></p>
-            <p className="mt-8 max-w-[34ch] border-t border-input pt-5 text-base leading-relaxed font-extrabold">
-              
-            </p> */}
-          </div>
-        </section>
-        <div className="flex min-h-full items-start justify-center px-4 py-8 sm:px-8 sm:py-10 lg:items-center lg:px-12 lg:py-12">
-          <div className="w-full max-w-[420px]">
+        <img
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-[32%_center] sm:object-center"
+          decoding="async"
+          fetchPriority="high"
+          src={familySignInHero}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[linear-gradient(180deg,rgb(31_38_56_/_0.10),rgb(47_40_67_/_0.18))]"
+        />
+        <div className="relative z-10 w-full max-w-[440px] rounded-[16px] bg-background/92 px-6 py-8 shadow-[0_20px_55px_rgb(33_28_50_/_0.24)] sm:px-9 sm:py-10">
+          <div className="w-full">
+            <p className="mb-6 text-center text-lg font-extrabold tracking-[-0.02em] text-primary">
+              PeiPal
+            </p>
             <AuthForm variant="elderly" redirect={search.redirect} />
           </div>
         </div>

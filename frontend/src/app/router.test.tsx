@@ -124,8 +124,9 @@ describe("application routes", () => {
   it("renders authentication outside the main app shell", async () => {
     renderRoute("/auth");
     expect(
-      await screen.findByRole("heading", { name: /welcome back/i }),
+      await screen.findByRole("heading", { name: /sign in to peipal/i }),
     ).toBeVisible();
+    expect(document.querySelector('img[aria-hidden="true"]')).toBeInTheDocument();
     expect(
       screen.queryByRole("navigation", { name: /primary navigation/i }),
     ).not.toBeInTheDocument();
@@ -136,9 +137,10 @@ describe("application routes", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: /signing in without a password/i,
+        name: /sign in to peipal/i,
       }),
     ).toBeVisible();
+    expect(screen.getByText(/we’ll email you a six-digit code/i)).toBeVisible();
     expect(screen.getByRole("button", { name: /email me a code/i })).toBeVisible();
     expect(screen.queryByLabelText(/^password$/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
@@ -153,7 +155,7 @@ describe("application routes", () => {
     const { router } = renderRoute("/auth?redirect=%2Ffamily");
 
     await user.click(
-      await screen.findByRole("link", { name: /sign up as a guardian instead/i }),
+      await screen.findByRole("link", { name: /guardian sign in/i }),
     );
 
     await waitFor(() =>
@@ -166,7 +168,7 @@ describe("application routes", () => {
     expect(screen.getByLabelText(/^password$/i)).toBeVisible();
     expect(
       screen.queryByRole("heading", {
-        name: /signing in without a password/i,
+        name: /sign in to peipal/i,
       }),
     ).not.toBeInTheDocument();
   });
@@ -176,14 +178,14 @@ describe("application routes", () => {
     const { router } = renderRoute("/auth/creator?redirect=%2Ffamily");
 
     await user.click(
-      await screen.findByRole("link", { name: /use an email code instead/i }),
+      await screen.findByRole("link", { name: /sign in as a senior instead/i }),
     );
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/auth"));
     expect(router.state.location.search).toMatchObject({ redirect: "/family" });
     expect(
       await screen.findByRole("heading", {
-        name: /signing in without a password/i,
+        name: /sign in to peipal/i,
       }),
     ).toBeVisible();
   });
@@ -191,7 +193,7 @@ describe("application routes", () => {
   it("redirects signed-out visitors away from protected pages", async () => {
     renderRoute("/family");
     expect(
-      await screen.findByRole("heading", { name: /welcome back/i }),
+      await screen.findByRole("heading", { name: /sign in to peipal/i }),
     ).toBeVisible();
     expect(
       screen.queryByRole("navigation", { name: /primary navigation/i }),

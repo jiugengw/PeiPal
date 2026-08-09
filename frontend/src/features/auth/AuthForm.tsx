@@ -143,20 +143,20 @@ export function AuthForm({ variant, redirect }: AuthFormProps) {
 
   if (variant === "elderly") {
     return (
-      <div className="min-w-0 bg-background">
-        <h1 className="m-0 max-w-[18ch] text-[clamp(2rem,6vw,2.75rem)] leading-none font-bold tracking-[-0.03em] text-balance text-foreground">
-          Hello!
+      <div className="min-w-0">
+        <h1 className="m-0 text-center text-[clamp(2rem,6vw,2.75rem)] leading-none font-bold tracking-[-0.03em] text-balance text-foreground">
+          Sign in to PeiPal
         </h1>
-        <p className="mt-2 max-w-[52ch] text-base leading-relaxed text-foreground">
-          Sign in with the six-digit code sent to your email. You do not need a password.
+        <p className="mt-3 text-center text-lg leading-relaxed text-foreground">
+          We’ll email you a six-digit code.
         </p>
         <MagicCodePanel />
         <Link
-          className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border-2 border-input bg-background px-4 text-center text-base  text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          className="mx-auto mt-5 flex min-h-12 w-fit items-center justify-center px-4 text-center text-base font-bold text-foreground underline decoration-2 underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           to="/auth/creator"
           search={{ redirect }}
         >
-          Sign Up As A Guardian Instead
+          Guardian sign in
         </Link>
       </div>
     );
@@ -386,14 +386,7 @@ function MagicCodePanel() {
   });
 
   return (
-    <section className="mt-8 border-t border-border pt-8">
-      <h2 className="text-xl font-bold text-foreground">
-        Signing in without a password
-      </h2>
-      <p className="mt-2 text-base leading-relaxed text-foreground">
-        Enter your email and we will send you a six-digit code to type in here.
-      </p>
-
+    <section className="mt-6">
       {!sent ? (
         <form
           className="mt-4 flex flex-col gap-3"
@@ -416,7 +409,7 @@ function MagicCodePanel() {
             placeholder="you@example.com"
           />
           <button
-            className="inline-flex min-h-14 w-full items-center justify-center rounded-xl border border-input bg-background px-6 font-extrabold text-foreground hover:bg-muted disabled:opacity-50"
+            className="inline-flex min-h-14 w-full items-center justify-center rounded-xl border-0 bg-primary px-6 text-lg font-extrabold text-primary-foreground hover:bg-foreground disabled:cursor-wait disabled:opacity-60"
             disabled={sendLink.isPending}
             type="submit"
           >

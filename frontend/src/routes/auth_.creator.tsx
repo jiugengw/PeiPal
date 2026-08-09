@@ -83,7 +83,7 @@ function CreatorAuthPage() {
               to="/auth"
               search={{ redirect: search.redirect }}
             >
-              Sign Up As A Senior Instead
+              Sign in As A Senior Instead
             </Link>
           </div>
         </div>

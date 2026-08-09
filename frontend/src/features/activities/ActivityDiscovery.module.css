@@ -1,0 +1,26 @@
+.discovery {
+  container-type: inline-size;
+}
+
+.layout {
+  display: grid;
+  min-width: 0;
+  gap: 2rem;
+}
+
+.details {
+  min-width: 0;
+}
+
+@container (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: 2.5rem;
+  }
+
+  .details {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+  }
+}

@@ -4,6 +4,7 @@ import { ActivityResultsList } from "@/features/activities/ActivityResultsList";
 import { SelectedActivityPanel } from "@/features/activities/SelectedActivityPanel";
 import { PlanConfirmationPanel } from "@/features/plans/PlanConfirmationPanel";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
+import styles from "@/features/activities/ActivityDiscovery.module.css";
 
 export function ActivityDiscovery() {
   const { family, olderAdult } = useSetupProgress();
@@ -24,8 +25,8 @@ export function ActivityDiscovery() {
   const greetingName = olderAdult?.preferred_name || olderAdult?.name;
 
   return (
-    <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-      <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
+    <section className={`${styles.discovery} min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12`}>
+      <div className={`${styles.layout} mx-auto w-full max-w-[1180px]`}>
         <div className="min-w-0">
           <header className="mb-6">
             <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
@@ -66,7 +67,7 @@ export function ActivityDiscovery() {
           </div>
         </div>
 
-        <aside className="lg:sticky lg:top-8 lg:self-start">
+        <aside className={styles.details}>
           {isReviewingPlan && selectedActivity && family && olderAdult ? (
             <PlanConfirmationPanel
               activity={selectedActivity}

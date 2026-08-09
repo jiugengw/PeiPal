@@ -103,6 +103,39 @@ def test_family_lookup_and_plan_creation_forward_to_api():
     assert fake.calls[0][2]["token"] == "t"
 
 
+def test_plan_creation_looks_up_family_when_workbuddy_omits_it():
+    fake = FakeApi({
+        ("GET", "/api/older-adults/29"): {"id": 29, "family_id": 3},
+        ("POST", "/api/plans"): {"id": 23, "status": "coordinating"},
+    })
+
+    result = call_tool(
+        fake,
+        "create_plan",
+        {"older_adult_id": 29, "activity_id": 26},
+    )
+
+    assert result == {
+        "ok": True,
+        "plan": {"id": 23, "status": "coordinating"},
+    }
+    assert fake.calls == [
+        ("GET", "/api/older-adults/29", {"token": "t"}),
+        (
+            "POST",
+            "/api/plans",
+            {
+                "token": "t",
+                "json": {
+                    "family_id": 3,
+                    "older_adult_id": 29,
+                    "activity_id": 26,
+                },
+            },
+        ),
+    ]
+
+
 def test_recommendation_tool_forwards_person_specific_request():
     fake = FakeApi({
         ("GET", "/api/older-adults/8/recommendations"): {

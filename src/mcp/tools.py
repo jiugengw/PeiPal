@@ -248,18 +248,27 @@ def register_tools(mcp: FastMCP, api: PeiPalApi | None = None) -> None:
     @mcp.tool()
     async def create_plan(
         ctx: Context,
-        family_id: int,
         older_adult_id: int,
         activity_id: int,
+        family_id: int | None = None,
     ) -> dict[str, Any]:
-        """Create a plan only after confirming the selected activity and person."""
+        """Create a plan only after confirming the selected activity and person.
+        The older adult's family is looked up automatically when family_id is
+        omitted, so callers only need the confirmed person and activity IDs."""
         try:
+            token = _token_from(ctx)
+            resolved_family_id = family_id
+            if resolved_family_id is None:
+                profile = await backend.request(
+                    "GET", f"/api/older-adults/{older_adult_id}", token=token
+                )
+                resolved_family_id = profile["family_id"]
             plan = await backend.request(
                 "POST",
                 "/api/plans",
-                token=_token_from(ctx),
+                token=token,
                 json={
-                    "family_id": family_id,
+                    "family_id": resolved_family_id,
                     "older_adult_id": older_adult_id,
                     "activity_id": activity_id,
                 },

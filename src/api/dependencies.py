@@ -10,7 +10,7 @@ from fastapi import Depends, Header, HTTPException, status
 from supabase import Client, create_client
 
 from src.api.config import supabase_service_key, supabase_url
-from src.services.workbuddy_tokens import resolve_token
+from src.services.oauth import resolve_access_token
 
 
 @lru_cache(maxsize=1)
@@ -31,12 +31,10 @@ def require_user(
         )
 
     token = authorization.removeprefix("Bearer ").strip()
-    # A WorkBuddy/ChatGPT-style client presents its own personal access
-    # token here instead of a Supabase JWT; resolve it directly to a user,
-    # no Supabase call needed. Falls through to a normal browser session.
-    workbuddy_user_id = resolve_token(client, token)
-    if workbuddy_user_id is not None:
-        return SimpleNamespace(id=workbuddy_user_id)
+    oauth_identity = resolve_access_token(client, token)
+    if oauth_identity is not None:
+        oauth_user_id, scopes = oauth_identity
+        return SimpleNamespace(id=oauth_user_id, oauth_scopes=scopes)
 
     try:
         response = client.auth.get_user(token)
@@ -57,6 +55,12 @@ def require_user(
 
 def user_id(user: Any) -> str:
     return str(user.id)
+
+
+def require_scope(user: Any, scope: str) -> None:
+    scopes = getattr(user, "oauth_scopes", None)
+    if scopes is not None and scope not in scopes:
+        raise HTTPException(status_code=403, detail=f"This connection needs the {scope} permission.")
 
 
 def require_family_account(client: Client, family_id: int, user: Any) -> None:

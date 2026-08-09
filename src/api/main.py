@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.config import cors_origins, load_config
 from src.api.routes import router
+from src.api.oauth import router as oauth_router
 
 
 load_config()
@@ -100,6 +101,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 app.include_router(router)
+app.include_router(oauth_router)
 
 
 @app.get("/health", tags=["System"], summary="Check API health")

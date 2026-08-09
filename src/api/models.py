@@ -243,30 +243,6 @@ class SignInCodeResponse(BaseModel):
     message: str
 
 
-class WorkBuddyTokenCreate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"name": "WorkBuddy"}]})
-
-    name: str
-
-
-class WorkBuddyTokenResponse(BaseModel):
-    id: int
-    name: str
-    token: str
-    created_at: datetime
-
-
-class WorkBuddyTokenSummary(BaseModel):
-    id: int
-    name: str
-    created_at: datetime
-    revoked_at: datetime | None = None
-
-
-class WorkBuddyTokenListResponse(BaseModel):
-    tokens: list[WorkBuddyTokenSummary]
-
-
 class ViewerResponse(BaseModel):
     """Which kind of person is signed in, and what they may act on."""
 

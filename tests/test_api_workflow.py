@@ -33,9 +33,8 @@ client = TestClient(app)
         ("get", "/api/plans/1/coordination"),
         ("post", "/api/plans/1/complete"),
         ("post", "/api/voice/session"),
-        ("post", "/api/workbuddy/tokens"),
-        ("get", "/api/workbuddy/tokens"),
-        ("delete", "/api/workbuddy/tokens/1"),
+        ("get", "/api/workbuddy/connections"),
+        ("delete", "/api/workbuddy/connections/client-1"),
     ],
 )
 def test_protected_routes_require_authentication(method, path):

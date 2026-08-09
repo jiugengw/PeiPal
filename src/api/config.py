@@ -34,5 +34,9 @@ def openai_api_key() -> str:
 
 
 def cors_origins() -> list[str]:
-    value = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:5500")
+    value = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5500")
     return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+
+def oauth_frontend_url() -> str:
+    return os.getenv("OAUTH_FRONTEND_URL", "http://localhost:5173")

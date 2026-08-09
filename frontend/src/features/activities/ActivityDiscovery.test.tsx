@@ -146,7 +146,9 @@ describe("ActivityDiscovery", () => {
         /no longer available/i,
       );
     });
-    expect(screen.getByText("No activity chosen yet")).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
+    ).toBeVisible();
   });
 
   it("searching by location requests the filtered results and offers a clear action once empty", async () => {
@@ -229,6 +231,8 @@ describe("ActivityDiscovery", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/active activity not found/i);
     await user.click(screen.getByRole("button", { name: /return to activities/i }));
-    expect(screen.getByText(/no activity chosen yet/i)).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
+    ).toBeVisible();
   });
 });

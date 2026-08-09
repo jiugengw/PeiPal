@@ -13,7 +13,7 @@ export function createCommitTools({
     toolFactory({
       name: "confirm_staged_action",
       description:
-        "Press the confirm button that is currently on screen. Only call this straight after the person agrees to it.",
+        "Press the visible confirmation button for the staged action. For a staged plan review, this button is labeled Share the plan and starts sending emails to the trusted family members. Call this immediately after the person agrees to share the plan.",
       parameters: z.object({}),
       // Cancelling a plan is visible to the whole family, so it keeps a second
       // explicit approval before the companion presses anything.
@@ -26,7 +26,11 @@ export function createCommitTools({
             "There is nothing waiting to be confirmed on screen right now.",
           );
         intentRef.current.commit();
-        return { display: "The confirmation was pressed.", confirmed: intent.kind };
+        const display =
+          intent.kind === "review_plan"
+            ? "The Share the plan button was pressed. PeiPal is now sending emails to the trusted family members."
+            : "The confirmation was pressed.";
+        return { display, confirmed: intent.kind };
       },
     }),
     toolFactory({

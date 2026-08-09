@@ -64,4 +64,29 @@ describe("CoordinationPage", () => {
     expect(screen.queryByText(/waiting for the family to approve/i)).not.toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /i can do this/i })).toHaveLength(2);
   });
+
+  it("always shows Approval first, regardless of the order the backend returns tasks in", async () => {
+    vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
+      data: coordinationState({
+        // Deliberately out of order, and with approval already acted on -
+        // this is exactly the shape that used to make the approval card
+        // jump to the bottom after someone clicked it.
+        tasks: [
+          { task_type: "transport", status: "open", owner_name: null, decided_by_name: null, reason: null, version: 1 },
+          { task_type: "registration", status: "open", owner_name: null, decided_by_name: null, reason: null, version: 1 },
+          { task_type: "approval", status: "approved", owner_name: null, decided_by_name: "Anna", reason: null, version: 2 },
+        ],
+      }),
+      response: new Response(null, { status: 200 }),
+    } as never);
+
+    renderPage();
+
+    const headings = await screen.findAllByRole("heading", { level: 3 });
+    expect(headings.map((heading) => heading.textContent)).toEqual([
+      "Approval",
+      "Signing up",
+      "Getting there",
+    ]);
+  });
 });

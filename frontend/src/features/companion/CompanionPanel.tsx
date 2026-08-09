@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type KeyboardEvent } from "react";
 import { Mic, MicOff, MessageSquare, Pause, Send, Square, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useStagedIntentContext } from "@/hooks/useStagedIntent";
@@ -10,20 +10,84 @@ import {
   type CompanionState,
 } from "@/features/companion/useCompanionSession";
 
-export function CompanionPanel() {
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 520;
+
+interface CompanionPanelProps {
+  isOpen?: boolean;
+  width?: number;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onWidthChange?: (width: number) => void;
+}
+
+export function CompanionPanel({
+  isOpen,
+  width,
+  onOpen,
+  onClose,
+  onWidthChange,
+}: CompanionPanelProps) {
   const companion = useCompanionSession();
   useStagedIntentContext();
-  const [isOpen, setIsOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const [localWidth, setLocalWidth] = useState(380);
   const [typedMessage, setTypedMessage] = useState("");
+  const [isResizing, setIsResizing] = useState(false);
+  const openState = isOpen ?? localOpen;
+  const panelWidth = width ?? localWidth;
+  const resizeStart = useRef({ x: 0, width: panelWidth });
   const reduceMotion = useReducedMotion();
 
+  useEffect(() => {
+    if (!openState) return;
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") (onClose ?? (() => setLocalOpen(false)))();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [openState, onClose]);
+
   function open() {
-    setIsOpen(true);
+    (onOpen ?? (() => setLocalOpen(true)))();
     if (!companion.isConnected) void companion.startText();
   }
 
   function close() {
-    setIsOpen(false);
+    (onClose ?? (() => setLocalOpen(false)))();
+  }
+
+  function beginResize(event: ReactPointerEvent<HTMLDivElement>) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    resizeStart.current = { x: event.clientX, width: panelWidth };
+    setIsResizing(true);
+  }
+
+  function resize(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!isResizing) return;
+    const nextWidth = Math.min(
+      MAX_WIDTH,
+      Math.max(MIN_WIDTH, resizeStart.current.width + resizeStart.current.x - event.clientX),
+    );
+    (onWidthChange ?? setLocalWidth)(nextWidth);
+  }
+
+  function endResize(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setIsResizing(false);
+  }
+
+  function resizeWithKeyboard(event: KeyboardEvent<HTMLDivElement>) {
+    const step = event.shiftKey ? 40 : 16;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      (onWidthChange ?? setLocalWidth)(Math.min(MAX_WIDTH, panelWidth + step));
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      (onWidthChange ?? setLocalWidth)(Math.max(MIN_WIDTH, panelWidth - step));
+    }
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -39,10 +103,10 @@ export function CompanionPanel() {
 
   return (
     <aside
-      className="fixed right-4 bottom-4 z-40 w-[calc(100%-2rem)] max-w-[390px]"
+      className={openState ? "relative z-30 min-h-0 min-w-0" : "fixed right-4 bottom-4 z-40"}
       aria-label="PeiPal companion"
     >
-      {!isOpen ? (
+      {!openState ? (
         <motion.button
           className="ml-auto flex min-h-14 items-center gap-3 rounded-xl bg-primary px-5 font-bold text-primary-foreground shadow-[0_14px_34px_rgb(37_44_64_/_0.22)] hover:bg-foreground"
           onClick={open}
@@ -66,12 +130,29 @@ export function CompanionPanel() {
           aria-label={
             hasConversation ? "Reopen conversation (Ask or type)" : undefined
           }
+            aria-expanded={openState}
         >
           <MessageSquare aria-hidden="true" size={22} />
           {hasConversation ? "Reopen conversation" : "Ask or type"}
         </motion.button>
       ) : (
-        <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-background p-5 shadow-[0_22px_55px_rgb(37_44_64_/_0.22)]">
+        <div className="relative flex h-full min-h-0 flex-col overflow-y-auto border-l border-border bg-muted p-5 shadow-[-14px_0_35px_rgb(37_44_64_/_0.08)] max-[1023px]:fixed max-[1023px]:inset-x-0 max-[1023px]:bottom-0 max-[1023px]:z-40 max-[1023px]:max-h-[82dvh] max-[1023px]:rounded-t-2xl max-[1023px]:border-t max-[1023px]:border-l-0">
+          <div
+            className="absolute left-0 top-0 hidden h-full w-3 -translate-x-1/2 cursor-col-resize items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground lg:flex"
+            role="separator"
+            aria-label="Resize companion sidebar"
+            aria-orientation="vertical"
+            aria-valuemin={MIN_WIDTH}
+            aria-valuemax={MAX_WIDTH}
+            aria-valuenow={panelWidth}
+            tabIndex={0}
+            onKeyDown={resizeWithKeyboard}
+            onPointerDown={beginResize}
+            onPointerMove={resize}
+            onPointerUp={endResize}
+          >
+            <span className="h-16 w-1 rounded-full bg-steel-blue" aria-hidden="true" />
+          </div>
           <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">Companion</h2>

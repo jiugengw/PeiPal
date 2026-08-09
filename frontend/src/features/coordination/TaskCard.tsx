@@ -141,7 +141,7 @@ export function TaskCard({
                 onClick={() => onAct("release")}
                 type="button"
               >
-                Step back
+                Cancel role
               </button>
             </>
           ) : task.owner_name ? (

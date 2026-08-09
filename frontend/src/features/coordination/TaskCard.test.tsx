@@ -66,6 +66,22 @@ describe("TaskCard", () => {
     },
   );
 
+  it("lets someone give up a role they claimed, via the Cancel role button", async () => {
+    const onAct = vi.fn();
+    const user = userEvent.setup();
+    renderCard({
+      isApproved: true,
+      onAct,
+      respondingAs: "Anna",
+      task: task({ status: "claimed", owner_name: "Anna" }),
+    });
+
+    expect(screen.queryByRole("button", { name: /step back/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /cancel role/i }));
+
+    expect(onAct).toHaveBeenCalledWith("release");
+  });
+
   it("never blocks the approval task itself, regardless of isApproved", () => {
     renderCard({ isApproved: false, task: task({ task_type: "approval" }) });
 

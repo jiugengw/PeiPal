@@ -30,48 +30,20 @@ export function ActivityDiscovery() {
 
   return (
     <section className="min-h-full bg-[linear-gradient(105deg,var(--muted)_0%,var(--background)_72%)] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-      <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
-        <div className="min-w-0">
-          <header className="mb-6">
-            <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
-              {greetingName
-                ? `Hello, ${greetingName}!`
-                : "Find something to look forward to."}
-            </h1>
-            <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">
-              Browse nearby activities, or search a neighborhood to narrow
-              things down. Choose one to see the full details.
-            </p>
-          </header>
+      <div className="mx-auto w-full max-w-[1180px]">
+        <header className="mb-6">
+          <h1 className="max-w-[16ch] text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
+            {greetingName
+              ? `Hello, ${greetingName}!`
+              : "Find something to look forward to."}
+          </h1>
+          <p className="mt-4 max-w-[65ch] text-lg leading-relaxed text-foreground">
+            Browse nearby activities, or search a neighborhood to narrow things
+            down. Choose one to see the full details.
+          </p>
+        </header>
 
-          <LocationSearchForm
-            key={location}
-            location={location}
-            onSearch={searchActivities}
-          />
-
-          {unavailableNotice ? (
-            <p
-              className="mt-6 rounded-xl border border-input bg-background p-4 text-base font-bold text-foreground"
-              role="alert"
-            >
-              {unavailableNotice}
-            </p>
-          ) : null}
-
-          <div className="mt-6">
-            <ActivityResultsList
-              activities={activities}
-              locationFilter={location}
-              onClearLocation={() => searchActivities("")}
-              onSelect={selectActivity}
-              query={activitiesQuery}
-              selectedDedupeKey={selectedActivity?.dedupeKey ?? null}
-            />
-          </div>
-        </div>
-
-        <aside className="lg:sticky lg:top-8 lg:self-start">
+        <div className="mb-8">
           {isReviewingPlan &&
           selectedActivity &&
           viewer.familyId &&
@@ -87,15 +59,47 @@ export function ActivityDiscovery() {
               onBack={() => setIsReviewingPlan(false)}
               onUnavailable={markSelectionUnavailable}
             />
-          ) : (
+          ) : selectedActivity ? (
             <SelectedActivityPanel
               activity={selectedActivity}
               canMakePlan={canMakePlan}
               onClear={clearSelection}
               onMakePlan={() => setIsReviewingPlan(true)}
             />
-          )}
-        </aside>
+          ) : null}
+
+          {!selectedActivity ? (
+            <p className="rounded-xl border border-border bg-background px-5 py-4 text-base text-foreground">
+              Choose an activity below to see its details here.
+            </p>
+          ) : null}
+        </div>
+
+        <LocationSearchForm
+          key={location}
+          location={location}
+          onSearch={searchActivities}
+        />
+
+        {unavailableNotice ? (
+          <p
+            className="mt-6 rounded-xl border border-input bg-background p-4 text-base font-bold text-foreground"
+            role="alert"
+          >
+            {unavailableNotice}
+          </p>
+        ) : null}
+
+        <div className="mt-6">
+          <ActivityResultsList
+            activities={activities}
+            locationFilter={location}
+            onClearLocation={() => searchActivities("")}
+            onSelect={selectActivity}
+            query={activitiesQuery}
+            selectedDedupeKey={selectedActivity?.dedupeKey ?? null}
+          />
+        </div>
       </div>
     </section>
   );

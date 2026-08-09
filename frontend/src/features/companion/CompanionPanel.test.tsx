@@ -211,6 +211,23 @@ describe("CompanionPanel", () => {
     expect(screen.getByText(/remember this/i)).toBeVisible();
   });
 
+  it("supports keyboard resizing of the open sidebar", async () => {
+    const user = userEvent.setup();
+    await openCompanion(user);
+
+    const resizeHandle = screen.getByRole("separator", {
+      name: /resize companion sidebar/i,
+    });
+    expect(resizeHandle).toHaveAttribute("aria-valuenow", "380");
+
+    resizeHandle.focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(resizeHandle).toHaveAttribute("aria-valuenow", "396");
+
+    await user.keyboard("{Shift>}{ArrowRight}{/Shift}");
+    expect(resizeHandle).toHaveAttribute("aria-valuenow", "356");
+  });
+
   it("answers a typed message in text only, without changing the session default", async () => {
     const user = userEvent.setup();
     const session = await openCompanion(user);
@@ -362,7 +379,7 @@ describe("companion tools", () => {
     const result = await toolsByName().get("confirm_staged_action")!.execute({});
 
     expect(intentApi.commit).toHaveBeenCalledTimes(1);
-    expect(result.display).toMatch(/confirmation was pressed/i);
+    expect(result.display).toMatch(/sending emails to the trusted family members/i);
   });
 
   it("explains itself when there is nothing on screen to confirm", async () => {

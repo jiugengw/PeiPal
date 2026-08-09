@@ -38,6 +38,7 @@ class ClientRegistration(BaseModel):
 
 @router.get("/.well-known/oauth-authorization-server")
 @router.get("/mcp/.well-known/oauth-authorization-server")
+@router.get("/.well-known/oauth-authorization-server/api/mcp")
 def oauth_metadata(request: Request) -> dict[str, Any]:
     base = str(request.base_url).rstrip("/")
     return {
@@ -55,6 +56,7 @@ def oauth_metadata(request: Request) -> dict[str, Any]:
 
 @router.get("/.well-known/oauth-protected-resource")
 @router.get("/mcp/.well-known/oauth-protected-resource")
+@router.get("/.well-known/oauth-protected-resource/api/mcp")
 def protected_resource_metadata(request: Request) -> dict[str, Any]:
     base = str(request.base_url).rstrip("/")
     # On Vercel the function's own root_path already ends in "/mcp" (see

@@ -79,7 +79,10 @@ describe("ActivityDiscovery", () => {
     renderPage();
 
     expect(
-      await screen.findByRole("heading", { name: /something new for mary/i }),
+      await screen.findByRole("heading", { name: /hello, mary/i }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
     ).toBeVisible();
     expect(await screen.findByText("Senior Yoga")).toBeVisible();
   });
@@ -104,6 +107,11 @@ describe("ActivityDiscovery", () => {
     expect(
       within(panel as HTMLElement).getByText(/bishan community club/i),
     ).toBeVisible();
+    const search = screen.getByLabelText(/search by neighborhood or venue/i);
+    expect(
+      (panel as HTMLElement).compareDocumentPosition(search) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
     expect(screen.getByRole("button", { name: /^selected$/i })).toBeDisabled();
   });
 
@@ -138,7 +146,9 @@ describe("ActivityDiscovery", () => {
         /no longer available/i,
       );
     });
-    expect(screen.getByText("No activity chosen yet")).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
+    ).toBeVisible();
   });
 
   it("searching by location requests the filtered results and offers a clear action once empty", async () => {
@@ -221,6 +231,8 @@ describe("ActivityDiscovery", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/active activity not found/i);
     await user.click(screen.getByRole("button", { name: /return to activities/i }));
-    expect(screen.getByText(/no activity chosen yet/i)).toBeVisible();
+    expect(
+      screen.getByText(/choose an activity below to see its details here/i),
+    ).toBeVisible();
   });
 });

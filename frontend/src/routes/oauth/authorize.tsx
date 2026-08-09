@@ -15,7 +15,7 @@ export const Route = createFileRoute("/oauth/authorize")({
   beforeLoad: ({ context, location }) => {
     if (context.auth.session) return;
     throw redirect({
-      to: "/auth",
+      to: "/auth/creator",
       search: { redirect: `${location.pathname}${location.searchStr}` },
       replace: true,
     });

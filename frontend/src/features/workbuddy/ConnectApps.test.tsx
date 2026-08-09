@@ -4,32 +4,29 @@ import userEvent from "@testing-library/user-event";
 import { AppProviders } from "@/app/providers/AppProviders";
 import { ConnectApps } from "@/features/workbuddy/ConnectApps";
 import {
-  createWorkBuddyToken,
-  revokeWorkBuddyToken,
-  workbuddyTokensQueryKey,
-  workbuddyTokensQueryOptions,
-  type WorkBuddyToken,
-} from "@/features/workbuddy/api/workbuddyTokenQueries";
+  revokeWorkBuddyConnection,
+  workbuddyConnectionsQueryKey,
+  workbuddyConnectionsQueryOptions,
+  type WorkBuddyConnection,
+} from "@/features/workbuddy/api/workbuddyConnectionQueries";
 
-vi.mock("@/features/workbuddy/api/workbuddyTokenQueries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/features/workbuddy/api/workbuddyTokenQueries")>();
+vi.mock("@/features/workbuddy/api/workbuddyConnectionQueries", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/workbuddy/api/workbuddyConnectionQueries")>();
   return {
     ...actual,
-    createWorkBuddyToken: vi.fn(),
-    revokeWorkBuddyToken: vi.fn(),
-    workbuddyTokensQueryOptions: vi.fn(),
+    revokeWorkBuddyConnection: vi.fn(),
+    workbuddyConnectionsQueryOptions: vi.fn(),
   };
 });
 
-const createMock = vi.mocked(createWorkBuddyToken);
-const revokeMock = vi.mocked(revokeWorkBuddyToken);
-const queryOptionsMock = vi.mocked(workbuddyTokensQueryOptions);
+const revokeMock = vi.mocked(revokeWorkBuddyConnection);
+const queryOptionsMock = vi.mocked(workbuddyConnectionsQueryOptions);
 
-function mockTokens(tokens: WorkBuddyToken[]) {
+function mockConnections(connections: WorkBuddyConnection[]) {
   queryOptionsMock.mockReturnValue(
     queryOptions({
-      queryKey: workbuddyTokensQueryKey,
-      queryFn: async () => tokens,
+      queryKey: workbuddyConnectionsQueryKey,
+      queryFn: async () => connections,
     }),
   );
 }
@@ -44,20 +41,19 @@ function renderPage() {
 
 describe("ConnectApps", () => {
   beforeEach(() => {
-    createMock.mockReset();
     revokeMock.mockReset();
     queryOptionsMock.mockReset();
   });
 
   it("shows no apps connected yet when the list is empty", async () => {
-    mockTokens([]);
+    mockConnections([]);
     renderPage();
-    expect(await screen.findByText(/no apps connected yet/i)).toBeVisible();
+    expect(await screen.findByText(/no apps are connected yet/i)).toBeVisible();
   });
 
   it("lists existing tokens without ever showing the raw value", async () => {
-    mockTokens([
-      { id: 1, name: "WorkBuddy", created_at: "2026-01-01T00:00:00Z", revoked_at: null },
+    mockConnections([
+      { client_id: "client-1", scope: "activities:read plans:read plans:write", created_at: "2026-01-01T00:00:00Z", expires_at: "2026-02-01T00:00:00Z", revoked_at: null },
     ]);
     renderPage();
     expect(await screen.findByText("WorkBuddy")).toBeVisible();
@@ -65,34 +61,23 @@ describe("ConnectApps", () => {
   });
 
   it("generates a new token and shows it exactly once", async () => {
-    mockTokens([]);
-    createMock.mockResolvedValue({
-      id: 2,
-      name: "ChatGPT",
-      token: "raw-token-value",
-      created_at: "2026-01-01T00:00:00Z",
-    });
-    const user = userEvent.setup();
+    mockConnections([]);
     renderPage();
 
-    await user.type(screen.getByLabelText(/name this app/i), "ChatGPT");
-    await user.click(screen.getByRole("button", { name: /generate token/i }));
-
-    expect(createMock).toHaveBeenCalledWith("ChatGPT");
-    expect(await screen.findByText("raw-token-value")).toBeVisible();
-    expect(screen.getByText(/copy this now/i)).toBeVisible();
+    expect(await screen.findByText(/no apps are connected yet/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: /copy address/i })).toBeVisible();
   });
 
   it("revokes a token", async () => {
-    mockTokens([
-      { id: 1, name: "WorkBuddy", created_at: "2026-01-01T00:00:00Z", revoked_at: null },
+    mockConnections([
+      { client_id: "client-1", scope: "activities:read plans:read plans:write", created_at: "2026-01-01T00:00:00Z", expires_at: "2026-02-01T00:00:00Z", revoked_at: null },
     ]);
     revokeMock.mockResolvedValue();
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(await screen.findByRole("button", { name: /revoke/i }));
+    await user.click(await screen.findByRole("button", { name: /revoke access/i }));
 
-    expect(revokeMock).toHaveBeenCalledWith(1);
+    expect(revokeMock).toHaveBeenCalledWith("client-1", expect.anything());
   });
 });

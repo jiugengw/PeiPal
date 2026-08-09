@@ -2,9 +2,11 @@ export interface EnvironmentInput {
   VITE_API_BASE_URL?: string;
   VITE_SUPABASE_URL?: string;
   VITE_SUPABASE_ANON_KEY?: string;
+  VITE_MCP_URL?: string;
 }
 export interface Environment {
   apiBaseUrl: string;
+  mcpUrl: string;
   supabase?: { url: string; anonKey: string };
 }
 
@@ -17,6 +19,7 @@ export function readEnvironment(input: EnvironmentInput): Environment {
     );
   return {
     apiBaseUrl: (input.VITE_API_BASE_URL?.trim() || "").replace(/\/$/, ""),
+    mcpUrl: input.VITE_MCP_URL?.trim() || "http://localhost:8001/mcp",
     ...(url && anonKey ? { supabase: { url, anonKey } } : {}),
   };
 }

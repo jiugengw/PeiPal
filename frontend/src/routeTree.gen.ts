@@ -18,6 +18,7 @@ import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as CoordinateTokenRouteImport } from './routes/coordinate.$token'
+import { Route as OauthAuthorizeRouteImport } from './routes/oauth/authorize'
 import { Route as AuthenticatedPlansIndexRouteImport } from './routes/_authenticated/plans/index'
 import { Route as AuthenticatedPlansPlanIdRouteImport } from './routes/_authenticated/plans/$planId'
 
@@ -66,6 +67,11 @@ const CoordinateTokenRoute = CoordinateTokenRouteImport.update({
   path: '/coordinate/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OauthAuthorizeRoute = OauthAuthorizeRouteImport.update({
+  id: '/oauth/authorize',
+  path: '/oauth/authorize',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPlansIndexRoute = AuthenticatedPlansIndexRouteImport.update({
   id: '/plans/',
   path: '/plans/',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
+  '/oauth/authorize': typeof OauthAuthorizeRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
   '/plans/': typeof AuthenticatedPlansIndexRoute
 }
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
+  '/oauth/authorize': typeof OauthAuthorizeRoute
   '/': typeof AuthenticatedIndexRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
   '/plans': typeof AuthenticatedPlansIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
+  '/oauth/authorize': typeof OauthAuthorizeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
   '/_authenticated/plans/': typeof AuthenticatedPlansIndexRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/family'
     | '/setup'
     | '/coordinate/$token'
+    | '/oauth/authorize'
     | '/plans/$planId'
     | '/plans/'
   fileRoutesByTo: FileRoutesByTo
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/family'
     | '/setup'
     | '/coordinate/$token'
+    | '/oauth/authorize'
     | '/'
     | '/plans/$planId'
     | '/plans'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_authenticated/family'
     | '/_authenticated/setup'
     | '/coordinate/$token'
+    | '/oauth/authorize'
     | '/_authenticated/'
     | '/_authenticated/plans/$planId'
     | '/_authenticated/plans/'
@@ -160,6 +172,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   CoordinateTokenRoute: typeof CoordinateTokenRoute
+  OauthAuthorizeRoute: typeof OauthAuthorizeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoordinateTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/authorize': {
+      id: '/oauth/authorize'
+      path: '/oauth/authorize'
+      fullPath: '/oauth/authorize'
+      preLoaderRoute: typeof OauthAuthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/plans/': {
       id: '/_authenticated/plans/'
       path: '/plans'
@@ -274,6 +294,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   CoordinateTokenRoute: CoordinateTokenRoute,
+  OauthAuthorizeRoute: OauthAuthorizeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -6,6 +6,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { routeTree } from "@/routeTree.gen";
 import { AuthSessionContext } from "@/features/auth/AuthSessionContext";
 import { createQueryClient } from "@/lib/queryClient";
@@ -128,6 +129,63 @@ describe("application routes", () => {
     expect(
       screen.queryByRole("navigation", { name: /primary navigation/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows only email-code authentication to an older adult", async () => {
+    renderRoute("/auth");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: /signing in without a password/i,
+      }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: /email me a code/i })).toBeVisible();
+    expect(screen.queryByLabelText(/^password$/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /create account/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("takes password users to creator authentication and preserves redirect", async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute("/auth?redirect=%2Ffamily");
+
+    await user.click(
+      await screen.findByRole("link", { name: /sign up as a guardian instead/i }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/auth/creator"),
+    );
+    expect(router.state.location.search).toMatchObject({ redirect: "/family" });
+    expect(
+      await screen.findByRole("heading", { name: /welcome back/i }),
+    ).toBeVisible();
+    expect(screen.getByLabelText(/^password$/i)).toBeVisible();
+    expect(
+      screen.queryByRole("heading", {
+        name: /signing in without a password/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets creator users return to email-code authentication", async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute("/auth/creator?redirect=%2Ffamily");
+
+    await user.click(
+      await screen.findByRole("link", { name: /use an email code instead/i }),
+    );
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/auth"));
+    expect(router.state.location.search).toMatchObject({ redirect: "/family" });
+    expect(
+      await screen.findByRole("heading", {
+        name: /signing in without a password/i,
+      }),
+    ).toBeVisible();
   });
 
   it("redirects signed-out visitors away from protected pages", async () => {

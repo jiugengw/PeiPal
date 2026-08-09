@@ -17,6 +17,7 @@ import { Route as AuthenticatedConnectAppsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
+import { Route as AuthCreatorRouteImport } from './routes/auth_.creator'
 import { Route as CoordinateTokenRouteImport } from './routes/coordinate.$token'
 import { Route as OauthAuthorizeRouteImport } from './routes/oauth/authorize'
 import { Route as AuthenticatedPlansIndexRouteImport } from './routes/_authenticated/plans/index'
@@ -62,6 +63,11 @@ const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthCreatorRoute = AuthCreatorRouteImport.update({
+  id: '/auth_/creator',
+  path: '/auth/creator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoordinateTokenRoute = CoordinateTokenRouteImport.update({
   id: '/coordinate/$token',
   path: '/coordinate/$token',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/auth/creator': typeof AuthCreatorRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
   '/oauth/authorize': typeof OauthAuthorizeRoute
   '/plans/$planId': typeof AuthenticatedPlansPlanIdRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/discover': typeof AuthenticatedDiscoverRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/auth/creator': typeof AuthCreatorRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
   '/oauth/authorize': typeof OauthAuthorizeRoute
   '/': typeof AuthenticatedIndexRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
+  '/auth_/creator': typeof AuthCreatorRoute
   '/coordinate/$token': typeof CoordinateTokenRoute
   '/oauth/authorize': typeof OauthAuthorizeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/family'
     | '/setup'
+    | '/auth/creator'
     | '/coordinate/$token'
     | '/oauth/authorize'
     | '/plans/$planId'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/family'
     | '/setup'
+    | '/auth/creator'
     | '/coordinate/$token'
     | '/oauth/authorize'
     | '/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/_authenticated/discover'
     | '/_authenticated/family'
     | '/_authenticated/setup'
+    | '/auth_/creator'
     | '/coordinate/$token'
     | '/oauth/authorize'
     | '/_authenticated/'
@@ -171,6 +183,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  AuthCreatorRoute: typeof AuthCreatorRoute
   CoordinateTokenRoute: typeof CoordinateTokenRoute
   OauthAuthorizeRoute: typeof OauthAuthorizeRoute
 }
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSetupRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/auth_/creator': {
+      id: '/auth_/creator'
+      path: '/auth/creator'
+      fullPath: '/auth/creator'
+      preLoaderRoute: typeof AuthCreatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/coordinate/$token': {
       id: '/coordinate/$token'
       path: '/coordinate/$token'
@@ -293,6 +313,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  AuthCreatorRoute: AuthCreatorRoute,
   CoordinateTokenRoute: CoordinateTokenRoute,
   OauthAuthorizeRoute: OauthAuthorizeRoute,
 }

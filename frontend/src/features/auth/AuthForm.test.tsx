@@ -16,7 +16,7 @@ const signUpMock = vi.mocked(signUp);
 function renderAuthForm() {
   return render(
     <AppProviders>
-      <AuthForm />
+      <AuthForm variant="creator" />
     </AppProviders>,
   );
 }
@@ -41,7 +41,6 @@ describe("AuthForm", () => {
   it("shows useful validation and focuses the first invalid field", async () => {
     const user = userEvent.setup();
     renderAuthForm();
-    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     await user.click(screen.getByRole("button", { name: /^log in$/i }));
     expect(screen.getByLabelText(/email address/i)).toHaveFocus();
     expect(screen.getByText(/enter your email address/i)).toBeVisible();
@@ -51,7 +50,6 @@ describe("AuthForm", () => {
   it("reveals and hides the password", async () => {
     const user = userEvent.setup();
     renderAuthForm();
-    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     const password = screen.getByLabelText(/^password$/i);
     expect(password).toHaveAttribute("type", "password");
     await user.click(screen.getByRole("button", { name: /show password/i }));
@@ -64,7 +62,6 @@ describe("AuthForm", () => {
     signInMock.mockResolvedValue();
     const user = userEvent.setup();
     renderAuthForm();
-    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     await user.type(
       screen.getByLabelText(/email address/i),
       "person@example.com",
@@ -84,7 +81,6 @@ describe("AuthForm", () => {
     signInMock.mockResolvedValue();
     const user = userEvent.setup();
     renderAuthForm();
-    await user.click(screen.getByRole("button", { name: /use a password instead/i }));
     await user.type(
       screen.getByLabelText(/email address/i),
       "person@example.com",
@@ -117,5 +113,16 @@ describe("AuthForm", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       /check your email/i,
     );
+  });
+
+  it("does not show the elderly email-code panel", () => {
+    renderAuthForm();
+
+    expect(
+      screen.queryByRole("heading", { name: /signing in without a password/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /email me a code/i }),
+    ).not.toBeInTheDocument();
   });
 });

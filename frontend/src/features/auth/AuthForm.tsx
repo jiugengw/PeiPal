@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useRef, useState, type FormEvent } from "react";
 import { signIn } from "@/features/auth/signIn";
 import { signUp } from "@/features/auth/signUp";
@@ -16,15 +17,19 @@ interface FormValues {
   password: string;
 }
 
+interface AuthFormProps {
+  variant: "elderly" | "creator";
+  redirect?: string;
+}
+
 const emptyValues: FormValues = { name: "", email: "", password: "" };
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function AuthForm() {
+export function AuthForm({ variant, redirect }: AuthFormProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [values, setValues] = useState<FormValues>(emptyValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
@@ -73,7 +78,6 @@ export function AuthForm() {
     setValues(emptyValues);
     setErrors({});
     setShowPassword(false);
-    setShowPasswordLogin(false);
     setSuccessMessage("");
     setSubmissionError("");
     signInMutation.reset();
@@ -95,7 +99,7 @@ export function AuthForm() {
     else if (!emailPattern.test(values.email))
       nextErrors.email =
         "Enter an email address in the format name@example.com.";
-    if ((mode === "signup" || showPasswordLogin) && !values.password)
+    if (!values.password)
       nextErrors.password = "Enter your password.";
     else if (mode === "signup" && values.password.length < 8)
       nextErrors.password = "Use at least 8 characters for your password.";
@@ -110,9 +114,7 @@ export function AuthForm() {
     setSubmissionError("");
 
     const firstInvalidField = (
-      mode === "signup" || showPasswordLogin
-        ? ["name", "email", "password"]
-        : ["email"]
+      mode === "signup" ? ["name", "email", "password"] : ["email", "password"]
     ).find((field) => nextErrors[field as FieldName]) as FieldName | undefined;
     if (firstInvalidField) {
       const refs = { name: nameRef, email: emailRef, password: passwordRef };
@@ -120,7 +122,7 @@ export function AuthForm() {
       return;
     }
 
-    if (mode === "login" && showPasswordLogin) {
+    if (mode === "login") {
       signInMutation.mutate({
         email: values.email.trim(),
         password: values.password,
@@ -138,6 +140,27 @@ export function AuthForm() {
   const isSigningIn = mode === "login" && signInMutation.isPending;
   const isCreatingAccount = mode === "signup" && signUpMutation.isPending;
   const isSubmitting = isSigningIn || isCreatingAccount;
+
+  if (variant === "elderly") {
+    return (
+      <div className="min-w-0 bg-background">
+        <h1 className="m-0 max-w-[18ch] text-[clamp(2rem,6vw,2.75rem)] leading-none font-bold tracking-[-0.03em] text-balance text-foreground">
+          Hello!
+        </h1>
+        <p className="mt-2 max-w-[52ch] text-base leading-relaxed text-foreground">
+          Sign in with the six-digit code sent to your email. You do not need a password.
+        </p>
+        <MagicCodePanel />
+        <Link
+          className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border-2 border-input bg-background px-4 text-center text-base  text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          to="/auth/creator"
+          search={{ redirect }}
+        >
+          Sign Up As A Guardian Instead
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-w-0 bg-background">
@@ -176,27 +199,11 @@ export function AuthForm() {
         </h1>
         <p className="mt-2 max-w-[52ch] text-[0.95rem] leading-normal">
           {mode === "login"
-            ? "The easiest way in is with a one-time code sent to your email."
-            : "Start with the essentials. You can add support preferences later."}
+            ? "Log in to set up or manage a PeiPal family account."
+            : "Create the account you will use to set up and manage a PeiPal family."}
         </p>
 
-        {mode === "login" && !showPasswordLogin ? <MagicLinkPanel /> : null}
-
-        {mode === "login" && !showPasswordLogin ? (
-          <button
-            className="mt-5 min-h-12 w-full cursor-pointer rounded-xl border-2 border-input bg-background px-4 text-base font-extrabold text-foreground hover:bg-muted"
-            type="button"
-            onClick={() => {
-              setShowPasswordLogin(true);
-              setSuccessMessage("");
-              setSubmissionError("");
-            }}
-          >
-            Use a password instead
-          </button>
-        ) : null}
-
-        {mode === "signup" || showPasswordLogin ? <form className="mt-3 grid gap-3" noValidate onSubmit={handleSubmit}>
+        <form className="mt-3 grid gap-3" noValidate onSubmit={handleSubmit}>
           {mode === "signup" ? (
             <div className="grid gap-1">
               <label className="text-base font-extrabold" htmlFor="auth-name">
@@ -340,21 +347,7 @@ export function AuthForm() {
               {successMessage}
             </p>
           ) : null}
-          {mode === "login" && showPasswordLogin ? (
-            <button
-              className="min-h-11 text-base font-bold text-foreground underline"
-              type="button"
-              onClick={() => {
-                setShowPasswordLogin(false);
-                setValues(emptyValues);
-                setErrors({});
-                setSubmissionError("");
-              }}
-            >
-              Use an email code instead
-            </button>
-          ) : null}
-        </form> : null}
+        </form>
       </div>
     </div>
   );
@@ -364,7 +357,7 @@ export function AuthForm() {
  * The primary way into PeiPal. A one-time code avoids asking older adults to
  * remember a password, while still working for every registered account.
  */
-function MagicLinkPanel() {
+function MagicCodePanel() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
@@ -410,8 +403,8 @@ function MagicLinkPanel() {
             sendLink.mutate();
           }}
         >
-          <label className="sr-only" htmlFor="magic-link-email">
-            Email me a sign-in link
+          <label className="text-base font-extrabold" htmlFor="magic-link-email">
+            Email address
           </label>
           <input
             className="min-h-14 w-full rounded-xl border-2 border-input bg-background px-4 py-3 text-lg text-foreground outline-none hover:border-primary focus-visible:border-primary focus-visible:outline-none"
@@ -427,7 +420,9 @@ function MagicLinkPanel() {
             disabled={sendLink.isPending}
             type="submit"
           >
-            {sendLink.isPending ? "Sending\u2026" : "Email me a code"}
+            <strong className="font-extrabold">
+              {sendLink.isPending ? "Sending\u2026" : "Email me a code"}
+            </strong>
           </button>
         </form>
       ) : (

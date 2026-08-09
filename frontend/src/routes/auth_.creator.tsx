@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import {
   createFileRoute,
+  Link,
   redirect,
   useNavigate,
   useRouter,
@@ -9,14 +10,13 @@ import { TextAnimate } from "@/components/ui/text-animate";
 import { AuthForm } from "@/features/auth/AuthForm";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute("/auth_/creator")({
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   beforeLoad: ({ context, search }) => {
     if (!context.auth.session) return;
 
-    // "/" decides where each role belongs, so sign-in never guesses.
     const destination =
       search.redirect?.startsWith("/") && !search.redirect.startsWith("/auth")
         ? search.redirect
@@ -24,10 +24,10 @@ export const Route = createFileRoute("/auth")({
 
     throw redirect({ href: destination, replace: true });
   },
-  component: AuthPage,
+  component: CreatorAuthPage,
 });
 
-function AuthPage() {
+function CreatorAuthPage() {
   const navigate = useNavigate();
   const router = useRouter();
   const search = Route.useSearch();
@@ -64,24 +64,27 @@ function AuthPage() {
               duration={2}
               once
             >
-              Support your loved ones. Be there when it matters.
+              Set up support for someone you love.
             </TextAnimate>
             <TextAnimate
               animation="fadeIn"
               delay={2}
               className="mt-8 max-w-[34ch] border-t border-input pt-5 text-base leading-relaxed font-extrabold"
             >
-              Pei Pal is here to help
+              Create or manage the PeiPal account used to set up a family.
             </TextAnimate>
-            {/* <p></p>
-            <p className="mt-8 max-w-[34ch] border-t border-input pt-5 text-base leading-relaxed font-extrabold">
-              
-            </p> */}
           </div>
         </section>
         <div className="flex min-h-full items-start justify-center px-4 py-8 sm:px-8 sm:py-10 lg:items-center lg:px-12 lg:py-12">
           <div className="w-full max-w-[420px]">
-            <AuthForm variant="elderly" redirect={search.redirect} />
+            <AuthForm variant="creator" />
+            <Link
+              className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border-2 border-input bg-background px-4 text-center text-base text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              to="/auth"
+              search={{ redirect: search.redirect }}
+            >
+              Sign Up As A Senior Instead
+            </Link>
           </div>
         </div>
       </main>

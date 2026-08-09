@@ -233,12 +233,29 @@ function SetupWizardForm({
 
           {currentStep === 1 ? (
             <form onSubmit={submitProfileDetails}>
+              <div className="mb-6 rounded-xl border border-border bg-muted px-5 py-4">
+                <p className="text-sm font-extrabold uppercase tracking-[0.08em] text-primary">
+                  Older adult profile
+                </p>
+                <p className="mt-1 text-lg font-bold text-foreground">
+                  {progress.olderAdult?.preferred_name ||
+                    progress.olderAdult?.name ||
+                    "Name will be added below"}
+                </p>
+                <p className="mt-1 text-base text-foreground">
+                  This profile is for the senior supported by {familyName}.
+                </p>
+              </div>
               <StepHeading
-                title="Tell us what makes support comfortable."
-                description="Only add what will help with activity suggestions and practical planning."
+                title={
+                  progress.olderAdult
+                    ? "Update the older adult's profile."
+                    : "Create the older adult's profile."
+                }
+                description="Add details about the senior—not the guardian account. This helps PeiPal suggest comfortable activities and practical support."
               />
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Full name" required>
+                <Field label="Older adult's full name" required>
                   <input
                     className={fieldClass}
                     required
@@ -249,7 +266,7 @@ function SetupWizardForm({
                     }
                   />
                 </Field>
-                <Field label="Preferred name">
+                <Field label="Older adult's preferred name">
                   <input
                     className={fieldClass}
                     maxLength={120}
@@ -262,7 +279,7 @@ function SetupWizardForm({
                     }
                   />
                 </Field>
-                <Field label="Age">
+                <Field label="Older adult's age">
                   <input
                     className={fieldClass}
                     type="number"
@@ -279,7 +296,7 @@ function SetupWizardForm({
                     }
                   />
                 </Field>
-                <Field label="Preferred language">
+                <Field label="Older adult's preferred language">
                   <input
                     className={fieldClass}
                     maxLength={80}

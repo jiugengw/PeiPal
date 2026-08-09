@@ -181,10 +181,9 @@ describe("application routes", () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/auth/creator"),
     );
-    expect(
-      router.state.location.search.redirect.startsWith(oauthRequest),
-    ).toBe(true);
-    expect(router.state.location.search.redirect).toContain(
+    const preservedRedirect = router.state.location.search.redirect ?? "";
+    expect(preservedRedirect.startsWith(oauthRequest)).toBe(true);
+    expect(preservedRedirect).toContain(
       "scope=activities%3Aread+plans%3Aread+plans%3Awrite",
     );
     expect(

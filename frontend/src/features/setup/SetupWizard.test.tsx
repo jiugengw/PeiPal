@@ -128,7 +128,9 @@ describe("SetupWizard", () => {
       body: { name: "Lim Family" },
     });
     expect(
-      await screen.findByRole("heading", { name: /what makes support comfortable/i }),
+      await screen.findByRole("heading", {
+        name: /create the older adult's profile/i,
+      }),
     ).toBeVisible();
   });
 
@@ -162,7 +164,9 @@ describe("SetupWizard", () => {
 
     await user.click(screen.getByRole("button", { name: /create family/i }));
     expect(
-      await screen.findByRole("heading", { name: /what makes support comfortable/i }),
+      await screen.findByRole("heading", {
+        name: /create the older adult's profile/i,
+      }),
     ).toBeVisible();
     expect(post).toHaveBeenCalledTimes(2);
   });

@@ -92,7 +92,7 @@ describe("ActivityDiscovery", () => {
     expect(screen.getByRole("button", { name: /make a plan/i })).toBeEnabled();
   });
 
-  it("selecting an activity shows it in the detail panel and disables re-choosing it", async () => {
+  it("expands planning details beneath the selected activity and disables re-choosing it", async () => {
     const user = userEvent.setup();
     vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
       data: { activities: [activityResponse()] },
@@ -105,14 +105,46 @@ describe("ActivityDiscovery", () => {
       await screen.findByRole("button", { name: /choose this activity/i }),
     );
 
-    const panel = screen
-      .getByRole("heading", { name: "Senior Yoga", level: 2 })
-      .closest("div");
-    expect(panel).not.toBeNull();
+    const selectedButton = screen.getByRole("button", { name: /^selected$/i });
+    const selectedRow = selectedButton.closest("li");
+    expect(selectedRow).not.toBeNull();
     expect(
-      within(panel as HTMLElement).getByText(/bishan community club/i),
+      within(selectedRow as HTMLElement).getByText(/bishan community club/i),
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: /^selected$/i })).toBeDisabled();
+    expect(
+      within(selectedRow as HTMLElement).getByRole("button", {
+        name: /make a plan/i,
+      }),
+    ).toBeEnabled();
+    expect(
+      within(selectedRow as HTMLElement).queryByRole("button", {
+        name: /tell me more/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(selectedButton).toBeDisabled();
+  });
+
+  it("clears an activity from its inline planning details", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
+      data: { activities: [activityResponse()] },
+      response: new Response(null, { status: 200 }),
+    } as never);
+
+    renderPage();
+    await user.click(
+      await screen.findByRole("button", { name: /choose this activity/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /choose a different activity/i }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: /choose this activity/i }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: /make a plan/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("clears the selection and explains it when the activity disappears from a refreshed result set", async () => {
@@ -147,8 +179,8 @@ describe("ActivityDiscovery", () => {
       );
     });
     expect(
-      screen.getByText(/choose an activity below to see its details here/i),
-    ).toBeVisible();
+      screen.queryByRole("button", { name: /^selected$/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("searching by location requests the filtered results and offers a clear action once empty", async () => {
@@ -213,6 +245,48 @@ describe("ActivityDiscovery", () => {
     });
   });
 
+  it("moves plan review above search, scrolls to it, and restores inline details on back", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
+      data: { activities: [activityResponse()] },
+      response: new Response(null, { status: 200 }),
+    } as never);
+
+    renderPage();
+    await user.click(
+      await screen.findByRole("button", { name: /choose this activity/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /make a plan/i }));
+
+    const reviewHeading = screen.getByRole("heading", {
+      name: /review this plan/i,
+    });
+    const searchForm = screen
+      .getByLabelText(/search by neighborhood or venue/i)
+      .closest("form");
+    expect(
+      reviewHeading.compareDocumentPosition(searchForm as HTMLElement) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "start",
+    });
+    expect(
+      screen.queryByRole("button", { name: /choose a different activity/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /back to activity/i }));
+    expect(
+      screen.getByRole("button", { name: /choose a different activity/i }),
+    ).toBeVisible();
+  });
+
   it("returns to discovery when the selected activity becomes unavailable during creation", async () => {
     const user = userEvent.setup();
     vi.spyOn(fetchClient, "GET").mockResolvedValueOnce({
@@ -232,7 +306,7 @@ describe("ActivityDiscovery", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/active activity not found/i);
     await user.click(screen.getByRole("button", { name: /return to activities/i }));
     expect(
-      screen.getByText(/choose an activity below to see its details here/i),
-    ).toBeVisible();
+      screen.getByRole("button", { name: /choose this activity/i }),
+    ).toBeEnabled();
   });
 });

@@ -1,9 +1,5 @@
 import type { Activity } from "@/features/activities/types";
 import {
-  formatActivityCost,
-  formatActivityWhen,
-} from "@/features/activities/format";
-import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/features/activities/activityStyles";
@@ -45,51 +41,45 @@ export function SelectedActivityPanel({
   }
 
   return (
-    <div className="rounded-2xl bg-background p-6 shadow-[0_18px_45px_rgb(37_44_64_/_0.10)]">
-      <h2 className="text-2xl font-bold text-foreground">
-        {activity.title}
-      </h2>
-
-      <dl className="mt-4 space-y-2 text-base text-foreground">
-        <div className="flex justify-between gap-3">
-          <dt className="font-bold">When</dt>
-          <dd className="text-right">{formatActivityWhen(activity)}</dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="font-bold">Where</dt>
-          <dd className="text-right">{activity.venue}</dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="font-bold">Cost</dt>
-          <dd className="text-right">{formatActivityCost(activity)}</dd>
-        </div>
-      </dl>
-
+    <section
+      aria-label={`${activity.title} planning options`}
+      className="mt-5 rounded-[16px] bg-muted p-5 sm:p-6"
+    >
       {activity.description ? (
-        <p className="mt-4 text-base leading-relaxed text-foreground">
+        <p className="max-w-[65ch] text-base leading-relaxed text-foreground">
           {activity.description}
         </p>
       ) : null}
-      <div className="mt-6 space-y-3">
+      {activity.infoLink ? (
+        <a
+          className="mt-3 inline-block font-bold text-primary underline"
+          href={activity.infoLink}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          More information (opens in a new tab)
+        </a>
+      ) : null}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <button
-          className={`${primaryButtonClass} w-full`}
+          className={`${primaryButtonClass} w-full sm:w-auto`}
           disabled={!canMakePlan}
           onClick={onMakePlan}
           type="button"
         >
           Make a plan
         </button>
-        <p className="text-sm text-foreground">
-          Review the details before creating anything. No email is sent yet.
-        </p>
         <button
-          className={`${secondaryButtonClass} w-full`}
+          className={`${secondaryButtonClass} w-full sm:w-auto`}
           onClick={onClear}
           type="button"
         >
           Choose a different activity
         </button>
       </div>
-    </div>
+      <p className="mt-3 text-sm text-foreground">
+        Review the details before creating anything. No email is sent yet.
+      </p>
+    </section>
   );
 }

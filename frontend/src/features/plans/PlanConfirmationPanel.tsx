@@ -100,9 +100,9 @@ export function PlanConfirmationPanel({
         </div>
       ) : null}
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <button
-          className={`${primaryButtonClass} w-full`}
+          className={`${primaryButtonClass} w-full sm:w-auto`}
           disabled={createMutation.isPending || unavailable}
           onClick={() => createMutation.mutate()}
           type="button"
@@ -110,7 +110,7 @@ export function PlanConfirmationPanel({
           {createMutation.isPending ? "Creating plan…" : "Confirm and create plan"}
         </button>
         <button
-          className={`${secondaryButtonClass} w-full`}
+          className={`${secondaryButtonClass} w-full sm:w-auto`}
           disabled={createMutation.isPending}
           onClick={onBack}
           type="button"

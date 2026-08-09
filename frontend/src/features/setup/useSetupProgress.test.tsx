@@ -81,4 +81,49 @@ describe("useSetupProgress", () => {
     expect(result.current.isError).toBe(true);
     expect(result.current.isComplete).toBe(false);
   });
+
+  it("starts fresh (no family) when selectedFamilyId is explicitly null, even if families already exist", () => {
+    mockedUseQuery
+      .mockReturnValueOnce(
+        queryResult({ families: [{ id: 1, name: "Lim Family" }] }) as never,
+      )
+      .mockReturnValueOnce(queryResult(undefined) as never)
+      .mockReturnValueOnce(queryResult(undefined) as never);
+
+    const { result } = renderHook(() => useSetupProgress(null));
+
+    expect(result.current.family).toBeUndefined();
+    // Dependent queries must not fire for a family that doesn't exist yet.
+    expect(mockedUseQuery.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({ enabled: false }),
+    );
+  });
+
+  it("selects a specific family by id out of several, for the organizer's edit flow", () => {
+    const families = [
+      { id: 1, name: "Lim Family" },
+      { id: 2, name: "Tan Family" },
+    ];
+    mockedUseQuery
+      .mockReturnValueOnce(queryResult({ families }) as never)
+      .mockReturnValueOnce(queryResult({ older_adults: [] }) as never)
+      .mockReturnValueOnce(queryResult({ family_members: [] }) as never);
+
+    const { result } = renderHook(() => useSetupProgress(2));
+
+    expect(result.current.family).toEqual({ id: 2, name: "Tan Family" });
+  });
+
+  it("falls back to no family when the requested id is not in the organizer's own list", () => {
+    mockedUseQuery
+      .mockReturnValueOnce(
+        queryResult({ families: [{ id: 1, name: "Lim Family" }] }) as never,
+      )
+      .mockReturnValueOnce(queryResult(undefined) as never)
+      .mockReturnValueOnce(queryResult(undefined) as never);
+
+    const { result } = renderHook(() => useSetupProgress(999));
+
+    expect(result.current.family).toBeUndefined();
+  });
 });

@@ -34,8 +34,8 @@ function errorMessage(error: unknown) {
   return "We could not save that yet. Check your connection and try again.";
 }
 
-export function SetupWizard() {
-  const progress = useSetupProgress();
+export function SetupWizard({ familyId = null }: { familyId?: number | null } = {}) {
+  const progress = useSetupProgress(familyId);
 
   if (progress.isPending)
     return <SetupStatus message="Loading your saved setup…" />;
@@ -508,7 +508,7 @@ function SetupComplete({
           type="button"
           onClick={() => void navigate({ to: "/family" })}
         >
-          Go to your trusted circle
+          Go to your family
         </button>
       </div>
     </div>

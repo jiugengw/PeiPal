@@ -70,30 +70,30 @@ describe("application routes", () => {
     useViewer.mockReturnValue(viewer());
   });
 
-  it("sends the organizer to setup", async () => {
+  it("sends the organizer to their families", async () => {
     const { router } = renderRoute("/", true);
-    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
-    expect(
-      await screen.findByRole("heading", {
-        name: /who are we setting this up for/i,
-      }),
-    ).toBeVisible();
+    await waitFor(() => expect(router.state.location.pathname).toBe("/family"));
   });
 
   it("keeps the organizer out of the older adult's pages", async () => {
     const { router } = renderRoute("/discover", true);
-    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/family"));
   });
 
-  it("lets the organizer review the trusted circle", async () => {
+  it("lets the organizer reach the family page directly", async () => {
     const { router } = renderRoute("/family", true);
     await waitFor(() => expect(router.state.location.pathname).toBe("/family"));
   });
 
-  it("keeps an unresolved account on setup", async () => {
+  it("also lets the organizer reach setup directly, to add or edit a family", async () => {
+    const { router } = renderRoute("/setup", true);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
+  });
+
+  it("sends an unresolved account to /family too, same as a resolved organizer", async () => {
     useViewer.mockReturnValue(viewer("unknown"));
     const { router } = renderRoute("/discover", true);
-    await waitFor(() => expect(router.state.location.pathname).toBe("/setup"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/family"));
   });
 
   it("keeps the older adult out of setup", async () => {

@@ -1,28 +1,7 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 import { useAuthSession } from "@/features/auth/AuthSessionContext";
-import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { useViewer } from "@/hooks/useViewer";
-
-// Organizers move through a guided setup-then-trusted-circle flow rather
-// than jumping between tabs, so their nav slot shows the current page's
-// name as plain text instead of clickable links. The trusted circle and
-// connected apps don't exist as usable concepts until setup (family, older
-// adult, at least one family member) is done, so the title stays "Setup"
-// until then, regardless of what the URL happens to be.
-const organizerPageTitles: { path: string; label: string }[] = [
-  { path: "/setup", label: "Setup" },
-  { path: "/family", label: "Family" },
-  { path: "/connect-apps", label: "Connect an app" },
-];
-
-function organizerPageTitle(pathname: string, isSetupComplete: boolean): string {
-  if (!isSetupComplete) return "Setup";
-  const match = organizerPageTitles.find(
-    (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
-  );
-  return match?.label ?? "Setup";
-}
 
 const olderAdultNavigation = [
   { to: "/discover", label: "Explore" },
@@ -44,10 +23,7 @@ const gridColsClassByCount: Record<number, string> = {
 export function Navbar() {
   const { session, isLoading } = useAuthSession();
   const { role } = useViewer();
-  const location = useLocation();
   const isOlderAdult = role === "older_adult";
-  const isOrganizer = role === "organizer";
-  const setup = useSetupProgress(Boolean(session) && isOrganizer);
 
   return (
     <header className="flex-none border-b border-border bg-background">
@@ -91,14 +67,7 @@ export function Navbar() {
               ))}
             </ul>
           </nav>
-        ) : (
-          // Not a <nav> landmark: this is a static label, not a set of
-          // navigation links, for organizers (and the brief "unknown" role
-          // window before an account's role is resolved).
-          <p className="col-span-2 row-start-2 text-center text-lg font-extrabold text-foreground md:col-span-1 md:col-start-2 md:row-start-1">
-            {organizerPageTitle(location.pathname, setup.isComplete)}
-          </p>
-        )}
+        ) : null}
 
         <div className="col-start-2 row-start-1 justify-self-end">
           {isLoading ? (

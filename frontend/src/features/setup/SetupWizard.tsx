@@ -11,7 +11,6 @@ import {
 } from "@/features/setup/api/setupQueries";
 import { useSetupProgress } from "@/features/setup/useSetupProgress";
 import { fetchClient } from "@/lib/fetchClient";
-import { sendSignInLink } from "@/features/auth/sendSignInLink";
 
 type OlderAdultDraft = components["schemas"]["OlderAdultCreate"];
 type OlderAdultUpdate = components["schemas"]["OlderAdultUpdate"];

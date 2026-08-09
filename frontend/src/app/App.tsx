@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Navbar } from "@/components/Navbar";
 import { ActivityWorkflowProvider } from "@/features/activities/ActivityWorkflowProvider";
 import { StagedIntentProvider } from "@/app/providers/StagedIntentProvider";
@@ -8,10 +8,25 @@ import { canReach, homePathFor } from "@/app/roleAccess";
 import { useViewer } from "@/hooks/useViewer";
 import styles from "./AppShell.module.css";
 
+const DEFAULT_COMPANION_WIDTH = 380;
+const MIN_COMPANION_WIDTH = 320;
+const MAX_COMPANION_WIDTH = 520;
+const COMPANION_WIDTH_KEY = "peipal-companion-width";
+
+function storedCompanionWidth() {
+  if (typeof window === "undefined") return DEFAULT_COMPANION_WIDTH;
+  const value = Number(window.localStorage.getItem(COMPANION_WIDTH_KEY));
+  return Number.isFinite(value) && value >= MIN_COMPANION_WIDTH && value <= MAX_COMPANION_WIDTH
+    ? value
+    : DEFAULT_COMPANION_WIDTH;
+}
+
 export function App() {
   const { role, isPending } = useViewer();
   const location = useLocation();
   const navigate = useNavigate();
+  const [companionOpen, setCompanionOpen] = useState(false);
+  const [companionWidth, setCompanionWidth] = useState(storedCompanionWidth);
   const isBlocked = !isPending && !canReach(role, location.pathname);
 
   useEffect(() => {
@@ -26,10 +41,26 @@ export function App() {
       <ActivityWorkflowProvider>
         <StagedIntentProvider>
           <Navbar />
-          <main className={styles.clnMain} id="main-content">
-            {isBlocked ? <RedirectingMessage /> : <Outlet />}
-          </main>
-          {role === "older_adult" && <CompanionPanel />}
+          <div
+            className={`${styles.clnWorkspace} ${companionOpen ? styles.clnWorkspaceWithCompanion : ""}`}
+            style={{ "--companion-width": `${companionWidth}px` } as CSSProperties}
+          >
+            <main className={styles.clnMain} id="main-content">
+              {isBlocked ? <RedirectingMessage /> : <Outlet />}
+            </main>
+            {role === "older_adult" && (
+              <CompanionPanel
+                isOpen={companionOpen}
+                width={companionWidth}
+                onOpen={() => setCompanionOpen(true)}
+                onClose={() => setCompanionOpen(false)}
+                onWidthChange={(width) => {
+                  setCompanionWidth(width);
+                  window.localStorage.setItem(COMPANION_WIDTH_KEY, String(width));
+                }}
+              />
+            )}
+          </div>
         </StagedIntentProvider>
       </ActivityWorkflowProvider>
     </div>

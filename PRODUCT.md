@@ -44,7 +44,7 @@ The current prototype is a family-assisted setup flow followed by a voice- or ch
 
 ## Evidence on Hand
 
-- Existing family-assisted setup prototype: `index.html`, `styles.css`, and `script.js`.
+- The frontend application lives in `frontend/`.
 - Product concept, workflows, MVP scope, and demo scenario: `plan.md`.
 - No production customer evidence, testimonials, or live integrations are available; future work must not fabricate them.
 

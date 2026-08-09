@@ -356,7 +356,6 @@ function SetupWizardForm({
 
           {currentStep === 2 && progress.family ? (
             <>
-              <OlderAdultAccessPanel olderAdults={progress.olderAdults} />
               <FamilyMembersStep
               familyMembers={progress.familyMembers}
               familyId={progress.family.id}
@@ -467,75 +466,6 @@ function SetupStatus({
         </p>
         {action ? <div className="mt-5">{action}</div> : null}
       </div>
-    </section>
-  );
-}
-
-/**
- * Hands each older adult their own way in. They sign in with a link to their
- * email rather than a password, so no credential is ever shared with them.
- */
-function OlderAdultAccessPanel({ olderAdults }: { olderAdults: OlderAdult[] }) {
-  const [sentTo, setSentTo] = useState<string[]>([]);
-  const [error, setError] = useState("");
-  const sendLink = useMutation({
-    mutationFn: (email: string) => sendSignInLink(email),
-  });
-
-  const withEmail = olderAdults.filter((person) => person.email);
-  if (withEmail.length === 0) return null;
-
-  async function send(email: string) {
-    setError("");
-    try {
-      await sendLink.mutateAsync(email);
-      setSentTo((current) => [...current, email]);
-    } catch (caught) {
-      setError(errorMessage(caught));
-    }
-  }
-
-  return (
-    <section className="mb-8 rounded-2xl bg-muted p-5 sm:p-7">
-      <h2 className="text-2xl font-bold text-foreground">Give them their own access</h2>
-      <p className="mt-2 max-w-[65ch] text-lg leading-relaxed text-foreground">
-        Each older adult gets an email with a six-digit code. They type it into
-        the sign-in page, and never need a password.
-      </p>
-      <ul className="mt-5 divide-y divide-border border-y border-border">
-        {withEmail.map((person) => (
-          <li
-            className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-            key={person.id}
-          >
-            <div>
-              <strong className="text-lg text-foreground">
-                {person.preferred_name || person.name}
-              </strong>
-              <p className="mt-1 text-base text-foreground">{person.email}</p>
-            </div>
-            {sentTo.includes(person.email ?? "") ? (
-              <p className="text-base font-bold text-foreground" role="status">
-                Link sent
-              </p>
-            ) : (
-              <button
-                className={secondaryButtonClass}
-                disabled={sendLink.isPending}
-                onClick={() => void send(person.email ?? "")}
-                type="button"
-              >
-                {sendLink.isPending ? "Sending\u2026" : "Send sign-in code"}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {error ? (
-        <p className="mt-4 font-bold text-foreground" role="alert">
-          {error}
-        </p>
-      ) : null}
     </section>
   );
 }

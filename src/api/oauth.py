@@ -84,7 +84,7 @@ def authorize(request: Request, client: Client = Depends(get_supabase_client)) -
     if not requested.issubset(set(DEFAULT_SCOPE.split())):
         raise HTTPException(status_code=400, detail="Unsupported OAuth scope.")
     frontend = oauth_frontend_url().rstrip("/") + "/oauth/authorize"
-    return RedirectResponse(frontend + "?" + urlencode(query), status_code=307)
+    return RedirectResponse(frontend + "?" + urlencode(query), status_code=302)
 
 
 class AuthorizationApproval(BaseModel):

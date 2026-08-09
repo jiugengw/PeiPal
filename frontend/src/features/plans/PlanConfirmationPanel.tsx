@@ -104,7 +104,7 @@ export function PlanConfirmationPanel({
           onClick={() => createMutation.mutate()}
           type="button"
         >
-          {createMutation.isPending ? "Creating plan…" : "Confirm and create plan"}
+          {createMutation.isPending ? "Sharing plan…" : "Share the plan"}
         </button>
         <button
           className={`${secondaryButtonClass} w-full`}

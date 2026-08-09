@@ -202,7 +202,7 @@ describe("ActivityDiscovery", () => {
     await user.click(screen.getByRole("button", { name: /make a plan/i }));
 
     expect(screen.getByRole("heading", { name: /review this plan/i })).toBeVisible();
-    await user.click(screen.getByRole("button", { name: /confirm and create plan/i }));
+    await user.click(screen.getByRole("button", { name: /share the plan/i }));
 
     await waitFor(() => expect(post).toHaveBeenCalledWith("/api/plans", {
       body: { family_id: 1, older_adult_id: 2, activity_id: 27 },
@@ -227,7 +227,7 @@ describe("ActivityDiscovery", () => {
     renderPage();
     await user.click(await screen.findByRole("button", { name: /choose this activity/i }));
     await user.click(screen.getByRole("button", { name: /make a plan/i }));
-    await user.click(screen.getByRole("button", { name: /confirm and create plan/i }));
+    await user.click(screen.getByRole("button", { name: /share the plan/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/active activity not found/i);
     await user.click(screen.getByRole("button", { name: /return to activities/i }));
